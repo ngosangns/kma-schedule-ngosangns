@@ -1,0 +1,58 @@
+{
+  "name": "tkb",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "@inotom/vue-go-top": "^1.3.0",
+    "@vue/cli": "^4.3.1",
+    "core-js": "^3.6.4",
+    "dom-to-image-more": "^2.8.0",
+    "jquery": "^3.5.1",
+    "md5": "^2.2.1",
+    "moment": "^2.26.0",
+    "popper": "^1.0.1",
+    "vue": "^2.6.11",
+    "vue-filter-date-format": "^1.3.1",
+    "vue-loading-overlay": "^3.3.2",
+    "vue-material": "^1.0.0-beta-13",
+    "vuelidate": "^0.7.5"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~4.3.0",
+    "@vue/cli-plugin-eslint": "~4.3.0",
+    "@vue/cli-service": "~4.3.0",
+    "babel-eslint": "^10.1.0",
+    "eslint": "^6.7.2",
+    "eslint-plugin-vue": "^6.2.2",
+    "expose-loader": "^0.7.5",
+    "stylus": "^0.54.7",
+    "stylus-loader": "^3.0.2",
+    "vue-cli-plugin-vuetify-preset-shrine": "~1.0.3",
+    "vue-template-compiler": "^2.6.11",
+    "worker-loader": "^2.0.0"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "parser": "babel-eslint"
+    },
+    "rules": {}
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}
