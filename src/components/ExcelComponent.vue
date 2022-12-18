@@ -1,17 +1,9 @@
 <template>
   <div>
-    <md-dialog-alert
-      :md-active.sync="error.enable"
-      v-bind:md-content="error.message"
-      md-confirm-text="OK"
-      md-fullscreen="true"
-    />
-    <md-progress-bar
-      style="position: fixed; top: 0; left: 0; width: 100vw; z-index: 99"
-      class="md-layout-item md-size-100"
-      md-mode="indeterminate"
-      v-if="sending"
-    />
+    <md-dialog-alert :md-active.sync="error.enable" v-bind:md-content="error.message" md-confirm-text="OK"
+      md-fullscreen="true" />
+    <md-progress-bar style="position: fixed; top: 0; left: 0; width: 100vw; z-index: 99"
+      class="md-layout-item md-size-100" md-mode="indeterminate" v-if="sending" />
     <md-card-header class="md-layout-item md-size-100">
       <div class="md-title">Dịch TKB từ file Excel</div>
     </md-card-header>
@@ -55,7 +47,7 @@ export default {
         try {
           let worker = new Worker('js/excel.worker.js')
           worker.addEventListener('message', (res) => {
-            if(res.data) {
+            if (res.data) {
               resolve(res.data)
             }
             // Handle error
@@ -66,18 +58,17 @@ export default {
           worker.postMessage(event.target.files[0])
         }
         // Handle error
-        catch(err) {
+        catch (err) {
           reject(err)
         }
       })
-      .then(res_data => {
-        window.localStorage.setItem("tkb", JSON.stringify(res_data))
-        this.$emit("update_tkb_data", JSON.parse(window.localStorage.getItem("tkb")));
-      })
-      .catch((err) => {
-        this.error.present("Không thể lấy thông tin thời khóa biểu");
-        if(err) console.log(err);
-      })
+        .then(res_data => {
+          this.$emit("updateTkbData", JSON.parse(window.localStorage.getItem("tkb")));
+        })
+        .catch((err) => {
+          this.error.present("Không thể lấy thông tin thời khóa biểu");
+          if (err) console.log(err);
+        })
       this.sending = false
     }
   }

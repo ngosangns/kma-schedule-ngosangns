@@ -1,24 +1,11 @@
 <template>
   <div class="md-layout" :class="`md-alignment-center-center`">
     <go-top bg-color="#333" fg-color="#fff"></go-top>
-    <md-dialog-alert
-      :md-active.sync="error.enable"
-      v-bind:md-content="error.message"
-      md-confirm-text="OK"
-      md-fullscreen="true"
-    />
-    <md-progress-bar
-      style="position: fixed; top: 0; left: 0; width: 100vw; z-index: 99"
-      class="md-layout-item md-size-100"
-      md-mode="indeterminate"
-      v-if="sending"
-    />
-
     <md-toolbar class="md-layout-item md-size-100">
-      <h3 v-once class="md-title">{{student}}</h3>
+      <h3 class="md-title">{{ student }}</h3>
       <div class="md-toolbar-section-end">
-        <md-button v-once v-on:click="exportToGoogleCalendar()">Export to Google Calendar</md-button>
-        <md-button v-once v-on:click="signOut()">Đăng xuất</md-button>
+        <md-button v-on:click="exportToGoogleCalendar()">Export to Google Calendar</md-button>
+        <md-button v-on:click="signOut()">Đăng xuất</md-button>
       </div>
     </md-toolbar>
 
@@ -27,7 +14,7 @@
         <h1 class="md-title">Thông tin học kì</h1>
       </md-table-toolbar>
       <md-table-row slot="md-table-row" slot-scope="{ item }">
-        <md-table-cell md-label="STT">{{ tkb.data.data_subject.indexOf(item) + 1}}</md-table-cell>
+        <md-table-cell md-label="STT">{{ tkb.data.data_subject.indexOf(item) + 1 }}</md-table-cell>
         <md-table-cell md-label="Lớp học phần">{{ item.lop_hoc_phan }}</md-table-cell>
         <md-table-cell md-label="Học phần">{{ item.hoc_phan }}</md-table-cell>
         <md-table-cell md-label="Giảng viên">{{ item.giang_vien }}</md-table-cell>
@@ -36,6 +23,60 @@
         <md-table-cell md-label="Số TC">{{ item.so_tc }}</md-table-cell>
       </md-table-row>
     </md-table> -->
+
+    <div id="tkb-container">
+      <div class="md-layout-item md-gutter md-size-100">
+        <div class="md-size-100" style="height: 20px; background: transparent"></div>
+        <div style="display: grid; grid-template-columns: 1fr 10fr 1fr; grid-gap: 1rem">
+          <md-button style="height: 100%; margin: 0" class="md-raised" :md-ripple="false" @click="currentWeekIndex--">
+            <md-icon>chevron_left</md-icon>
+          </md-button>
+          <md-table ref="week" class="md-size-100" md-card>
+            <md-table-toolbar>
+              <md-field v-if="signIn" style="max-width: 15rem; margin-top: 0; margin-right: 1rem">
+                <label for="semester">Học kì</label>
+                <md-select v-model="currentSemester" name="semester" id="semester" @md-selected="onChangeSemester">
+                  <md-option v-for="item in semesters" :key="item.value" :value="item.value">
+                    {{ item.from }} - {{ item.to }} Kỳ {{ item.th }}
+                  </md-option>
+                </md-select>
+              </md-field>
+              <label class="md-title">WEEK {{ currentWeekIndex + 1 }}: {{
+              moment(currentWeek[0].time).format("DD/MM/YYYY")
+              }}
+                -
+                {{ moment(currentWeek[currentWeek.length - 1].time).format("DD/MM/YYYY") }}</label>
+              <md-button class="md-raised md-primary" ref="save"
+                v-on:click="save(currentWeekIndex, currentWeek[0].time, currentWeek[currentWeek.length - 1].time)">SAVE</md-button>
+            </md-table-toolbar>
+            <md-table-row>
+              <md-table-cell colspan=2>Tiết</md-table-cell>
+              <md-table-cell v-for="(shift_header, shift_header_index) in currentWeek[0].shift"
+                :key="shift_header_index" v-bind:class="checkSession(shift_header_index + 1)">{{ shift_header_index + 1
+                }}</md-table-cell>
+            </md-table-row>
+
+            <md-table-row v-for="(day, day_index) in currentWeek" :key="day_index">
+              <md-table-cell colspan=2>
+                {{ moment(day.time).format("dddd[\n]DD/MM/YYYY").split('\n')[0] }}<br>
+                {{ moment(day.time).format("dddd[\n]DD/MM/YYYY").split('\n')[1] }}
+              </md-table-cell>
+              <template v-for="(shift, shift_index) in day.shift">
+                <md-table-cell v-if="parseInt(shift.length)" :key="shift_index"
+                  v-bind:class="checkSession(shift_index + 1)" v-bind:colspan="shift.length">
+                  <md-card v-if="shift.content">
+                    {{ shift.content }}
+                  </md-card>
+                </md-table-cell>
+              </template>
+            </md-table-row>
+          </md-table>
+          <md-button style="height: 100%; margin: 0" class="md-raised" :md-ripple="false" @click="currentWeekIndex++">
+            <md-icon>chevron_right</md-icon>
+          </md-button>
+        </div>
+      </div>
+    </div>
 
     <md-table class="md-layout-item md-gutter md-size-100" md-card>
       <md-table-toolbar>
@@ -77,39 +118,6 @@
         <md-table-cell></md-table-cell>
       </md-table-row>
     </md-table>
-    <div id="tkb-container">
-        <div v-once v-for="(week, week_index) in tkb.data.data_subject" :key='week_index' class="md-layout-item md-gutter md-size-100">
-          <div class="md-size-100" style='height: 20px; background: transparent'></div>
-          <md-table ref="week" class="md-size-100" md-card>
-            <md-table-toolbar>
-              <label v-once class="md-title">WEEK {{week_index + 1}}: {{moment(week[0].time).format("DD/MM/YYYY")}} - {{moment(week[week.length-1].time).format("DD/MM/YYYY")}}</label>
-              <md-button v-once class="md-raised md-primary" ref="save" 
-                v-on:click="save(week_index, week[0].time, week[week.length - 1].time)"
-                >SAVE</md-button>
-            </md-table-toolbar>
-            <md-table-row>
-              <md-table-cell v-once colspan=2>Tiết</md-table-cell>
-              <md-table-cell v-once v-for="(shift_header, shift_header_index) in week[0].shift" :key="shift_header_index" 
-               v-bind:class="checkSession(shift_header_index+1)" >{{shift_header_index+1}}</md-table-cell>
-            </md-table-row>
-
-            <md-table-row v-once v-for="(day, day_index) in week" :key="day_index">
-              <md-table-cell v-once colspan=2>
-                {{ moment(day.time).format("dddd[\n]DD/MM/YYYY").split('\n')[0] }}<br>
-                {{ moment(day.time).format("dddd[\n]DD/MM/YYYY").split('\n')[1] }}
-              </md-table-cell>
-              <template v-for="(shift, shift_index) in day.shift">
-                <md-table-cell v-if="parseInt(shift.length)" :key="shift_index" 
-                  v-bind:class="checkSession(shift_index+1)" v-bind:colspan="shift.length">
-                  <md-card v-if="shift.content">
-                    {{shift.content}}
-                  </md-card>
-                </md-table-cell>
-              </template>
-            </md-table-row>
-          </md-table>
-        </div>
-    </div>
   </div>
 </template>
 
@@ -117,31 +125,24 @@
 import domtoimage from 'dom-to-image-more'
 import moment from 'moment'
 import GoTop from '@inotom/vue-go-top'
+import { processCalendar, fetchCalendarWithPost } from '../utils/calendar'
 
 export default {
   name: "TkbComponent",
+  props: {
+    sending: { value: false },
+    error: { enable: false, message: "" },
+    tkb: null,
+  },
   data: () => {
     return {
-      tkb: null,
-      student: null,
       document: document,
       moment: moment,
-      sending: false,
-      error: {
-        enable: false,
-        message: null,
-        present(message) {
-          this.message = message;
-          this.enable = true;
-        }
-      }
+      currentWeekIndex: 0,
     };
   },
   components: {
     GoTop
-  },
-  props: {
-    down_tkb: null
   },
   methods: {
     checkSession(shift) {
@@ -152,18 +153,17 @@ export default {
     async save(week_index, date_start, date_end) {
       let currentWeek = this.$refs.week[week_index].$el
       let currentSave = this.$refs.save[week_index].$el
-
       currentWeek.style['pointer-events'] = 'none'
       currentSave.style['display'] = 'none'
-      this.sending = true
+      this.sending.value = true
       await domtoimage.toJpeg(currentWeek, { quality: 0.95 })
         .then(function (dataUrl) {
           date_start = new Date(date_start)
           date_end = new Date(date_end)
-          date_start = `${date_start.getDate()}_${date_start.getMonth()+1}_${date_start.getFullYear()}`
-          date_end = `${date_end.getDate()}_${date_end.getMonth()+1}_${date_end.getFullYear()}`
+          date_start = `${date_start.getDate()}_${date_start.getMonth() + 1}_${date_start.getFullYear()}`
+          date_end = `${date_end.getDate()}_${date_end.getMonth() + 1}_${date_end.getFullYear()}`
           let link = document.createElement('a');
-          link.download = `${week_index+1}_tkb_${date_start}_${date_end}.jpeg`;
+          link.download = `${week_index + 1}_tkb_${date_start}_${date_end}.jpeg`;
           link.href = dataUrl;
           link.click();
           link.remove();
@@ -171,37 +171,37 @@ export default {
         .catch(e => { this.error.present("Có lỗi xảy ra"); console.log(e) });
       currentWeek.style['pointer-events'] = 'auto'
       currentSave.style['display'] = 'block'
-      this.sending = false
+      this.sending.value = false
     },
     exportToGoogleCalendar() {
       let time_sift_table = [
         {},
-        {start: '000000', end: '004500'}, 
-        {start: '005000', end: '013500'}, 
-        {start: '014000', end: '022500'}, 
-        {start: '023500', end: '032000'}, 
-        {start: '032500', end: '041000'}, 
-        {start: '041500', end: '050000'}, 
-        {start: '053000', end: '061500'}, 
-        {start: '062000', end: '070500'}, 
-        {start: '071000', end: '075500'}, 
-        {start: '080500', end: '085000'}, 
-        {start: '085500', end: '094000'}, 
-        {start: '094500', end: '103000'}, 
-        {start: '110000', end: '114500'}, 
-        {start: '114500', end: '123000'}, 
-        {start: '124500', end: '133000'}, 
-        {start: '133000', end: '141500'},
+        { start: '000000', end: '004500' },
+        { start: '005000', end: '013500' },
+        { start: '014000', end: '022500' },
+        { start: '023500', end: '032000' },
+        { start: '032500', end: '041000' },
+        { start: '041500', end: '050000' },
+        { start: '053000', end: '061500' },
+        { start: '062000', end: '070500' },
+        { start: '071000', end: '075500' },
+        { start: '080500', end: '085000' },
+        { start: '085500', end: '094000' },
+        { start: '094500', end: '103000' },
+        { start: '110000', end: '114500' },
+        { start: '114500', end: '123000' },
+        { start: '124500', end: '133000' },
+        { start: '133000', end: '141500' },
       ]
       let result = `BEGIN:VCALENDAR\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\n\n`
       this.tkb.data.data_subject.forEach(week => {
-        for(let day of week) {
+        for (let day of week) {
           let timeIter = new Date(day.time)
           day.shift.forEach((shift, shift_index) => {
-            if(shift.content) {
-              result += `BEGIN:VEVENT\nDTSTART:${this.moment(timeIter).format('YYYYMMDD')}T${time_sift_table[shift_index+1].start}Z\n`
+            if (shift.content) {
+              result += `BEGIN:VEVENT\nDTSTART:${this.moment(timeIter).format('YYYYMMDD')}T${time_sift_table[shift_index + 1].start}Z\n`
               result += `DTEND:${this.moment(timeIter).format('YYYYMMDD')}T${time_sift_table[shift_index + shift.length].end}Z\n`
-              if(shift.address) result += `LOCATION:${shift.address}\n`
+              if (shift.address) result += `LOCATION:${shift.address}\n`
               result += `SUMMARY:${shift.name}\n`
               result += `END:VEVENT\n\n`
             }
@@ -209,7 +209,6 @@ export default {
         }
       })
       result += `END:VCALENDAR`
-
       let link = document.createElement('a')
       link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(result))
       link.setAttribute('download', `${this.student ? this.student.split(" - ")[0] : 'tkb_export'}.ics`)
@@ -218,16 +217,85 @@ export default {
       link.click()
       document.body.removeChild(link)
     },
+    async onChangeSemester(val) {
+      this.sending.value = true
+      try {
+        // update semester to form
+        const mainForm = this.mainForm
+        mainForm['drpSemester'] = val
+        let hidSemester = this.semesters.find((v) => v.value == val ? v : undefined)
+        mainForm['hidSemester'] = hidSemester.from + "_" + hidSemester.to + "_" + hidSemester.th
+
+        // get calendar
+        const result = await fetchCalendarWithPost(mainForm, this.signIn);
+        this.$emit("updateMainDataForm", result)
+
+        // process calendar
+        const processResult = await processCalendar(result)
+        this.$emit("updateTkbData", processResult)
+      } catch (e) {
+        this.error.present("Có lỗi xảy ra khi lấy thông tin thời khóa biểu!");
+        if (e) console.log(e);
+      }
+      this.sending.value = false
+    },
     signOut() {
-      window.localStorage.removeItem("tkb");
+      window.localStorage.removeItem("tkb")
       window.localStorage.removeItem('student')
+      window.localStorage.removeItem('semesters')
+      window.localStorage.removeItem('currentSemester')
+      window.localStorage.removeItem('mainForm')
+      window.localStorage.removeItem('signIn')
       this.$parent.tkb.enable = false;
+    },
+  },
+  computed: {
+    semesters: function () {
+      return JSON.parse(window.localStorage.getItem('semesters'))
+    },
+    currentSemester: {
+      get: function () {
+        return window.localStorage.getItem('currentSemester')
+      },
+      set: function (val) {
+        window.localStorage.setItem('currentSemester', val)
+      }
+    },
+    mainForm: function () {
+      return JSON.parse(window.localStorage.getItem('mainForm'))
+    },
+    signIn: function () {
+      return window.localStorage.getItem('signIn')
+    },
+    student: function () {
+      const student = window.localStorage.getItem('student')
+      return student ? student : "KITCLUB - Học viện Kỹ thuật Mật mã"
+    },
+    currentWeek: function () {
+      const data = this.tkb?.data?.data_subject ? this.tkb.data.data_subject : []
+      if (!data.length) return null
+      if (this.currentWeekIndex < 0) this.currentWeekIndex = 0
+      if (this.currentWeekIndex >= data.length) this.currentWeekIndex = data.length - 1
+      return data[this.currentWeekIndex]
     }
   },
-  created() {
-    this.student = window.localStorage.getItem('student');
-    if(!this.student) this.student = `KITCLUB - Học viện Kỹ thuật Mật mã`;
-    this.tkb = this.down_tkb;
+  mounted() {
+    // get current week if exist
+    const data = this.tkb?.data?.data_subject ? this.tkb.data.data_subject : []
+    for (const [index, week] of data.entries()) {
+      if (moment(week[0].time).isSameOrBefore("2022-10-25") && moment(week[week.length - 1].time).isSameOrAfter("2022-10-25")) {
+        this.currentWeekIndex = index
+        break
+      }
+    }
+
+    // hotkey
+    document.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowLeft')
+        this.currentWeekIndex--
+      else if (e.key === 'ArrowRight')
+        this.currentWeekIndex++
+    }, false);
   }
 };
 </script>

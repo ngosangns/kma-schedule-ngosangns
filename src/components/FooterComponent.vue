@@ -1,6 +1,6 @@
 <template>
   <footer style='text-align: center'>
-    <p>&copy;2019 ngosangns. Version 8.2.3</p>
+    <p>&copy;2019 ngosangns. Version 2022.12</p>
   </footer>
 </template>
 
@@ -11,4 +11,5 @@ export default {
 </script>
 
 <style>
+
 </style>
