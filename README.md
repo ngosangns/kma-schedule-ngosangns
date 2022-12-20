@@ -16,11 +16,13 @@ Feature:
   - nvm: [https://github.com/nvm-sh/nvm#installing-and-updating](https://github.com/nvm-sh/nvm#installing-and-updating)
   - pnpm `npm install -g pnpm`
   - make `sudo apt install make`
+
 - Install:
 
 ```
 nvm install 16.19.0
-make i
+nvm use
+pnpm install
 ```
 
 - Run: `make dev`
