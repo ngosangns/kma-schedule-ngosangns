@@ -36,7 +36,7 @@
 <script>
 import { validationMixin } from "vuelidate"
 import { required } from "vuelidate/lib/validators"
-import { processCalendar } from "../utils/calendar"
+import { processCalendar } from "../util/calendar"
 
 export default {
   name: "NonLoGinComponent",

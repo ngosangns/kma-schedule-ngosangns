@@ -1,32 +1,39 @@
-self.importScripts('./xlsx.full.min.js')
-self.addEventListener('message', function (file) {
-    let reader = new FileReader();
-    reader.onload = function (e) {
-        let data = new Uint8Array(e.target.result);
-        // eslint-disable-next-line no-undef
-        let workbook = XLSX.read(data, { type: "array" });
-        workbook = workbook.Sheets[workbook.SheetNames[0]];
-        
-        let result = proccessExcel(workbook);
-        self.postMessage(result)
-    };
-    reader.readAsArrayBuffer(file.data);
-}, false)
+import { createInlineWorker } from '../util/worker'
+
+export function proccessExcel(file) {
+    return new Promise((resolve, reject) => {
+        const worker = createInlineWorker(file => {
+            const reader = new FileReader()
+            reader.onload = function (e) {
+                const data = new Uint8Array(e.target.result)
+                const xlsx = require("xlsx")
+                let workbook = xlsx.read(data, { type: "array" })
+                workbook = workbook.Sheets[workbook.SheetNames[0]]
+                const result = restructureExcel(workbook)
+                self.postMessage(result)
+            }
+            reader.readAsArrayBuffer(file.data)
+        }, alphaToNum, numToAlpha, getEndIndexCell, parseIndexCell, getSubjectInfo, restructureExcel)
+        worker.onmessage = res => resolve(res.data)
+        worker.onerror = err => reject(err)
+        worker.postMessage(file)
+    })
+}
 
 function alphaToNum(alpha) {
     var i = 0,
         num = 0,
-        len = alpha.length;
+        len = alpha.length
     for (; i < len; i++)
-        num = num * 26 + alpha.charCodeAt(i) - 0x40;
-    return num - 1;
+        num = num * 26 + alpha.charCodeAt(i) - 0x40
+    return num - 1
 }
 
 function numToAlpha(num) {
-    var alpha = '';
+    var alpha = ''
     for (; num >= 0; num = parseInt(num / 26, 10) - 1)
-        alpha = String.fromCharCode(num % 26 + 0x41) + alpha;
-    return alpha;
+        alpha = String.fromCharCode(num % 26 + 0x41) + alpha
+    return alpha
 }
 
 function getEndIndexCell(startIndex, worksheet) {
@@ -45,7 +52,7 @@ function parseIndexCell(indexTable) {
     let c, r
     c = indexTable.match(/^[A-Z]*/i)[0]
     r = +indexTable.match(/[0-9]*$/i)[0]
-    return {c, r}
+    return { c, r }
 }
 
 function getSubjectInfo(worksheet) {
@@ -53,11 +60,11 @@ function getSubjectInfo(worksheet) {
     let subjectColumnsIndex = []
     for (let cell in worksheet) {
         if (worksheet[cell]['w'])
-        if (worksheet[cell]['w'] == "Môn học")
-            subjectColumnsIndex.push({
-                s: parseIndexCell(cell),
-                e: getEndIndexCell(parseIndexCell(cell), worksheet)
-            })
+            if (worksheet[cell]['w'] == "Môn học")
+                subjectColumnsIndex.push({
+                    s: parseIndexCell(cell),
+                    e: getEndIndexCell(parseIndexCell(cell), worksheet)
+                })
     }
 
     // Index start by 1 (i)
@@ -67,7 +74,6 @@ function getSubjectInfo(worksheet) {
         // Move the pointer to the first subject row in excel
         let i = subjectColumn.e.r + 2
         while (worksheet[subjectColumn.s.c + i]) {
-            console.log(worksheet[subjectColumn.s.c + i])
             subject.push({
                 lop_hoc_phan: worksheet[subjectColumn.s.c + i].w,
                 hoc_phan: worksheet[numToAlpha(alphaToNum(subjectColumn.e.c) + 1) + i].w,
@@ -84,13 +90,13 @@ function getSubjectInfo(worksheet) {
  * @param {*} worksheet 
  */
 function countSubjectRows(worksheet) {
-    let i = 6;
+    let i = 6
     while (worksheet['B' + i] || worksheet['Q' + i])
         i++
     return i
 }
 
-function proccessExcel(worksheet) {
+function restructureExcel(worksheet) {
     let subject = getSubjectInfo(worksheet)
     let min_time = null
     let max_time = null
@@ -191,66 +197,62 @@ function proccessExcel(worksheet) {
             }
         })
     }
-    
-    if (!max_time) return false;
+
+    if (!max_time) return false
     max_time = max_time.getTime()
     min_time = min_time.getTime()
 
-    let days_outline = new Array();
-    let one_day_time = 86400000;
+    let days_outline = new Array()
+    let one_day_time = 86400000
 
-    for (
-        let time_iter = min_time;
-        time_iter <= max_time;
-        time_iter += one_day_time
-    ) {
+    for (let time_iter = min_time; time_iter <= max_time; time_iter += one_day_time) {
         if (new Date(time_iter).getDay() + 1 == 2 || time_iter == min_time) {
-            days_outline.push([{ time: time_iter, shift: [] }]);
-            continue;
+            days_outline.push([{ time: time_iter, shift: [] }])
+            continue
         }
-        days_outline[days_outline.length - 1].push({ time: time_iter, shift: [] });
+        days_outline[days_outline.length - 1].push({ time: time_iter, shift: [] })
     }
 
     for (let week of days_outline)
-    for (let day of week)
-    day.shift = [...Array(16).keys()].map(shift => {
-        for (let _subject of subject)
-        for (let season of _subject.tkb)
-        if (
-            day.time >= season.startTime.getTime()
-            && day.time <= season.endTime.getTime()
-        )
-            for (let sub_day of season.dayOfWeek) {
-                if (
-                    sub_day.dow == new Date(day.time).getDay() + 1
-                    || (new Date(day.time).getDay() + 1 == 1 && sub_day.dow == 8) // Chu nhat
-                )
-                    if (
-                        (shift + 1) >= parseInt(sub_day.shi[0])
-                        && (shift + 1) <= parseInt(sub_day.shi[sub_day.shi.length - 1])
-                    )
-                        if ((shift + 1) === parseInt(sub_day.shi[0])) {
-                            return {
-                                content: `${_subject.lop_hoc_phan}${season.address ? ` tại ${season.address}` : ''}`,
-                                name: _subject.lop_hoc_phan,
-                                address: season.address ? season.address : null,
-                                length: sub_day.shi.length
+        for (let day of week)
+            day.shift = [...Array(16).keys()].map(shift => {
+                for (let _subject of subject)
+                    for (let season of _subject.tkb)
+                        if (
+                            day.time >= season.startTime.getTime()
+                            && day.time <= season.endTime.getTime()
+                        )
+                            for (let sub_day of season.dayOfWeek) {
+                                if (
+                                    sub_day.dow == new Date(day.time).getDay() + 1
+                                    || (new Date(day.time).getDay() + 1 == 1 && sub_day.dow == 8) // Chu nhat
+                                )
+                                    if (
+                                        (shift + 1) >= parseInt(sub_day.shi[0])
+                                        && (shift + 1) <= parseInt(sub_day.shi[sub_day.shi.length - 1])
+                                    )
+                                        if ((shift + 1) === parseInt(sub_day.shi[0])) {
+                                            return {
+                                                content: `${_subject.lop_hoc_phan}${season.address ? ` tại ${season.address}` : ''}`,
+                                                name: _subject.lop_hoc_phan,
+                                                address: season.address ? season.address : null,
+                                                length: sub_day.shi.length
+                                            }
+                                        }
+                                        else return {
+                                            content: null,
+                                            name: null,
+                                            address: null,
+                                            length: 0
+                                        }
                             }
-                        }
-                        else return {
-                            content: null,
-                            name: null,
-                            address: null,
-                            length: 0
-                        }
-            }
 
-        return {
-            content: null,
-            name: null,
-            address: null,
-            length: 1
-        }
-    })
+                return {
+                    content: null,
+                    name: null,
+                    address: null,
+                    length: 1
+                }
+            })
     return { data_subject: days_outline }
 }

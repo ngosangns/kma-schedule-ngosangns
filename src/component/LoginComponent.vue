@@ -26,10 +26,10 @@
 </template>
 
 <script>
-import { validationMixin } from "vuelidate";
-import { required } from "vuelidate/lib/validators";
-import { fetchCalendarWithGet, processCalendar } from '../utils/calendar'
-import { loginWithAccount } from '../utils/user'
+import { validationMixin } from "vuelidate"
+import { required } from "vuelidate/lib/validators"
+import { fetchCalendarWithGet, processCalendar } from '../util/calendar'
+import { login, logout } from '../util/user'
 
 export default {
   name: "LoginComponent",
@@ -72,21 +72,21 @@ export default {
       this.sending.value = true;
 
       try {
-        const signInToken = await loginWithAccount(this.form.student_code, this.form.password)
-        window.localStorage.setItem("signIn", signInToken)
-
+        const signInToken = await login(this.form.student_code, this.form.password)
         const response = await fetchCalendarWithGet(signInToken)
-        this.$emit("updateMainDataForm", response)
-
         const data = await processCalendar(response)
+
+        window.localStorage.setItem("signIn", signInToken)
+        this.$emit("updateMainDataForm", response)
         this.$emit("updateTkbData", data)
       } catch (e) {
         this.error.present("Có lỗi xảy ra khi lấy thông tin thời khóa biểu hoặc tài khoản/mật khẩu không đúng!")
-        if (e) console.log(e)
+        throw e
+        logout()
+      } finally {
+        this.sending.value = false
       }
-
-      this.sending.value = false
     },
-  }
+  },
 };
 </script>

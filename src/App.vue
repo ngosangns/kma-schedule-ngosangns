@@ -24,12 +24,12 @@
 </template>
 
 <script>
-import TkbHeader from "./components/HeaderComponent"
-import LoginComponent from "./components/LoginComponent"
-import NonLoginComponent from "./components/NonLoginComponent"
-import TkbComponent from "./components/TkbComponent"
-import FooterComponent from "./components/FooterComponent"
-import ExcelComponent from "./components/ExcelComponent"
+import TkbHeader from "./component/HeaderComponent"
+import LoginComponent from "./component/LoginComponent"
+import NonLoginComponent from "./component/NonLoginComponent"
+import TkbComponent from "./component/TkbComponent"
+import FooterComponent from "./component/FooterComponent"
+import ExcelComponent from "./component/ExcelComponent"
 import $ from "jquery"
 
 export default {
@@ -102,19 +102,19 @@ export default {
   }
 }
 </script>
-<style lang='stylus'>
+<style>
 #root {
-  min-width: 1250px
-  max-width: 100vw
-  background-color: #303030 !important
+  min-width: 1250px;
+  max-width: 100vw;
+  background-color: #303030 !important;
 }
 
 .md-dialog-container {
-  transform: none !important
+  transform: none !important;
 }
 
 .md-card {
-  margin-top: 20px !important
-  padding: 20px !important
+  margin-top: 20px !important;
+  padding: 20px !important;
 }
 </style>

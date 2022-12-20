@@ -19,7 +19,7 @@ Feature:
 - Install:
 
 ```
-nvm install 14.21.2
+nvm install 16.19.0
 make i
 ```
 

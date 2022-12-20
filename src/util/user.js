@@ -2,7 +2,7 @@ import $ from 'jquery'
 import { getFieldFromResult } from './calendar'
 
 // return SignIn token
-export async function loginWithAccount(username, password) {
+export async function login(username, password) {
     let md5 = require("md5")
     let result = await $.ajax({
         url: "https://actvn-schedule.cors-ngosangns.workers.dev/login",
@@ -28,4 +28,13 @@ export async function loginWithAccount(username, password) {
         }
     })
     return await result.text()
+}
+
+export function logout() {
+    window.localStorage.removeItem("tkb")
+    window.localStorage.removeItem('student')
+    window.localStorage.removeItem('semesters')
+    window.localStorage.removeItem('currentSemester')
+    window.localStorage.removeItem('mainForm')
+    window.localStorage.removeItem('signIn')
 }

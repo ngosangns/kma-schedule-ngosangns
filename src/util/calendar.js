@@ -1,5 +1,101 @@
-/* eslint-disable no-unused-vars */
-function restructureTKB(data) {
+import $ from 'jquery'
+import { createInlineWorker } from './worker'
+
+export function fetchCalendarWithPost(formObj, signInToken) {
+    return $.ajax({
+        url:
+            "https://actvn-schedule.cors-ngosangns.workers.dev/subject",
+        method: "POST",
+        data: Object.keys(formObj)
+            .map(key => {
+                return (
+                    encodeURIComponent(key) + "=" + encodeURIComponent(formObj[key])
+                )
+            })
+            .join("&"),
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "x-cors-headers": JSON.stringify({
+                Cookie: signInToken
+            })
+        }
+    })
+}
+
+export function fetchCalendarWithGet(signInToken) {
+    return $.ajax({
+        url:
+            "https://actvn-schedule.cors-ngosangns.workers.dev/subject",
+        method: "GET",
+        headers: {
+            "x-cors-headers": JSON.stringify({
+                Cookie: signInToken
+            })
+        }
+    })
+}
+
+export function getFieldFromResult(result, field) {
+    let res = result.match(new RegExp("id=\"" + field + "\" value=\"(.+?)\"", "g"))
+    if (!res || !res.length) return false
+    res = res[0]
+    res = res.match(/value="(.+?)"/)
+    if (!res || !res.length) return false
+    res = res[1]
+    return res
+}
+
+function stripHTMLTags(str) {
+    if ((str === null) || (str === false)) return ''
+    else str = str.toString()
+    return str.replace(/<[^>]*>/g, '')
+}
+
+export function cleanFromHTMLtoArray(raw_tkb) {
+    if (!raw_tkb || !raw_tkb.length) return false
+    let student = raw_tkb.match(/<span id="lblStudent">(.+?)<\/span/g)
+    if (student)
+        window.localStorage.setItem(
+            "student",
+            student[0].match(/<span id="lblStudent">(.+?)<\/span/)[1]
+        )
+
+    // remove trash and catch table from html string
+    raw_tkb = raw_tkb.replace(/ {2,}/gm, " ")
+    raw_tkb = raw_tkb.replace(/<!--.*?-->|\t|(?:\r?\n[ \t]*)+/gm, "")
+    raw_tkb = raw_tkb.match(/<table.+?gridRegistered.+?<\/table>/g)
+    if (!raw_tkb || !raw_tkb.length) raw_tkb = raw_tkb[0]
+
+    // convert response to DOM then export the table to array
+    $("body").append("<div id=cleanTKB class=uk-hidden></div>")
+    $("#cleanTKB").html(raw_tkb)
+    let data_content_temp = Array.prototype.map.call(
+        document.querySelectorAll("#gridRegistered tr"),
+        (tr) =>
+            Array.prototype.map.call(tr.querySelectorAll("td"), (td) =>
+                stripHTMLTags(td.innerHTML)
+            )
+    )
+    $("#cleanTKB").remove()
+
+    // check null
+    if (!data_content_temp) return false
+
+    return data_content_temp
+}
+
+export async function processCalendar(data) {
+    if (!data) throw new Error("empty data")
+
+    return await new Promise((resolve, reject) => {
+        const worker = createInlineWorker((data) => self.postMessage(restructureTKB(data.data)), restructureTKB)
+        worker.onmessage = res => resolve(res.data)
+        worker.onerror = err => reject(err)
+        worker.postMessage(cleanFromHTMLtoArray(data))
+    }).catch(e => { throw e })
+}
+
+export function restructureTKB(data) {
     let categories = {
         lop_hoc_phan: "Lớp học phần",
         hoc_phan: "Học phần",
@@ -50,7 +146,6 @@ function restructureTKB(data) {
             // remove season index in string
             temp_dia_diem = Array.prototype.map.call(temp_dia_diem, item => item.replace(/^\([0-9]+?\) /i, '').trim());
         }
-
 
         // ---------------------------------
 
@@ -139,47 +234,50 @@ function restructureTKB(data) {
         days_outline[days_outline.length - 1].push({ time: time_iter, shift: [] });
     }
 
-    for (let week of days_outline)
-    for (let day of week)
-    day.shift = [...Array(16).keys()].map(shift => {
-        for (let subject of data_subject)
-        for (let season of subject.tkb)
-        if (
-            day.time >= season.startTime.getTime()
-            && day.time <= season.endTime.getTime()
-        )
-            for (let sub_day of season.dayOfWeek) {
-                if (
-                    sub_day.dow == new Date(day.time).getDay() + 1
-                    || (new Date(day.time).getDay() + 1 == 1 && sub_day.dow == 8) // Chu nhat
-                )
-                    if (
-                        (shift + 1) >= parseInt(sub_day.shi[0])
-                        && (shift + 1) <= parseInt(sub_day.shi[sub_day.shi.length - 1])
-                    )
-                        if ((shift + 1) === parseInt(sub_day.shi[0])) {
-                            return {
-                                content: `${subject.lop_hoc_phan}${season.address ? ` tại ${season.address}` : ''}`,
-                                name: subject.lop_hoc_phan,
-                                address: season.address ? season.address : null,
-                                length: sub_day.shi.length,
-                            }
-                        }
-                        else return {
-                            content: null,
-                            name: null,
-                            address: null,
-                            length: 0
-                        }
-            }
+    for (let week of days_outline) {
+        for (let day of week) {
+            day.shift = [...Array(16).keys()].map(shift => {
+                for (let subject of data_subject) {
+                    if (subject)
+                        for (let season of subject.tkb)
+                            if (
+                                day.time >= season.startTime.getTime()
+                                && day.time <= season.endTime.getTime()
+                            )
+                                for (let sub_day of season.dayOfWeek) {
+                                    if (
+                                        sub_day.dow == new Date(day.time).getDay() + 1
+                                        || (new Date(day.time).getDay() + 1 == 1 && sub_day.dow == 8) // Chu nhat
+                                    )
+                                        if (
+                                            (shift + 1) >= parseInt(sub_day.shi[0])
+                                            && (shift + 1) <= parseInt(sub_day.shi[sub_day.shi.length - 1])
+                                        )
+                                            if ((shift + 1) === parseInt(sub_day.shi[0])) {
+                                                return {
+                                                    content: `${subject.lop_hoc_phan}${season.address ? ` tại ${season.address}` : ''}`,
+                                                    name: subject.lop_hoc_phan,
+                                                    address: season.address ? season.address : null,
+                                                    length: sub_day.shi.length,
+                                                }
+                                            }
+                                            else return {
+                                                content: null,
+                                                name: null,
+                                                address: null,
+                                                length: 0
+                                            }
+                                }
+                }
 
-        return {
-            content: null,
-            name: null,
-            address: null,
-            length: 1
+                return {
+                    content: null,
+                    name: null,
+                    address: null,
+                    length: 1
+                }
+            })
         }
-    })
-
+    }
     return { data_subject: days_outline }
 }

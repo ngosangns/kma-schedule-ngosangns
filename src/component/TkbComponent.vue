@@ -1,6 +1,5 @@
 <template>
   <div class="md-layout" :class="`md-alignment-center-center`">
-    <go-top bg-color="#333" fg-color="#fff"></go-top>
     <md-toolbar class="md-layout-item md-size-100">
       <h3 class="md-title">{{ student }}</h3>
       <div class="md-toolbar-section-end">
@@ -42,7 +41,7 @@
                 </md-select>
               </md-field>
               <label class="md-title">WEEK {{ currentWeekIndex + 1 }}: {{
-              moment(currentWeek[0].time).format("DD/MM/YYYY")
+                  moment(currentWeek[0].time).format("DD/MM/YYYY")
               }}
                 -
                 {{ moment(currentWeek[currentWeek.length - 1].time).format("DD/MM/YYYY") }}</label>
@@ -124,8 +123,8 @@
 <script>
 import domtoimage from 'dom-to-image-more'
 import moment from 'moment'
-import GoTop from '@inotom/vue-go-top'
-import { processCalendar, fetchCalendarWithPost } from '../utils/calendar'
+import { processCalendar, fetchCalendarWithPost } from '../util/calendar'
+import { logout } from '../util/user'
 
 export default {
   name: "TkbComponent",
@@ -140,9 +139,6 @@ export default {
       moment: moment,
       currentWeekIndex: 0,
     };
-  },
-  components: {
-    GoTop
   },
   methods: {
     checkSession(shift) {
@@ -240,12 +236,7 @@ export default {
       this.sending.value = false
     },
     signOut() {
-      window.localStorage.removeItem("tkb")
-      window.localStorage.removeItem('student')
-      window.localStorage.removeItem('semesters')
-      window.localStorage.removeItem('currentSemester')
-      window.localStorage.removeItem('mainForm')
-      window.localStorage.removeItem('signIn')
+      logout()
       this.$parent.tkb.enable = false;
     },
   },
@@ -283,7 +274,7 @@ export default {
     // get current week if exist
     const data = this.tkb?.data?.data_subject ? this.tkb.data.data_subject : []
     for (const [index, week] of data.entries()) {
-      if (moment(week[0].time).isSameOrBefore("2022-10-25") && moment(week[week.length - 1].time).isSameOrAfter("2022-10-25")) {
+      if (moment(week[0].time).isSameOrBefore(moment()) && moment(week[week.length - 1].time).isSameOrAfter(moment())) {
         this.currentWeekIndex = index
         break
       }
@@ -299,43 +290,59 @@ export default {
   }
 };
 </script>
-<style lang='stylus'>
-table
-  td
-    text-align center!important
-    div
-      display flex
-      justify-content center
-      align-items center
-  .md-table-head-container
-    display flex
-    align-items center
-    justify-content center
-#tkb-container
-  table
-    table-layout fixed!important
-  .md-card
-    margin-top 0!important
-    width 100%
-  
-.background-date
-  background-color rgb(33, 33, 33)
-.background-morning
-  background-color rgb(66, 66, 66)
-.background-afternoon
-  background-color rgb(45, 45, 45)
-.background-evening
-  background-color rgb(33, 33, 33)
+<style>
+table td {
+  text-align: center !important;
+}
 
-.md-table-cell
-  & .md-table-cell-container
-    height 100%!important
-    padding 10px!important
-    & .md-card
-      height 100%!important
-      display: flex
-      justify-content: center
-      align-items: center
-      padding 5px!important
-      margin: 0!important
+table td div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+table .md-table-head-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#tkb-container table {
+  table-layout: fixed !important;
+}
+
+#tkb-container .md-card {
+  margin-top: 0 !important;
+  width: 100%;
+}
+
+.background-date {
+  background-color: #212121;
+}
+
+.background-morning {
+  background-color: #424242;
+}
+
+.background-afternoon {
+  background-color: #2d2d2d;
+}
+
+.background-evening {
+  background-color: #212121;
+}
+
+.md-table-cell .md-table-cell-container {
+  height: 100% !important;
+  padding: 10px !important;
+}
+
+.md-table-cell .md-table-cell-container .md-card {
+  height: 100% !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5px !important;
+  margin: 0 !important;
+}
 </style>

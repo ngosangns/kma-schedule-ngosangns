@@ -20,18 +20,25 @@ export default {
 };
 </script>
 
-<style lang="stylus" scoped>
-.header-title
-    display block
-    width 100%
-    text-align center
-    padding-bottom 0!important
-    margin-bottom 0!important
-    & a
-        text-decoration none!important
-        color white!important
-.header-small-title
-    text-align center
-    & a
-        text-decoration none!important
+<style scoped>
+.header-title {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.header-title a {
+  text-decoration: none !important;
+  color: white !important;
+}
+
+.header-small-title {
+  text-align: center;
+}
+
+.header-small-title a {
+  text-decoration: none !important;
+}
 </style>
