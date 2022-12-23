@@ -1,6 +1,6 @@
 ### kma-schedule by ngosangns
 
-- Deployed by Google Firebase: [Link](https://kma-schedule-ngosangns.web.app/)
+- Deployed by Google Firebase: [https://kma-schedule-ngosangns.web.app](https://kma-schedule-ngosangns.web.app/)
 - Features:
   - Create a readable schedule timetable for KMA's students
   - Support login by account
