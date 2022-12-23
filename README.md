@@ -1,28 +1,29 @@
 ### kma-schedule by ngosangns
 
-Deployed by Google Firebase: [Link](https://kma-schedule-ngosangns.web.app/)  
-Feature:
-
-- Create a readable schedule timetable for KMA's students
-- Support login by account
-- Support excel file
-- Support source code
-- Export to Google Calendar
-- Proxy using Cloudflare Workers
+- Deployed by Google Firebase: [Link](https://kma-schedule-ngosangns.web.app/)
+- Features:
+  - Create a readable schedule timetable for KMA's students
+  - Support login by account
+  - Support source code
+  - Export to Google Calendar
+  - Proxy using Cloudflare Workers
 
 #### Install
 
 - Requires:
-  - nvm: [https://github.com/nvm-sh/nvm#installing-and-updating](https://github.com/nvm-sh/nvm#installing-and-updating)
-  - pnpm `npm install -g pnpm`
-  - make `sudo apt install make`
+
+  - Node.js 18 LTS
+  - npm
+  - pnpm: `npm install -g pnpm`
 
 - Install:
 
 ```
-nvm install 16.19.0
-nvm use
 pnpm install
 ```
 
-- Run: `make dev`
+- Run:
+
+```
+pnpm dev
+```
