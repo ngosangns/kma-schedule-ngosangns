@@ -4,10 +4,12 @@ import adapter from '@sveltejs/adapter-static';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-	adapter: adapter({
-		fallback: '200.html'
-	}),
-	prerender: { entries: [], enable: false },
+	kit: {
+		adapter: adapter({
+			fallback: 'index.html'
+		}),
+		prerender: { entries: [] },
+	},
 	preprocess: vitePreprocess()
 };
 
