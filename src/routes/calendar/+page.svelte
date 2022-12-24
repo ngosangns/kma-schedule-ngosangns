@@ -236,22 +236,22 @@
 										style="transform: skewY(30deg) translateY(-1.1rem) translateX(.1rem) scaleX(.75)"
 									/>
 								</th>
-								<th>1</th>
-								<th>2</th>
-								<th>3</th>
-								<th>4</th>
-								<th>5</th>
-								<th>6</th>
-								<th class="bg-neutral">7</th>
-								<th class="bg-neutral">8</th>
-								<th class="bg-neutral">9</th>
-								<th class="bg-neutral">10</th>
-								<th class="bg-neutral">11</th>
-								<th class="bg-neutral">12</th>
-								<th class="bg-neutral-focus">13</th>
-								<th class="bg-neutral-focus">14</th>
-								<th class="bg-neutral-focus">15</th>
-								<th class="bg-neutral-focus">16</th>
+								<th class="text-center">1</th>
+								<th class="text-center">2</th>
+								<th class="text-center">3</th>
+								<th class="text-center">4</th>
+								<th class="text-center">5</th>
+								<th class="text-center">6</th>
+								<th class="text-center bg-neutral">7</th>
+								<th class="text-center bg-neutral">8</th>
+								<th class="text-center bg-neutral">9</th>
+								<th class="text-center bg-neutral">10</th>
+								<th class="text-center bg-neutral">11</th>
+								<th class="text-center bg-neutral">12</th>
+								<th class="text-center bg-neutral-focus">13</th>
+								<th class="text-center bg-neutral-focus">14</th>
+								<th class="text-center bg-neutral-focus">15</th>
+								<th class="text-center bg-neutral-focus">16</th>
 							</tr>
 						</thead>
 						<tbody>
