@@ -34,6 +34,7 @@
 			{ start: '19:45', end: '20:30' },
 			{ start: '20:30', end: '21:15' }
 		];
+	const dayOfWeekMap = ['Chủ Nhật', 'Hai', 'Ba', 'Tư', 'Năm', 'Sáu', 'Bảy'];
 
 	// set current week index
 	let currentWeekIndex = 0;
@@ -258,8 +259,8 @@
 							{#each currentWeek as day}
 								<tr>
 									<td colspan="3" class="text-xs text-center">
-										{moment(day.time).format('dddd[\n]DD/MM/YYYY').split('\n')[0]}<br />
-										{moment(day.time).format('dddd[\n]DD/MM/YYYY').split('\n')[1]}
+										{dayOfWeekMap[moment(day.time).day()]}<br />
+										{moment(day.time).format('DD/MM/YYYY')}
 									</td>
 									{#each day.shift as shift, shiftIndex}
 										{#if parseInt(shift.length)}
