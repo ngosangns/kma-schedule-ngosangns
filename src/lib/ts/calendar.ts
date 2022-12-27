@@ -2,13 +2,8 @@ import $ from 'jquery';
 import { createInlineWorker } from './worker';
 import moment from 'moment';
 
-/**
- *
- * @param {*} formObj
- * @param {*} signInToken
- */
-export function fetchCalendarWithPost(formObj, signInToken) {
-	return /** @type {any} */ ($).ajax({
+export function fetchCalendarWithPost(formObj: any, signInToken: any) {
+	return /** @type {any} */ $.ajax({
 		url: 'https://actvn-schedule.cors-ngosangns.workers.dev/subject',
 		method: 'POST',
 		data: Object.keys(formObj)
@@ -25,12 +20,8 @@ export function fetchCalendarWithPost(formObj, signInToken) {
 	});
 }
 
-/**
- *
- * @param {*} signInToken
- */
-export function fetchCalendarWithGet(signInToken) {
-	return /** @type {any} */ ($).ajax({
+export function fetchCalendarWithGet(signInToken: any) {
+	return /** @type {any} */ $.ajax({
 		url: 'https://actvn-schedule.cors-ngosangns.workers.dev/subject',
 		method: 'GET',
 		headers: {
@@ -41,12 +32,7 @@ export function fetchCalendarWithGet(signInToken) {
 	});
 }
 
-/**
- *
- * @param {*} result
- * @param {*} field
- */
-export function getFieldFromResult(result, field) {
+export function getFieldFromResult(result: any, field: any) {
 	let res = result.match(new RegExp('id="' + field + '" value="(.+?)"', 'g'));
 	if (!res || !res.length) return false;
 	res = res[0];
@@ -56,43 +42,31 @@ export function getFieldFromResult(result, field) {
 	return res;
 }
 
-/**
- *
- * @param {*} str
- */
-function stripHTMLTags(str) {
+function stripHTMLTags(str: any) {
 	if (str === null || str === false) return '';
 	else str = str.toString();
 	return str.replace(/<[^>]*>/g, '');
 }
 
-/**
- * @param {string} html
- * @return {string} Filtered html
- */
-export function filterTrashInHtml(html) {
+export function filterTrashInHtml(html: string): string {
 	let result = html;
 	result = result.replace(/src="(.+?)"/g, '');
 	return result;
 }
 
-/**
- *
- * @param {string} raw_tkb
- */
-export function cleanFromHTMLtoArray(raw_tkb) {
+export function cleanFromHTMLtoArray(raw_tkb: string) {
 	if (!raw_tkb || !raw_tkb.length) return false;
 
 	// remove trash and catch table from html string
 	raw_tkb = raw_tkb.replace(/ {2,}/gm, ' ');
 	raw_tkb = raw_tkb.replace(/<!--.*?-->|\t|(?:\r?\n[ \t]*)+/gm, '');
-	raw_tkb = raw_tkb.match(/<table.+?gridRegistered.+?<\/table>/g);
-	if (!raw_tkb || !raw_tkb.length) raw_tkb = raw_tkb[0];
+	const raw_tkb_matched = raw_tkb.match(/<table.+?gridRegistered.+?<\/table>/g);
+	if (raw_tkb_matched && raw_tkb_matched.length) raw_tkb = raw_tkb_matched[0];
 
 	// convert response to DOM then export the table to array
 	$('body').append('<div id=cleanTKB class=uk-hidden></div>');
 	$('#cleanTKB').html(raw_tkb);
-	let data_content_temp = Array.prototype.map.call(
+	const data_content_temp = Array.prototype.map.call(
 		document.querySelectorAll('#gridRegistered tr'),
 		(tr) => Array.prototype.map.call(tr.querySelectorAll('td'), (td) => stripHTMLTags(td.innerHTML))
 	);
@@ -104,11 +78,7 @@ export function cleanFromHTMLtoArray(raw_tkb) {
 	return data_content_temp;
 }
 
-/**
- *
- * @param {string} rawHtml
- */
-export function processStudent(rawHtml) {
+export function processStudent(rawHtml: string) {
 	let student = rawHtml.match(/<span id="lblStudent">(.+?)<\/span/g);
 	if (student && student.length) {
 		student = student[0].match(/<span id="lblStudent">(.+?)<\/span/);
@@ -117,16 +87,12 @@ export function processStudent(rawHtml) {
 	return 'KIT Club';
 }
 
-/**
- *
- * @param {string} rawHtml
- */
-export async function processCalendar(rawHtml) {
+export async function processCalendar(rawHtml: string) {
 	if (!rawHtml) throw new Error('empty data');
 
 	return await new Promise((resolve, reject) => {
 		const worker = createInlineWorker(
-			(/** @type {{data: any}} */ _rawHtml) => self.postMessage(restructureTKB(_rawHtml.data)),
+			(_rawHtml: { data: any }) => self.postMessage(restructureTKB(_rawHtml.data)),
 			restructureTKB
 		);
 		worker.onmessage = (res) =>
@@ -138,16 +104,13 @@ export async function processCalendar(rawHtml) {
 	});
 }
 
-/**
- *
- * @param {*} rawHtml
- */
-export function processMainForm(rawHtml) {
+export function processMainForm(rawHtml: any) {
 	// parse html
 	const parser = new DOMParser(),
 		content = 'text/html',
 		dom = parser.parseFromString(rawHtml, content),
-		mainForm = $(dom.getElementById('Form1'));
+		form1 = dom.getElementById('Form1'),
+		mainForm = form1 ? $(form1) : null;
 	return mainForm
 		? mainForm.serializeArray().reduce((o, kv) => ({ ...o, [kv.name]: kv.value }), {})
 		: {};
@@ -161,14 +124,17 @@ export function processMainForm(rawHtml) {
  * 	currentSemester: string
  * } | null} response
  */
-export function processSemesters(response) {
+export function processSemesters(response: string): {
+	semesters: Array<{ value: string; from: string; to: string; th: string }>;
+	currentSemester: string;
+} | null {
 	const semesterOptions = $(response).find('select[name=drpSemester]').first();
 	if (!semesterOptions.length) return null;
 
 	const semester = semesterOptions.find('option');
 	const semesters = [];
 	for (const item of semester) {
-		let tmp = item.innerHTML.split('_');
+		const tmp = item.innerHTML.split('_');
 		semesters.push({
 			value: item.value,
 			from: tmp[1],
@@ -177,7 +143,7 @@ export function processSemesters(response) {
 		});
 	}
 
-	const currentSemester = semesterOptions.find('option:checked').first();
+	const currentSemester: any = semesterOptions.find('option:checked').first();
 
 	return {
 		semesters: semesters,
@@ -185,12 +151,8 @@ export function processSemesters(response) {
 	};
 }
 
-/**
- *
- * @param {*} data
- */
-export function restructureTKB(data) {
-	let categories = {
+export function restructureTKB(data: any) {
+	const categories = {
 		lop_hoc_phan: 'Lớp học phần',
 		hoc_phan: 'Học phần',
 		thoi_gian: 'Thời gian',
@@ -209,23 +171,23 @@ export function restructureTKB(data) {
 	// if after remove price just only have header titles then return
 	if (data.length == 1) return false;
 	// create var
-	let header_data = data[0];
-	let content_data = data.slice(1, data.length);
-	let min_time, max_time;
-	let data_subject = Array.prototype.map.call(content_data, function (td) {
-		let regex_time_spliter =
+	const header_data = data[0];
+	const content_data = data.slice(1, data.length);
+	let min_time: any, max_time: any;
+	const data_subject: any = Array.prototype.map.call(content_data, function (td) {
+		const regex_time_spliter =
 			'([0-9]{2}\\/[0-9]{2}\\/[0-9]{4}).+?([0-9]{2}\\/[0-9]{2}\\/[0-9]{4}):(\\([0-9]*\\))?(.+?)((Từ)|$)+?';
-		let regex_time_spliter_multi = new RegExp(regex_time_spliter, 'g');
-		let regex_time_spliter_line = new RegExp(regex_time_spliter);
+		const regex_time_spliter_multi = new RegExp(regex_time_spliter, 'g');
+		const regex_time_spliter_line = new RegExp(regex_time_spliter);
 
 		let temp_dia_diem = td[header_data.indexOf(categories.dia_diem)];
-		let temp_dia_diem_season_index = temp_dia_diem.match(/\([0-9,]+?\)/g);
+		const temp_dia_diem_season_index = temp_dia_diem.match(/\([0-9,]+?\)/g);
 		// return null (not remove) if not match the pattern (to sync with season time)
 		if (!temp_dia_diem_season_index) temp_dia_diem = null;
 		if (temp_dia_diem) {
 			// add \n before each season
 			temp_dia_diem_season_index.forEach(
-				(child_item) => (temp_dia_diem = temp_dia_diem.replace(child_item, '\n' + child_item))
+				(child_item: any) => (temp_dia_diem = temp_dia_diem.replace(child_item, '\n' + child_item))
 			);
 			// split season
 			temp_dia_diem = temp_dia_diem.match(/\n\(([0-9,]+?)\)(.+)/g);
@@ -234,14 +196,14 @@ export function restructureTKB(data) {
 					let temp = item.match(/\n\(([0-9,]+?)\)(.+)/);
 					temp = [temp[1].split(','), temp[2]];
 					// merge splited season to address
-					let temp2 = Array.prototype.map.call(
+					const temp2 = Array.prototype.map.call(
 						temp[0],
 						(child_item) => `(${child_item}) ${temp[1]}`
 					);
 					return temp2;
 				})
 				.flat();
-			temp_dia_diem.sort(function (a, b) {
+			temp_dia_diem.sort(function (a: any, b: any) {
 				return parseInt(a[1]) - parseInt(b[1]);
 			});
 			// remove season index in string
@@ -252,11 +214,11 @@ export function restructureTKB(data) {
 
 		// ---------------------------------
 
-		let temp_thoi_gian =
+		const temp_thoi_gian =
 			td[header_data.indexOf(categories.thoi_gian)].match(regex_time_spliter_multi);
 		// throw Error if subject hasn't had class times
 		if (!temp_thoi_gian) return false;
-		temp_thoi_gian.forEach((item, index) => {
+		temp_thoi_gian.forEach((item: any, index: any) => {
 			item = item.match(regex_time_spliter_line);
 			// remove if not match the pattern
 			if (!item) {
@@ -265,7 +227,7 @@ export function restructureTKB(data) {
 			}
 			item[4] = item[4].split('&nbsp;&nbsp;&nbsp;');
 			item[4].shift(); // remove trash
-			item[4].forEach((child_item, child_index) => {
+			item[4].forEach((child_item: any, child_index: any) => {
 				// split day of week part
 				child_item = child_item.match(/((Thứ .+?)||Chủ nhật) tiết (.+?)$/);
 				// remove if not match the pattern
@@ -274,7 +236,7 @@ export function restructureTKB(data) {
 					return;
 				}
 				// remove trash
-				let dayOfWeek_number = {
+				const dayOfWeek_number: any = {
 					'Thứ 2': 2,
 					'Thứ 3': 3,
 					'Thứ 4': 4,
@@ -330,8 +292,8 @@ export function restructureTKB(data) {
 	min_time = min_time.getTime();
 	max_time = max_time.getTime();
 
-	let days_outline = new Array();
-	let one_day_time = 86400000;
+	const days_outline: any = [];
+	const one_day_time = 86400000;
 
 	for (let time_iter = min_time; time_iter <= max_time; time_iter += one_day_time) {
 		if (new Date(time_iter).getDay() + 1 == 2 || time_iter == min_time) {
@@ -341,14 +303,14 @@ export function restructureTKB(data) {
 		days_outline[days_outline.length - 1].push({ time: time_iter, shift: [] });
 	}
 
-	for (let week of days_outline) {
-		for (let day of week) {
+	for (const week of days_outline) {
+		for (const day of week) {
 			day.shift = [...Array(16).keys()].map((shift) => {
-				for (let subject of data_subject) {
+				for (const subject of data_subject) {
 					if (subject)
-						for (let season of subject.tkb)
+						for (const season of subject.tkb)
 							if (day.time >= season.startTime.getTime() && day.time <= season.endTime.getTime())
-								for (let sub_day of season.dayOfWeek) {
+								for (const sub_day of season.dayOfWeek) {
 									if (
 										sub_day.dow == new Date(day.time).getDay() + 1 ||
 										(new Date(day.time).getDay() + 1 == 1 && sub_day.dow == 8) // Chu nhat
@@ -388,13 +350,8 @@ export function restructureTKB(data) {
 	return { data_subject: days_outline };
 }
 
-/**
- * Export calendar to Google Calendar supported file
- * @param {string | null} student
- * @param {*} calendar
- */
-export function exportToGoogleCalendar(student, calendar) {
-	let time_sift_table = [
+export function exportToGoogleCalendar(student: string | null, calendar: any) {
+	const time_sift_table = [
 		{},
 		{ start: '000000', end: '004500' },
 		{ start: '005000', end: '013500' },
@@ -414,10 +371,10 @@ export function exportToGoogleCalendar(student, calendar) {
 		{ start: '133000', end: '141500' }
 	];
 	let result = `BEGIN:VCALENDAR\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\n\n`;
-	calendar.data_subject.forEach((/** @type {any[]} */ week) => {
-		for (let day of week) {
+	calendar.data_subject.forEach((week: any) => {
+		for (const day of week) {
 			const timeIter = new Date(day.time);
-			day.shift.forEach((/** @type {*} */ shift, /** @type {number} */ shift_index) => {
+			day.shift.forEach((shift: any, shift_index: number) => {
 				if (shift.content) {
 					result += `BEGIN:VEVENT\nDTSTART:${moment(timeIter).format('YYYYMMDD')}T${
 						time_sift_table[shift_index + 1].start

@@ -1,5 +1,5 @@
-<script>
-	import { loadData, saveData } from '$lib/js/storage';
+<script lang="ts">
+	import { loadData, saveData } from '$lib/ts/storage';
 	import moment from 'moment';
 	import {
 		fetchCalendarWithPost,
@@ -9,8 +9,8 @@
 		processStudent,
 		filterTrashInHtml,
 		exportToGoogleCalendar
-	} from '$lib/js/calendar';
-	import { logout } from '$lib/js/user';
+	} from '$lib/ts/calendar';
+	import { logout } from '$lib/ts/user';
 	import { goto } from '$app/navigation';
 
 	let { calendar, student, semesters, mainForm, signInToken } = loadData();
@@ -52,9 +52,8 @@
 	initialCurrentWeekIndex();
 
 	// set current week
-	const onChangeWeekIndex = (/** @type {number} */ newWeekIndex) => {
-		/** @type {any[][]} */
-		const _data = calendar?.data_subject || [];
+	const onChangeWeekIndex = (newWeekIndex: number) => {
+		const _data: any[][] = calendar?.data_subject || [];
 		if (!_data.length) {
 			currentWeekIndex = 0;
 			currentWeek = [];
@@ -67,12 +66,11 @@
 
 		currentWeek = _data[currentWeekIndex];
 	};
-	/** @type {any[]} */
-	let currentWeek = [];
+	let currentWeek: any[] = [];
 	// initial currentWeek value
 	onChangeWeekIndex(currentWeekIndex);
 
-	async function onChangeSemester(/** @type {*} */ e) {
+	async function onChangeSemester(e: any) {
 		errorMessage = '';
 		loading = true;
 		let oldValue = semesters.currentSemester;
@@ -80,7 +78,7 @@
 			semesters.currentSemester = e.target.value;
 			saveData({ semesters });
 
-			const hidSemester = semesters.semesters.find((/** @type {*} */ v) =>
+			const hidSemester = semesters.semesters.find((v: any) =>
 				v.value == semesters.currentSemester ? v : undefined
 			);
 
@@ -112,10 +110,7 @@
 		}
 	}
 
-	/**
-	 * @param {number} shift
-	 */
-	const checkSession = (shift) => {
+	const checkSession = (shift: number) => {
 		if (shift >= 1 && shift <= 6) return 'morning';
 		if (shift >= 7 && shift <= 12) return 'afternoon';
 		return 'evening';

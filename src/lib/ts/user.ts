@@ -3,22 +3,16 @@ import { getFieldFromResult } from './calendar';
 import { clearData } from './storage';
 import md5 from 'md5';
 
-/**
- * return SignIn token
- * @param {*} username
- * @param {*} password
- */
-export async function login(username, password) {
-	let result = await /** @type {any} */ ($).ajax({
+export async function login(username: string, password: string) {
+	let result = await $.ajax({
 		url: 'https://actvn-schedule.cors-ngosangns.workers.dev/login',
 		method: 'GET'
 	});
 
-	let viewState = getFieldFromResult(result, '__VIEWSTATE');
-	let eventValidation = getFieldFromResult(result, '__EVENTVALIDATION');
+	const viewState = getFieldFromResult(result, '__VIEWSTATE');
+	const eventValidation = getFieldFromResult(result, '__EVENTVALIDATION');
 
-	/** @type {*} */
-	let data = {
+	const data: any = {
 		__VIEWSTATE: viewState,
 		__EVENTVALIDATION: eventValidation,
 		txtUserName: username.toUpperCase(),
@@ -29,7 +23,10 @@ export async function login(username, password) {
 	result = await fetch('https://actvn-schedule.cors-ngosangns.workers.dev/login', {
 		method: 'POST',
 		body: Object.keys(data)
-			.map((key) => encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
+			.map(
+				(key: string) =>
+					encodeURIComponent(key) + '=' + encodeURIComponent(key in data ? data[key] : '')
+			)
 			.join('&'),
 		headers: {
 			'Content-Type': 'application/x-www-form-urlencoded'

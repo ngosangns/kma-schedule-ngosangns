@@ -1,7 +1,7 @@
 <script>
 	import { goto } from '$app/navigation';
-	import { loadData } from '$lib/js/storage';
-	import { logout } from '$lib/js/user';
+	import { loadData } from '$lib/ts/storage';
+	import { logout } from '$lib/ts/user';
 
 	const { calendar } = loadData();
 

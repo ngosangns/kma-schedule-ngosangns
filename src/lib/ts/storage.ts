@@ -1,17 +1,13 @@
-/**
- *
- * @param {{
- * signInToken?: string,
- * mainForm?: *,
- * semesters?: {
- *  semesters: Array<{value: string, from: string, to: string, th: string}>,
- * 	currentSemester: string
- * } | null,
- * calendar?: *,
- * student?: string,
- * }} data
- */
-export function saveData(data) {
+export function saveData(data: {
+	signInToken?: string;
+	mainForm?: any;
+	semesters?: {
+		semesters: Array<{ value: string; from: string; to: string; th: string }>;
+		currentSemester: string;
+	} | null;
+	calendar?: any;
+	student?: string;
+}) {
 	if (data.semesters) {
 		window.localStorage.setItem('semesters', JSON.stringify(data.semesters));
 	}

@@ -1,5 +1,5 @@
-<script>
-	import { saveData } from '$lib/js/storage';
+<script lang="ts">
+	import { saveData } from '$lib/ts/storage';
 	import {
 		fetchCalendarWithGet,
 		processCalendar,
@@ -7,8 +7,8 @@
 		processSemesters,
 		processStudent,
 		filterTrashInHtml
-	} from '$lib/js/calendar';
-	import { login, logout } from '$lib/js/user';
+	} from '$lib/ts/calendar';
+	import { login, logout } from '$lib/ts/user';
 	import { goto } from '$app/navigation';
 
 	let username = '',
@@ -76,8 +76,7 @@
 				<h2 class="card-title text-lg">XEM THỜI KHÓA BIỂU TỪ TÀI KHOẢN TRƯỜNG</h2>
 				<form class="mt-4" on:submit|preventDefault={handleSubmit}>
 					<input
-						value={username}
-						on:input={(e) => (username = /** @type {any} */ (e.target)?.value)}
+						bind:value={username}
 						type="text"
 						placeholder="Username"
 						class="input input-md w-full input-bordered"
@@ -85,8 +84,7 @@
 						disabled={loading}
 					/>
 					<input
-						value={password}
-						on:input={(e) => (password = /** @type {any} */ (e.target)?.value)}
+						bind:value={password}
 						type="password"
 						placeholder="Password"
 						class="input input-md w-full input-bordered mt-3"
@@ -154,8 +152,7 @@
 				<form class="mt-4" on:submit|preventDefault={handleSubmitUserResponse}>
 					<textarea
 						rows="1"
-						value={userResponse}
-						on:input={(e) => (userResponse = /** @type {any} */ (e.target)?.value)}
+						bind:value={userResponse}
 						placeholder="Dán mã nguồn của trang xem lịch học tại đây..."
 						class="textarea w-full input-bordered"
 						required
