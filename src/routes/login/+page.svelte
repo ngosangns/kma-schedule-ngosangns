@@ -156,7 +156,6 @@
 						rows="1"
 						value={userResponse}
 						on:input={(e) => (userResponse = /** @type {any} */ (e.target)?.value)}
-						type="text"
 						placeholder="Dán mã nguồn của trang xem lịch học tại đây..."
 						class="textarea w-full input-bordered"
 						required

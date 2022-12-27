@@ -7,7 +7,7 @@
 		<a href="/">ACTVN SCHEDULE</a>
 	</h1>
 	<p class="inline-flex gap-2 mt-2">
-		<a href="/changelog" class="underline">CHANGELOG</a> |
+		<a href="/changelogs" class="underline">CHANGELOGS</a> |
 		<a href="/about" class="underline">ABOUT</a> |
 		<a
 			href="https://www.facebook.com/kitclubKMA"
