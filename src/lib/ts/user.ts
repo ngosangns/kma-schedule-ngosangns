@@ -7,6 +7,10 @@ export async function login(username: string, password: string) {
 		method: 'GET'
 	});
 
+	if (!result || !result.text) {
+		throw new Error('Failed to fetch login page');
+	}
+
 	const resultText = await result.text();
 
 	const viewState = getFieldFromResult(resultText, '__VIEWSTATE');
@@ -33,6 +37,10 @@ export async function login(username: string, password: string) {
 		}
 	});
 
+	if (!result || !result.headers) {
+		throw new Error('Failed to authenticate with server');
+	}
+
 	// Get cookies from response headers
 	const setCookieHeader = result.headers.get('set-cookie') || result.headers.get('Set-Cookie');
 
@@ -41,12 +49,21 @@ export async function login(username: string, password: string) {
 	}
 
 	// If no cookies in headers, try to extract from response text
+	if (!result.text) {
+		throw new Error('Invalid response from server');
+	}
+
 	const responseText = await result.text();
 
 	// The response text appears to be the cookie value directly
 	// Format it as a proper cookie string
 	if (responseText && responseText.startsWith('SignIn=')) {
 		return responseText;
+	}
+
+	// If we get here, authentication likely failed
+	if (!responseText || responseText.length === 0) {
+		throw new Error('Authentication failed - empty response');
 	}
 
 	return responseText;

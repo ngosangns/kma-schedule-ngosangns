@@ -5,10 +5,10 @@ const createJestConfig = nextJest({
 	dir: './'
 });
 
-// Add any custom config to be passed to Jest
+// Add any custom config to be passed to Jest for integration tests
 const customJestConfig = {
 	// Add more setup options before each test is run
-	setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+	setupFilesAfterEnv: ['<rootDir>/jest.integration.setup.js'],
 
 	// if using TypeScript with a baseUrl set to the root directory then you need the below for alias' to work
 	moduleDirectories: ['node_modules', '<rootDir>/'],
@@ -18,37 +18,13 @@ const customJestConfig = {
 		'^@/(.*)$': '<rootDir>/src/$1'
 	},
 
-	// Test environment
-	testEnvironment: 'jest-environment-jsdom',
+	// Test environment - use node for integration tests to have real fetch
+	testEnvironment: 'jest-environment-node',
 
-	// Coverage configuration
-	collectCoverageFrom: [
-		'src/**/*.{js,jsx,ts,tsx}',
-		'!src/**/*.d.ts',
-		'!src/pages/_app.tsx',
-		'!src/pages/_document.tsx',
-		'!src/pages/api/**',
-		'!src/**/*.stories.{js,jsx,ts,tsx}',
-		'!src/**/*.test.{js,jsx,ts,tsx}',
-		'!src/**/*.spec.{js,jsx,ts,tsx}',
-		'!src/**/index.{js,jsx,ts,tsx}'
-	],
-
-	// Coverage thresholds
-	coverageThreshold: {
-		global: {
-			branches: 70,
-			functions: 70,
-			lines: 70,
-			statements: 70
-		}
-	},
-
-	// Test patterns
+	// Test patterns - only integration tests
 	testMatch: [
-		'<rootDir>/src/**/__tests__/**/*.{test,spec}.{js,jsx,ts,tsx}',
-		'<rootDir>/src/**/*.{test,spec}.{js,jsx,ts,tsx}',
-		'<rootDir>/__tests__/**/*.{js,jsx,ts,tsx}'
+		'<rootDir>/src/**/__tests__/**/integration/**/*.{test,spec}.{js,jsx,ts,tsx}',
+		'<rootDir>/src/__tests__/integration/**/*.{test,spec}.{js,jsx,ts,tsx}'
 	],
 
 	// Ignore patterns
@@ -80,7 +56,10 @@ const customJestConfig = {
 	verbose: true,
 
 	// Transform ignore patterns
-	transformIgnorePatterns: ['node_modules/(?!(.*\\.mjs$|@radix-ui|lucide-react))']
+	transformIgnorePatterns: ['node_modules/(?!(.*\\.mjs$|@radix-ui|lucide-react))'],
+
+	// Timeout for integration tests
+	testTimeout: 30000
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

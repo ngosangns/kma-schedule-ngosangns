@@ -1,13 +1,76 @@
-// Optional: configure or set up a testing framework before each test.
-// If you delete this file, remove `setupFilesAfterEnv` from `jest.config.js`
-
-// Used for __tests__/testing-library.js
-// Learn more: https://github.com/testing-library/jest-dom
-import '@testing-library/jest-dom';
+// Setup file specifically for integration tests
 import dotenv from 'dotenv';
 
 // Load environment variables for testing
 dotenv.config();
+
+// Setup DOM globals for Node environment
+const { JSDOM } = require('jsdom');
+const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
+	url: 'http://localhost',
+	pretendToBeVisual: true,
+	resources: 'usable'
+});
+
+global.window = dom.window;
+global.document = dom.window.document;
+global.navigator = dom.window.navigator;
+global.DOMParser = dom.window.DOMParser;
+
+// Mock Worker for Node.js environment
+global.Worker = class MockWorker {
+	constructor(scriptURL) {
+		this.scriptURL = scriptURL;
+		this.onmessage = null;
+		this.onerror = null;
+	}
+
+	postMessage(data) {
+		// For integration tests, we'll execute the worker function synchronously
+		// Process the real data instead of mocking
+		setTimeout(() => {
+			try {
+				if (this.onmessage) {
+					// Import the actual restructureTKB function and process real data
+					const { restructureTKB } = require('@/lib/ts/calendar');
+
+					// Check if data is already processed (has data_subject property)
+					if (data && data.data_subject) {
+						// Data is already processed, just return it
+						this.onmessage({ data: data });
+					} else {
+						// Process raw data
+						const result = restructureTKB(data);
+						this.onmessage({ data: result });
+					}
+				}
+			} catch (error) {
+				console.error('Worker error:', error);
+				if (this.onerror) {
+					this.onerror(error);
+				}
+			}
+		}, 0);
+	}
+
+	terminate() {
+		// Mock terminate
+	}
+};
+
+// Mock URL.createObjectURL and URL.revokeObjectURL
+global.URL = {
+	createObjectURL: jest.fn(() => 'mock-object-url'),
+	revokeObjectURL: jest.fn()
+};
+
+// Mock Blob
+global.Blob = class MockBlob {
+	constructor(parts, options) {
+		this.parts = parts;
+		this.options = options;
+	}
+};
 
 // Mock Next.js router
 jest.mock('next/router', () => ({
@@ -119,22 +182,8 @@ global.ResizeObserver = class ResizeObserver {
 	}
 };
 
-// Mock fetch for unit tests only (not for integration tests)
-if (!process.env.JEST_INTEGRATION_TEST) {
-	global.fetch = jest.fn();
-} else {
-	// For integration tests, use real fetch
-	// Node.js 18+ has fetch built-in, but we need to polyfill for Jest
-	if (!global.fetch) {
-		try {
-			const { fetch } = require('undici');
-			global.fetch = fetch;
-		} catch (e) {
-			console.warn('Could not load undici fetch, using mock');
-			global.fetch = jest.fn();
-		}
-	}
-}
+// Use real fetch for integration tests
+// Don't mock fetch - let it use the real implementation
 
 // Mock console methods to reduce noise in tests
 const originalError = console.error;
