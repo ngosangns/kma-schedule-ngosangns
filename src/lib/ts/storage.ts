@@ -48,11 +48,22 @@ export function loadData() {
 	const mainForm = window.localStorage.getItem('mainForm');
 	const signInToken = window.localStorage.getItem('signInToken');
 
+	// Helper function to safely parse JSON
+	const safeJsonParse = (value: string | null) => {
+		if (!value) return null;
+		try {
+			return JSON.parse(value);
+		} catch (error) {
+			console.warn('Failed to parse JSON from localStorage:', error);
+			return null;
+		}
+	};
+
 	return {
-		calendar: calendar ? JSON.parse(calendar) : null,
+		calendar: safeJsonParse(calendar),
 		student: student ? student : null,
-		semesters: semesters ? JSON.parse(semesters) : null,
-		mainForm: mainForm ? JSON.parse(mainForm) : null,
+		semesters: safeJsonParse(semesters),
+		mainForm: safeJsonParse(mainForm),
 		signInToken: signInToken ? signInToken : null
 	};
 }
