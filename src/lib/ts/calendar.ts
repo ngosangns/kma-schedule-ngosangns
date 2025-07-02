@@ -1,12 +1,10 @@
-import $ from 'jquery';
 import { createInlineWorker } from './worker';
 import moment from 'moment';
 
-export function fetchCalendarWithPost(formObj: any, signInToken: any) {
-	return /** @type {any} */ $.ajax({
-		url: 'https://actvn-schedule.cors-ngosangns.workers.dev/subject',
+export async function fetchCalendarWithPost(formObj: any, signInToken: any) {
+	const response = await fetch('https://actvn-schedule.cors-ngosangns.workers.dev/subject', {
 		method: 'POST',
-		data: Object.keys(formObj)
+		body: Object.keys(formObj)
 			.map((key) => {
 				return encodeURIComponent(key) + '=' + encodeURIComponent(formObj[key]);
 			})
@@ -18,11 +16,11 @@ export function fetchCalendarWithPost(formObj: any, signInToken: any) {
 			})
 		}
 	});
+	return await response.text();
 }
 
-export function fetchCalendarWithGet(signInToken: any) {
-	return /** @type {any} */ $.ajax({
-		url: 'https://actvn-schedule.cors-ngosangns.workers.dev/subject',
+export async function fetchCalendarWithGet(signInToken: any) {
+	const response = await fetch('https://actvn-schedule.cors-ngosangns.workers.dev/subject', {
 		method: 'GET',
 		headers: {
 			'x-cors-headers': JSON.stringify({
@@ -30,6 +28,8 @@ export function fetchCalendarWithGet(signInToken: any) {
 			})
 		}
 	});
+
+	return await response.text();
 }
 
 export function getFieldFromResult(result: any, field: any) {
@@ -64,13 +64,21 @@ export function cleanFromHTMLtoArray(raw_tkb: string) {
 	if (raw_tkb_matched && raw_tkb_matched.length) raw_tkb = raw_tkb_matched[0];
 
 	// convert response to DOM then export the table to array
-	$('body').append('<div id=cleanTKB class=uk-hidden></div>');
-	$('#cleanTKB').html(raw_tkb);
+	if (typeof document === 'undefined') {
+		throw new Error('DOM operations not available on server side');
+	}
+
+	const tempDiv = document.createElement('div');
+	tempDiv.id = 'cleanTKB';
+	tempDiv.style.display = 'none';
+	tempDiv.innerHTML = raw_tkb;
+	document.body.appendChild(tempDiv);
+
 	const data_content_temp = Array.prototype.map.call(
-		document.querySelectorAll('#gridRegistered tr'),
+		tempDiv.querySelectorAll('#gridRegistered tr'),
 		(tr) => Array.prototype.map.call(tr.querySelectorAll('td'), (td) => stripHTMLTags(td.innerHTML))
 	);
-	$('#cleanTKB').remove();
+	document.body.removeChild(tempDiv);
 
 	// check null
 	if (!data_content_temp) return false;
@@ -106,14 +114,26 @@ export async function processCalendar(rawHtml: string) {
 
 export function processMainForm(rawHtml: any) {
 	// parse html
-	const parser = new DOMParser(),
-		content = 'text/html',
-		dom = parser.parseFromString(rawHtml, content),
-		form1 = dom.getElementById('Form1'),
-		mainForm = form1 ? $(form1) : null;
-	return mainForm
-		? mainForm.serializeArray().reduce((o, kv) => ({ ...o, [kv.name]: kv.value }), {})
-		: {};
+	if (typeof DOMParser === 'undefined') {
+		throw new Error('DOMParser not available on server side');
+	}
+
+	const parser = new DOMParser();
+	const dom = parser.parseFromString(rawHtml, 'text/html');
+	const form1 = dom.getElementById('Form1');
+
+	if (!form1) return {};
+
+	const formData: any = {};
+	const inputs = form1.querySelectorAll('input, select, textarea');
+
+	inputs.forEach((input: any) => {
+		if (input.name && input.value) {
+			formData[input.name] = input.value;
+		}
+	});
+
+	return formData;
 }
 
 /**
@@ -128,26 +148,38 @@ export function processSemesters(response: string): {
 	semesters: Array<{ value: string; from: string; to: string; th: string }>;
 	currentSemester: string;
 } | null {
-	const semesterOptions = $(response).find('select[name=drpSemester]').first();
-	if (!semesterOptions.length) return null;
+	if (typeof DOMParser === 'undefined') {
+		throw new Error('DOMParser not available on server side');
+	}
 
-	const semester = semesterOptions.find('option');
+	const parser = new DOMParser();
+	const dom = parser.parseFromString(response, 'text/html');
+	const semesterSelect = dom.querySelector('select[name=drpSemester]');
+
+	if (!semesterSelect) return null;
+
+	const options = semesterSelect.querySelectorAll('option');
 	const semesters = [];
-	for (const item of semester) {
-		const tmp = item.innerHTML.split('_');
+	let currentSemester = '';
+
+	for (let i = 0; i < options.length; i++) {
+		const option = options[i] as HTMLOptionElement;
+		const tmp = option.innerHTML.split('_');
 		semesters.push({
-			value: item.value,
+			value: option.value,
 			from: tmp[1],
 			to: tmp[2],
 			th: tmp[0]
 		});
-	}
 
-	const currentSemester: any = semesterOptions.find('option:checked').first();
+		if (option.selected) {
+			currentSemester = option.value;
+		}
+	}
 
 	return {
 		semesters: semesters,
-		currentSemester: currentSemester.length ? currentSemester.val() : ''
+		currentSemester: currentSemester
 	};
 }
 
@@ -305,7 +337,7 @@ export function restructureTKB(data: any) {
 
 	for (const week of days_outline) {
 		for (const day of week) {
-			day.shift = [...Array(16).keys()].map((shift) => {
+			day.shift = Array.from({ length: 16 }, (_, shift) => {
 				for (const subject of data_subject) {
 					if (subject)
 						for (const season of subject.tkb)
@@ -351,6 +383,10 @@ export function restructureTKB(data: any) {
 }
 
 export function exportToGoogleCalendar(student: string | null, calendar: any) {
+	if (!calendar || !calendar.data_subject || !Array.isArray(calendar.data_subject)) {
+		console.error('Invalid calendar data for export');
+		return;
+	}
 	const time_sift_table = [
 		{},
 		{ start: '000000', end: '004500' },
@@ -374,19 +410,28 @@ export function exportToGoogleCalendar(student: string | null, calendar: any) {
 	calendar.data_subject.forEach((week: any) => {
 		for (const day of week) {
 			const timeIter = new Date(day.time);
-			day.shift.forEach((shift: any, shift_index: number) => {
-				if (shift.content) {
-					result += `BEGIN:VEVENT\nDTSTART:${moment(timeIter).format('YYYYMMDD')}T${
-						time_sift_table[shift_index + 1].start
-					}Z\n`;
-					result += `DTEND:${moment(timeIter).format('YYYYMMDD')}T${
-						time_sift_table[shift_index + shift.length].end
-					}Z\n`;
-					if (shift.address) result += `LOCATION:${shift.address}\n`;
-					result += `SUMMARY:${shift.name}\n`;
-					result += `END:VEVENT\n\n`;
-				}
-			});
+			if (day.shift && Array.isArray(day.shift)) {
+				day.shift.forEach((shift: any, shift_index: number) => {
+					if (shift.content) {
+						const startIndex = shift_index + 1;
+						const endIndex = shift_index + (parseInt(shift.length) || 1);
+
+						// Ensure indices are within bounds
+						if (startIndex < time_sift_table.length && endIndex < time_sift_table.length) {
+							const startTime = time_sift_table[startIndex]?.start;
+							const endTime = time_sift_table[endIndex]?.end;
+
+							if (startTime && endTime) {
+								result += `BEGIN:VEVENT\nDTSTART:${moment(timeIter).format('YYYYMMDD')}T${startTime}Z\n`;
+								result += `DTEND:${moment(timeIter).format('YYYYMMDD')}T${endTime}Z\n`;
+								if (shift.address) result += `LOCATION:${shift.address}\n`;
+								result += `SUMMARY:${shift.name}\n`;
+								result += `END:VEVENT\n\n`;
+							}
+						}
+					}
+				});
+			}
 		}
 	});
 	result += `END:VCALENDAR`;

@@ -8,6 +8,8 @@ export function saveData(data: {
 	calendar?: any;
 	student?: string;
 }) {
+	if (typeof window === 'undefined') return;
+
 	if (data.semesters) {
 		window.localStorage.setItem('semesters', JSON.stringify(data.semesters));
 	}
@@ -30,6 +32,16 @@ export function saveData(data: {
 }
 
 export function loadData() {
+	if (typeof window === 'undefined') {
+		return {
+			calendar: null,
+			student: null,
+			semesters: null,
+			mainForm: null,
+			signInToken: null
+		};
+	}
+
 	const calendar = window.localStorage.getItem('calendar');
 	const student = window.localStorage.getItem('student');
 	const semesters = window.localStorage.getItem('semesters');
@@ -46,6 +58,8 @@ export function loadData() {
 }
 
 export function clearData() {
+	if (typeof window === 'undefined') return;
+
 	window.localStorage.removeItem('calendar');
 	window.localStorage.removeItem('student');
 	window.localStorage.removeItem('semesters');
