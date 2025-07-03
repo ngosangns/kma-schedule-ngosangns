@@ -1,13 +1,22 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { AuthState, CalendarData, UIState, User, StorageData } from '@/types';
+import {
+	AuthState,
+	ProcessedCalendarData,
+	UIState,
+	User,
+	StorageData,
+	UseAuthReturn,
+	UseCalendarReturn,
+	UseUIReturn
+} from '@/types';
 import { loadData, saveData } from '@/lib/ts/storage';
 
 // Combined App State
 interface AppState {
 	auth: AuthState;
-	calendar: CalendarData | null;
+	calendar: ProcessedCalendarData | null;
 	ui: UIState;
 	student: string | null;
 }
@@ -19,7 +28,7 @@ type AppAction =
 	| { type: 'AUTH_ERROR'; payload: string }
 	| { type: 'AUTH_LOGOUT' }
 	| { type: 'AUTH_INIT_COMPLETE' } // Đánh dấu việc khởi tạo auth đã hoàn thành
-	| { type: 'SET_CALENDAR'; payload: CalendarData }
+	| { type: 'SET_CALENDAR'; payload: ProcessedCalendarData }
 	| { type: 'SET_STUDENT'; payload: string }
 	| { type: 'SET_THEME'; payload: 'light' | 'dark' }
 	| { type: 'TOGGLE_SIDEBAR' }
@@ -172,7 +181,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
 		const storedData = loadData();
 		if (storedData) {
-			dispatch({ type: 'LOAD_FROM_STORAGE', payload: storedData as any });
+			dispatch({ type: 'LOAD_FROM_STORAGE', payload: storedData });
 		} else {
 			// Không có dữ liệu trong storage, đánh dấu init hoàn thành
 			dispatch({ type: 'AUTH_INIT_COMPLETE' });
@@ -182,12 +191,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 	// Save to storage when auth state changes
 	useEffect(() => {
 		if (state.auth.isAuthenticated && state.calendar) {
-			const dataToSave = {
+			const dataToSave: StorageData = {
 				calendar: state.calendar,
-				student: state.student || undefined,
-				user: state.auth.user || undefined
+				student: state.student,
+				user: state.auth.user
 			};
-			saveData(dataToSave as any);
+			saveData(dataToSave);
 		}
 	}, [state.auth.isAuthenticated, state.calendar, state.student, state.auth.user]);
 
@@ -204,29 +213,30 @@ export function useApp() {
 }
 
 // Convenience hooks
-export function useAuth() {
+export function useAuth(): UseAuthReturn {
 	const { state, dispatch } = useApp();
 	return {
 		...state.auth,
-		login: (user: User, signInToken: string) =>
-			dispatch({ type: 'AUTH_SUCCESS', payload: { user, signInToken } }),
+		login: (user: User, signInToken?: string) =>
+			dispatch({ type: 'AUTH_SUCCESS', payload: { user, signInToken: signInToken || '' } }),
 		logout: () => dispatch({ type: 'AUTH_LOGOUT' }),
 		setLoading: () => dispatch({ type: 'AUTH_START' }),
 		setError: (error: string) => dispatch({ type: 'AUTH_ERROR', payload: error })
 	};
 }
 
-export function useCalendar() {
+export function useCalendar(): UseCalendarReturn {
 	const { state, dispatch } = useApp();
 	return {
 		calendar: state.calendar,
 		student: state.student,
-		setCalendar: (calendar: CalendarData) => dispatch({ type: 'SET_CALENDAR', payload: calendar }),
+		setCalendar: (calendar: ProcessedCalendarData) =>
+			dispatch({ type: 'SET_CALENDAR', payload: calendar }),
 		setStudent: (student: string) => dispatch({ type: 'SET_STUDENT', payload: student })
 	};
 }
 
-export function useUI() {
+export function useUI(): UseUIReturn {
 	const { state, dispatch } = useApp();
 	return {
 		...state.ui,

@@ -7,8 +7,8 @@
  */
 
 // Skip these tests if credentials are not provided
-const TEST_USERNAME = process.env.TEST_USERNAME;
-const TEST_PASSWORD = process.env.TEST_PASSWORD;
+const _TEST_USERNAME = process.env.TEST_USERNAME;
+const _TEST_PASSWORD = process.env.TEST_PASSWORD;
 
 // Temporarily skip all hooks tests due to JSX issues in Node environment
 // TODO: Fix JSX compatibility in Node.js environment or create separate jsdom config

@@ -1,13 +1,6 @@
-export function saveData(data: {
-	signInToken?: string;
-	mainForm?: any;
-	semesters?: {
-		semesters: Array<{ value: string; from: string; to: string; th: string }>;
-		currentSemester: string;
-	} | null;
-	calendar?: any;
-	student?: string;
-}) {
+import { StorageData } from '@/types';
+
+export function saveData(data: StorageData): void {
 	if (typeof window === 'undefined') return;
 
 	if (data.semesters) {
@@ -31,7 +24,7 @@ export function saveData(data: {
 	}
 }
 
-export function loadData() {
+export function loadData(): StorageData {
 	if (typeof window === 'undefined') {
 		return {
 			calendar: null,
@@ -68,7 +61,7 @@ export function loadData() {
 	};
 }
 
-export function clearData() {
+export function clearData(): void {
 	if (typeof window === 'undefined') return;
 
 	window.localStorage.removeItem('calendar');

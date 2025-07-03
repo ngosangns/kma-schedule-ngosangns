@@ -39,7 +39,7 @@ describe('UI Improvements Integration', () => {
 			// This test verifies the terminology change
 			const shiftNumber = 1;
 			const expectedText = `Tiết ${shiftNumber}`;
-			
+
 			// Verify the expected format
 			expect(expectedText).toBe('Tiết 1');
 			expect(expectedText).not.toContain('Ca');
@@ -84,7 +84,7 @@ describe('UI Improvements Integration', () => {
 
 		test('should provide fallback text for missing address', () => {
 			const fallbackText = 'Chưa có thông tin';
-			
+
 			// Verify fallback text is appropriate
 			expect(fallbackText).toBe('Chưa có thông tin');
 			expect(fallbackText).not.toBe('N/A'); // Old format
@@ -94,13 +94,13 @@ describe('UI Improvements Integration', () => {
 	describe('Calendar Data Processing', () => {
 		test('should correctly map shift index to shift number', () => {
 			// Simulate the mapping logic used in calendar component
-			const mockShifts = new Array(16).fill(null).map((_, index) => ({
+			const mockShifts = Array.from({ length: 16 }, (_, index) => ({
 				name: index < 3 ? `Subject ${index + 1}` : null, // Only first 3 shifts have subjects
 				shiftNumber: index + 1
 			}));
 
 			// Filter only shifts with subjects
-			const shiftsWithSubjects = mockShifts.filter(shift => shift.name);
+			const shiftsWithSubjects = mockShifts.filter((shift) => shift.name);
 
 			expect(shiftsWithSubjects).toHaveLength(3);
 			expect(shiftsWithSubjects[0].shiftNumber).toBe(1);
@@ -111,7 +111,7 @@ describe('UI Improvements Integration', () => {
 		test('should handle empty shift arrays', () => {
 			const emptyShifts = [];
 			const filteredShifts = emptyShifts.filter((shift: any) => shift?.name);
-			
+
 			expect(filteredShifts).toHaveLength(0);
 		});
 	});
@@ -134,13 +134,9 @@ describe('UI Improvements Integration', () => {
 
 		test('should format time display consistently', () => {
 			// Test time format consistency
-			const timeFormats = [
-				'07:00 - 07:50',
-				'13:00 - 13:50',
-				'19:00 - 19:50'
-			];
+			const timeFormats = ['07:00 - 07:50', '13:00 - 13:50', '19:00 - 19:50'];
 
-			timeFormats.forEach(timeFormat => {
+			timeFormats.forEach((timeFormat) => {
 				expect(timeFormat).toMatch(/^\d{2}:\d{2} - \d{2}:\d{2}$/);
 			});
 		});
@@ -157,7 +153,7 @@ describe('UI Improvements Integration', () => {
 				]
 			};
 
-			mockSemesterData.semesters.forEach(semester => {
+			mockSemesterData.semesters.forEach((semester) => {
 				const formatted = formatSemesterName(`${semester.th}_${semester.from}_${semester.to}`);
 				expect(formatted).toMatch(/^Kỳ \d+ - \d{4} - \d{4}$/);
 			});
@@ -167,7 +163,7 @@ describe('UI Improvements Integration', () => {
 			// Mock realistic day structure
 			const mockDay = {
 				time: '2025-01-15',
-				shift: new Array(16).fill(null).map((_, index) => {
+				shift: Array.from({ length: 16 }, (_, index) => {
 					// Only some shifts have subjects
 					if (index === 0 || index === 1 || index === 6) {
 						return {
@@ -184,7 +180,7 @@ describe('UI Improvements Integration', () => {
 			// Test filtering logic
 			const shiftsWithSubjects = mockDay.shift
 				.map((subject, shiftIndex) => ({ ...subject, shiftNumber: shiftIndex + 1 }))
-				.filter(subject => subject.name);
+				.filter((subject) => subject.name);
 
 			expect(shiftsWithSubjects).toHaveLength(3);
 			expect(shiftsWithSubjects[0].shiftNumber).toBe(1);

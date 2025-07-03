@@ -5,7 +5,6 @@
 import { login } from '@/lib/ts/user';
 import {
 	fetchCalendarWithGet,
-	processCalendar,
 	processStudent,
 	processMainForm,
 	processSemesters,

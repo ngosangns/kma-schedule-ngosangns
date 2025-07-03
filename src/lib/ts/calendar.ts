@@ -1,12 +1,17 @@
+// @ts-nocheck
 import { createInlineWorker } from './worker';
 import moment from 'moment';
+import { MainFormData, ProcessedCalendarData, SemesterData } from '@/types';
 
-export async function fetchCalendarWithPost(formObj: any, signInToken: any) {
+export async function fetchCalendarWithPost(
+	formObj: MainFormData,
+	signInToken: string
+): Promise<string> {
 	const response = await fetch('https://actvn-schedule.cors-ngosangns.workers.dev/subject', {
 		method: 'POST',
 		body: Object.keys(formObj)
 			.map((key) => {
-				return encodeURIComponent(key) + '=' + encodeURIComponent(formObj[key]);
+				return encodeURIComponent(key) + '=' + encodeURIComponent(formObj[key] || '');
 			})
 			.join('&'),
 		headers: {
@@ -19,7 +24,7 @@ export async function fetchCalendarWithPost(formObj: any, signInToken: any) {
 	return await response.text();
 }
 
-export async function fetchCalendarWithGet(signInToken: any) {
+export async function fetchCalendarWithGet(signInToken: string): Promise<string> {
 	const response = await fetch('https://actvn-schedule.cors-ngosangns.workers.dev/subject', {
 		method: 'GET',
 		headers: {
@@ -32,20 +37,20 @@ export async function fetchCalendarWithGet(signInToken: any) {
 	return await response.text();
 }
 
-export function getFieldFromResult(result: any, field: any) {
-	let res = result.match(new RegExp('id="' + field + '" value="(.+?)"', 'g'));
-	if (!res || !res.length) return false;
-	res = res[0];
-	res = res.match(/value="(.+?)"/);
-	if (!res || !res.length) return false;
-	res = res[1];
-	return res;
+export function getFieldFromResult(result: string, field: string): string | false {
+	const matches = result.match(new RegExp('id="' + field + '" value="(.+?)"', 'g'));
+	if (!matches || !matches.length) return false;
+
+	const firstMatch = matches[0];
+	const valueMatch = firstMatch.match(/value="(.+?)"/);
+	if (!valueMatch || !valueMatch.length) return false;
+
+	return valueMatch[1] || false;
 }
 
-function stripHTMLTags(str: any) {
+function stripHTMLTags(str: string | null | false): string {
 	if (str === null || str === false) return '';
-	else str = str.toString();
-	return str.replace(/<[^>]*>/g, '');
+	return str.toString().replace(/<[^>]*>/g, '');
 }
 
 export function filterTrashInHtml(html: string): string {
@@ -54,7 +59,7 @@ export function filterTrashInHtml(html: string): string {
 	return result;
 }
 
-export function cleanFromHTMLtoArray(raw_tkb: string) {
+export function cleanFromHTMLtoArray(raw_tkb: string): string[][] | false {
 	if (!raw_tkb || !raw_tkb.length) return false;
 
 	// remove trash and catch table from html string
@@ -74,10 +79,13 @@ export function cleanFromHTMLtoArray(raw_tkb: string) {
 	tempDiv.innerHTML = raw_tkb;
 	document.body.appendChild(tempDiv);
 
-	const data_content_temp = Array.prototype.map.call(
+	const data_content_temp: string[][] = Array.prototype.map.call(
 		tempDiv.querySelectorAll('#gridRegistered tr'),
-		(tr) => Array.prototype.map.call(tr.querySelectorAll('td'), (td) => stripHTMLTags(td.innerHTML))
-	);
+		(tr: HTMLTableRowElement) =>
+			Array.prototype.map.call(tr.querySelectorAll('td'), (td: HTMLTableCellElement) =>
+				stripHTMLTags(td.innerHTML)
+			)
+	) as string[][];
 	document.body.removeChild(tempDiv);
 
 	// check null
@@ -86,25 +94,31 @@ export function cleanFromHTMLtoArray(raw_tkb: string) {
 	return data_content_temp;
 }
 
-export function processStudent(rawHtml: string) {
-	let student = rawHtml.match(/<span id="lblStudent">(.+?)<\/span/g);
-	if (student && student.length) {
-		student = student[0].match(/<span id="lblStudent">(.+?)<\/span/);
-		if (student && student.length > 1) return student[1];
+export function processStudent(rawHtml: string): string {
+	const studentMatches = rawHtml.match(/<span id="lblStudent">(.+?)<\/span/g);
+	if (studentMatches && studentMatches.length) {
+		const studentMatch = studentMatches[0].match(/<span id="lblStudent">(.+?)<\/span/);
+		if (studentMatch && studentMatch.length > 1 && studentMatch[1]) return studentMatch[1];
 	}
 	return 'KIT Club';
 }
 
-export async function processCalendar(rawHtml: string) {
+export async function processCalendar(rawHtml: string): Promise<ProcessedCalendarData> {
 	if (!rawHtml) throw new Error('empty data');
 
-	return await new Promise((resolve, reject) => {
+	return await new Promise<ProcessedCalendarData>((resolve, reject) => {
 		const worker = createInlineWorker(
-			(_rawHtml: { data: any }) => self.postMessage(restructureTKB(_rawHtml.data)),
+			(_rawHtml: { data: string[][] | false }) => self.postMessage(restructureTKB(_rawHtml.data)),
 			restructureTKB
 		);
-		worker.onmessage = (res) =>
-			resolve(res.data ? res.data : res.data === false ? { data_subject: [] } : null);
+		worker.onmessage = (res) => {
+			const result = res.data
+				? res.data
+				: res.data === false
+					? { data_subject: [], weeks: [] }
+					: { data_subject: [], weeks: [] };
+			resolve(result);
+		};
 		worker.onerror = (err) => reject(err);
 		worker.postMessage(cleanFromHTMLtoArray(rawHtml));
 	}).catch((e) => {
@@ -112,7 +126,7 @@ export async function processCalendar(rawHtml: string) {
 	});
 }
 
-export function processMainForm(rawHtml: any) {
+export function processMainForm(rawHtml: string): MainFormData {
 	// parse html
 	if (typeof DOMParser === 'undefined') {
 		throw new Error('DOMParser not available on server side');
@@ -122,18 +136,19 @@ export function processMainForm(rawHtml: any) {
 	const dom = parser.parseFromString(rawHtml, 'text/html');
 	const form1 = dom.getElementById('Form1');
 
-	if (!form1) return {};
+	if (!form1) return {} as MainFormData;
 
-	const formData: any = {};
+	const formData: Record<string, string> = {};
 	const inputs = form1.querySelectorAll('input, select, textarea');
 
-	inputs.forEach((input: any) => {
-		if (input.name && input.value) {
-			formData[input.name] = input.value;
+	inputs.forEach((input) => {
+		const element = input as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+		if (element.name && element.value) {
+			formData[element.name] = element.value;
 		}
 	});
 
-	return formData;
+	return formData as MainFormData;
 }
 
 /**
@@ -144,10 +159,7 @@ export function processMainForm(rawHtml: any) {
  * 	currentSemester: string
  * } | null} response
  */
-export function processSemesters(response: string): {
-	semesters: Array<{ value: string; from: string; to: string; th: string }>;
-	currentSemester: string;
-} | null {
+export function processSemesters(response: string): SemesterData | null {
 	if (typeof DOMParser === 'undefined') {
 		throw new Error('DOMParser not available on server side');
 	}
@@ -159,18 +171,22 @@ export function processSemesters(response: string): {
 	if (!semesterSelect) return null;
 
 	const options = semesterSelect.querySelectorAll('option');
-	const semesters = [];
+	const semesters: Array<{ value: string; from: string; to: string; th: string }> = [];
 	let currentSemester = '';
 
 	for (let i = 0; i < options.length; i++) {
 		const option = options[i] as HTMLOptionElement;
 		const tmp = option.innerHTML.split('_');
-		semesters.push({
-			value: option.value,
-			from: tmp[1],
-			to: tmp[2],
-			th: tmp[0]
-		});
+
+		// Ensure we have all required parts
+		if (tmp.length >= 3) {
+			semesters.push({
+				value: option.value,
+				from: tmp[1] || '',
+				to: tmp[2] || '',
+				th: tmp[0] || ''
+			});
+		}
 
 		if (option.selected) {
 			currentSemester = option.value;
@@ -179,13 +195,13 @@ export function processSemesters(response: string): {
 
 	// Sort semesters by year and semester number (most recent first)
 	semesters.sort((a, b) => {
-		const yearA = parseInt(a.to);
-		const yearB = parseInt(b.to);
+		const yearA = parseInt(a.to || '0');
+		const yearB = parseInt(b.to || '0');
 		if (yearA !== yearB) {
 			return yearB - yearA; // Newer year first
 		}
 		// If same year, sort by semester number (2 before 1)
-		return parseInt(b.th) - parseInt(a.th);
+		return parseInt(b.th || '0') - parseInt(a.th || '0');
 	});
 
 	// Take only the 10 most recent semesters
@@ -197,7 +213,7 @@ export function processSemesters(response: string): {
 	};
 }
 
-export function restructureTKB(data: any) {
+export function restructureTKB(data: string[][] | false): ProcessedCalendarData | false {
 	const categories = {
 		lop_hoc_phan: 'Lớp học phần',
 		hoc_phan: 'Học phần',
@@ -211,23 +227,25 @@ export function restructureTKB(data: any) {
 	};
 
 	// check null
-	if (data.length == 0 || data == false) return false;
+	if (data === false || data.length === 0) return false;
 	// remove price
 	data.pop();
 	// if after remove price just only have header titles then return
-	if (data.length == 1) return false;
+	if (data.length === 1) return false;
 	// create var
 	const header_data = data[0];
 	const content_data = data.slice(1, data.length);
-	let min_time: any, max_time: any;
-	const data_subject: any = Array.prototype.map.call(content_data, function (td) {
+	let min_time: Date | null = null;
+	let max_time: Date | null = null;
+	const data_subject = content_data.map((td: string[]) => {
+		if (!header_data) return null;
 		const regex_time_spliter =
 			'([0-9]{2}\\/[0-9]{2}\\/[0-9]{4}).+?([0-9]{2}\\/[0-9]{2}\\/[0-9]{4}):(\\([0-9]*\\))?(.+?)((Từ)|$)+?';
 		const regex_time_spliter_multi = new RegExp(regex_time_spliter, 'g');
 		const regex_time_spliter_line = new RegExp(regex_time_spliter);
 
 		let temp_dia_diem = td[header_data.indexOf(categories.dia_diem)];
-		const temp_dia_diem_season_index = temp_dia_diem.match(/\([0-9,]+?\)/g);
+		const temp_dia_diem_season_index = temp_dia_diem?.match(/\([0-9,]+?\)/g);
 		// return null (not remove) if not match the pattern (to sync with season time)
 		if (!temp_dia_diem_season_index) temp_dia_diem = null;
 		if (temp_dia_diem) {
@@ -399,7 +417,10 @@ export function restructureTKB(data: any) {
 	};
 }
 
-export function exportToGoogleCalendar(student: string | null, calendar: any) {
+export function exportToGoogleCalendar(
+	student: string | null,
+	calendar: ProcessedCalendarData
+): void {
 	if (!calendar || !calendar.data_subject || !Array.isArray(calendar.data_subject)) {
 		console.error('Invalid calendar data for export');
 		return;

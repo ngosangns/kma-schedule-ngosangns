@@ -14,8 +14,9 @@ import {
 } from '@/lib/ts/calendar';
 import { login as loginUser, logout as logoutUser } from '@/lib/ts/user';
 import { getErrorMessage } from '@/lib/utils';
+import { UseCalendarDataReturn, ProcessedCalendarData, SemesterData, MainFormData } from '@/types';
 
-export function useCalendarData() {
+export function useCalendarData(): UseCalendarDataReturn {
 	const { login: authLogin, logout: authLogout, setLoading, setError } = useAuth();
 	const { setCalendar, setStudent } = useCalendar();
 	const { showSuccess, showError } = useNotifications();
@@ -43,13 +44,13 @@ export function useCalendarData() {
 				saveData({
 					signInToken,
 					mainForm,
-					semesters,
+					semesters: semesters || null,
 					calendar,
 					student
 				});
 
 				authLogin(userData, signInToken);
-				setCalendar(calendar as any);
+				setCalendar(calendar);
 				setStudent(student);
 
 				if (setGlobalLoading) {
@@ -88,13 +89,13 @@ export function useCalendarData() {
 
 				saveData({
 					mainForm,
-					semesters,
+					semesters: semesters || null,
 					calendar,
 					student
 				});
 
 				authLogin(userData, '');
-				setCalendar(calendar as any);
+				setCalendar(calendar);
 				setStudent(student);
 
 				showSuccess('Dữ liệu đã được xử lý thành công!');
@@ -114,7 +115,7 @@ export function useCalendarData() {
 	const changeSemester = useCallback(
 		async (
 			newSemester: string,
-			currentData: { semesters: any; mainForm: any; signInToken: any }
+			currentData: { semesters: SemesterData; mainForm: MainFormData; signInToken: string }
 		) => {
 			const { semesters, mainForm, signInToken } = currentData;
 			const oldValue = semesters.currentSemester;
@@ -158,7 +159,7 @@ export function useCalendarData() {
 					signInToken: signInToken // Giữ lại signInToken
 				};
 
-				setCalendar(newCalendar as any);
+				setCalendar(newCalendar);
 				setStudent(newStudent);
 				saveData(newData);
 
@@ -178,7 +179,7 @@ export function useCalendarData() {
 	);
 
 	const exportCalendar = useCallback(
-		(student: string, calendar: any) => {
+		(student: string, calendar: ProcessedCalendarData) => {
 			try {
 				exportToGoogleCalendar(student, calendar);
 				showSuccess('Đã xuất lịch thành công!');

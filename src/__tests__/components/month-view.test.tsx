@@ -2,8 +2,8 @@
  * Tests for Month View functionality
  */
 
-import { render, screen } from '@testing-library/react';
-import { CalendarPage } from '@/app/(main)/calendar/page';
+// import { render, screen } from '@testing-library/react';
+// import { CalendarPage } from '@/app/(main)/calendar/page';
 
 // Mock the calendar data structure
 const mockCalendarData = {
@@ -77,11 +77,11 @@ function createMonthCalendarData(calendarData: any) {
 		const weekData: any[] = [];
 		for (let day = 0; day < 7; day++) {
 			const currentDate = new Date(startDate);
-			currentDate.setDate(startDate.getDate() + (week * 7) + day);
+			currentDate.setDate(startDate.getDate() + week * 7 + day);
 
 			// Find subjects for this date
 			const daySubjects: any[] = [];
-			
+
 			// Search through all weeks and days in calendar data
 			if (calendarData.weeks && Array.isArray(calendarData.weeks)) {
 				calendarData.weeks.forEach((calendarWeek: any) => {
@@ -148,9 +148,9 @@ describe('Month View Logic', () => {
 		it('should generate 6 weeks of calendar data', () => {
 			const result = createMonthCalendarData(mockCalendarData);
 			expect(result).toHaveLength(6);
-			
+
 			// Each week should have 7 days
-			result.forEach(week => {
+			result.forEach((week) => {
 				expect(week).toHaveLength(7);
 			});
 		});
@@ -159,9 +159,9 @@ describe('Month View Logic', () => {
 			const result = createMonthCalendarData(mockCalendarData);
 			const today = new Date();
 			const currentMonth = today.getMonth();
-			
+
 			let currentMonthDaysCount = 0;
-			result.forEach(week => {
+			result.forEach((week) => {
 				week.forEach((day: any) => {
 					if (day.isCurrentMonth) {
 						expect(day.date.getMonth()).toBe(currentMonth);
@@ -169,7 +169,7 @@ describe('Month View Logic', () => {
 					}
 				});
 			});
-			
+
 			// Should have at least 28 days in current month
 			expect(currentMonthDaysCount).toBeGreaterThanOrEqual(28);
 		});
@@ -177,9 +177,9 @@ describe('Month View Logic', () => {
 		it('should correctly identify today', () => {
 			const result = createMonthCalendarData(mockCalendarData);
 			const today = new Date();
-			
+
 			let todayFound = false;
-			result.forEach(week => {
+			result.forEach((week) => {
 				week.forEach((day: any) => {
 					if (day.isToday) {
 						expect(day.date.toDateString()).toBe(today.toDateString());
@@ -187,7 +187,7 @@ describe('Month View Logic', () => {
 					}
 				});
 			});
-			
+
 			// Today should be found if it's in the current month
 			if (today.getMonth() === new Date().getMonth()) {
 				expect(todayFound).toBe(true);
@@ -214,14 +214,22 @@ describe('Month View Logic', () => {
 			};
 
 			const result = createMonthCalendarData(testCalendarData);
-			
+
 			// Find the day that matches our test date
 			let foundDay: any = null;
-			result.forEach(week => {
+			result.forEach((week) => {
 				week.forEach((day: any) => {
-					const dayNormalized = new Date(day.date.getFullYear(), day.date.getMonth(), day.date.getDate());
-					const testNormalized = new Date(testDate.getFullYear(), testDate.getMonth(), testDate.getDate());
-					
+					const dayNormalized = new Date(
+						day.date.getFullYear(),
+						day.date.getMonth(),
+						day.date.getDate()
+					);
+					const testNormalized = new Date(
+						testDate.getFullYear(),
+						testDate.getMonth(),
+						testDate.getDate()
+					);
+
 					if (dayNormalized.getTime() === testNormalized.getTime()) {
 						foundDay = day;
 					}
@@ -247,9 +255,9 @@ describe('Month View Logic', () => {
 			};
 
 			const result = createMonthCalendarData(testCalendarData);
-			
+
 			// All days should have empty subjects array
-			result.forEach(week => {
+			result.forEach((week) => {
 				week.forEach((day: any) => {
 					expect(Array.isArray(day.subjects)).toBe(true);
 				});
@@ -262,7 +270,7 @@ describe('Month View Logic', () => {
 					[
 						{ time: 'invalid-time', shift: 'not-an-array' },
 						{ time: null, shift: null },
-						{ shift: [{ name: 'Test' }] }, // missing time
+						{ shift: [{ name: 'Test' }] } // missing time
 					]
 				]
 			};
@@ -278,7 +286,7 @@ describe('Month View Logic', () => {
 		it('should start calendar from Sunday of the week containing first day of month', () => {
 			const result = createMonthCalendarData(mockCalendarData);
 			const firstDay = result[0][0];
-			
+
 			// First day should be a Sunday (day 0)
 			expect(firstDay.date.getDay()).toBe(0);
 		});
@@ -286,11 +294,11 @@ describe('Month View Logic', () => {
 		it('should generate exactly 42 days (6 weeks)', () => {
 			const result = createMonthCalendarData(mockCalendarData);
 			let totalDays = 0;
-			
-			result.forEach(week => {
+
+			result.forEach((week) => {
 				totalDays += week.length;
 			});
-			
+
 			expect(totalDays).toBe(42);
 		});
 	});

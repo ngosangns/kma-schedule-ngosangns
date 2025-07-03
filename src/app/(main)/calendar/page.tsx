@@ -114,7 +114,13 @@ export default function CalendarPage() {
 			storedData.calendar.weeks.length > 0
 		) {
 			// Có dữ liệu thật từ storage với weeks
-			setData(storedData);
+			setData({
+				calendar: storedData.calendar || null,
+				student: storedData.student || null,
+				semesters: storedData.semesters || null,
+				mainForm: storedData.mainForm || null,
+				signInToken: storedData.signInToken || null
+			});
 			updateCurrentWeek(0, storedData.calendar);
 		} else if (storedData && storedData.calendar && storedData.calendar.data_subject) {
 			// Có dữ liệu nhưng không có weeks, kiểm tra xem data_subject có phải là weeks không
@@ -128,7 +134,7 @@ export default function CalendarPage() {
 				storedData.calendar.data_subject[0][0] &&
 				typeof storedData.calendar.data_subject[0][0].time === 'number'
 			) {
-				weeks = storedData.calendar.data_subject;
+				weeks = storedData.calendar.data_subject as any;
 			}
 
 			// Nếu vẫn không có weeks, tạo empty weeks
@@ -141,12 +147,13 @@ export default function CalendarPage() {
 				weeks: weeks
 			};
 
-			const newData = {
-				...storedData,
-				calendar: updatedCalendar
-			};
-
-			setData(newData);
+			setData({
+				calendar: updatedCalendar,
+				student: storedData.student || null,
+				semesters: storedData.semesters || null,
+				mainForm: storedData.mainForm || null,
+				signInToken: storedData.signInToken || null
+			});
 			updateCurrentWeek(0, updatedCalendar);
 		} else {
 			// Không có dữ liệu gì, tạo hoàn toàn mới
@@ -165,7 +172,7 @@ export default function CalendarPage() {
 			};
 
 			setData(newData);
-			setCurrentWeek(emptyWeeks[1]);
+			setCurrentWeek(emptyWeeks[1] || []);
 			setCurrentWeekIndex(1);
 		}
 	}, []);
@@ -282,7 +289,7 @@ export default function CalendarPage() {
 			setCalendar(newCalendar as any);
 			setStudent(newStudent);
 			saveData({
-				signInToken: data.signInToken || undefined,
+				signInToken: data.signInToken || null,
 				mainForm: newMainForm,
 				semesters: newSemesters,
 				calendar: newCalendar,

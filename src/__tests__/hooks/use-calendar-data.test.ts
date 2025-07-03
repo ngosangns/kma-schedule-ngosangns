@@ -14,7 +14,7 @@ import {
 	exportToGoogleCalendar
 } from '@/lib/ts/calendar';
 import { login as loginUser, logout as logoutUser } from '@/lib/ts/user';
-import { mockCalendarData, mockUser } from '../mocks/data';
+import { mockCalendarData } from '../mocks/data';
 
 // Mock all dependencies
 jest.mock('@/contexts/AppContext');

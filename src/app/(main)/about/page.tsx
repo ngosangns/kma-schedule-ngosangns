@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ExternalLink, Github, Heart, Users, Code, Smartphone } from 'lucide-react';
+import { ExternalLink, Github, Users, Code, Smartphone } from 'lucide-react';
 
 export default function AboutPage() {
 	return (
