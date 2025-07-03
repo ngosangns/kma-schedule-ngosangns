@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 interface LazyImageProps {
@@ -55,7 +56,7 @@ export function LazyImage({
 
 	return (
 		<div className={cn('relative overflow-hidden', className)}>
-			<img
+			<Image
 				ref={imgRef}
 				src={isInView ? src : placeholder}
 				alt={alt}
@@ -66,7 +67,8 @@ export function LazyImage({
 				)}
 				onLoad={handleLoad}
 				onError={handleError}
-				loading="lazy"
+				fill
+				sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 			/>
 			{!isLoaded && !hasError && <div className="absolute inset-0 bg-muted animate-pulse" />}
 			{hasError && (

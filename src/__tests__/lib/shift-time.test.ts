@@ -78,7 +78,7 @@ describe('Shift Time Functions', () => {
 			schedule.forEach(({ shift, expected }) => {
 				const time = getShiftTime(shift);
 				const session = getShiftSession(shift);
-				
+
 				expect(time).toEqual({ start: expected.start, end: expected.end });
 				expect(session).toBe(expected.session);
 			});
@@ -88,11 +88,13 @@ describe('Shift Time Functions', () => {
 			for (let shift = 1; shift <= 14; shift++) {
 				const currentShift = getShiftTime(shift);
 				const nextShift = getShiftTime(shift + 1);
-				
+
 				// Chuyển đổi thời gian thành phút để so sánh
-				const currentEndMinutes = parseInt(currentShift.end.split(':')[0]) * 60 + parseInt(currentShift.end.split(':')[1]);
-				const nextStartMinutes = parseInt(nextShift.start.split(':')[0]) * 60 + parseInt(nextShift.start.split(':')[1]);
-				
+				const currentEndMinutes =
+					parseInt(currentShift.end.split(':')[0]) * 60 + parseInt(currentShift.end.split(':')[1]);
+				const nextStartMinutes =
+					parseInt(nextShift.start.split(':')[0]) * 60 + parseInt(nextShift.start.split(':')[1]);
+
 				// Ca tiếp theo phải bắt đầu sau khi ca hiện tại kết thúc
 				expect(nextStartMinutes).toBeGreaterThan(currentEndMinutes);
 			}

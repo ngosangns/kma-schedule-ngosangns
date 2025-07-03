@@ -9,17 +9,42 @@ describe('Calendar Layout Integration', () => {
 					time: '2025-01-13', // Monday
 					shift: [
 						{ name: 'Toán cao cấp', address: 'TC-101', length: 3 }, // Shift 1-3
-						null, null, null, null, null,
+						null,
+						null,
+						null,
+						null,
+						null,
 						{ name: 'Lập trình Web', address: 'TC-205', length: 2 }, // Shift 7-8
-						null, null, null, null, null, null, null, null, null
+						null,
+						null,
+						null,
+						null,
+						null,
+						null,
+						null,
+						null,
+						null
 					]
 				},
 				{
-					time: '2025-01-14', // Tuesday  
+					time: '2025-01-14', // Tuesday
 					shift: [
 						null,
 						{ name: 'Cơ sở dữ liệu', address: 'TC-301', length: 2 }, // Shift 2-3
-						null, null, null, null, null, null, null, null, null, null, null, null, null, null
+						null,
+						null,
+						null,
+						null,
+						null,
+						null,
+						null,
+						null,
+						null,
+						null,
+						null,
+						null,
+						null,
+						null
 					]
 				}
 			];
@@ -32,7 +57,7 @@ describe('Calendar Layout Integration', () => {
 								...subject,
 								shiftNumber: shiftIndex + 1
 							}))
-							.filter(subject => subject.name)
+							.filter((subject) => subject.name)
 					: [];
 
 				return {
@@ -64,21 +89,18 @@ describe('Calendar Layout Integration', () => {
 				},
 				{
 					time: '2025-01-14',
-					shift: [
-						{ name: 'Toán cao cấp', address: 'TC-101', length: 1 },
-						...Array(15).fill(null)
-					]
+					shift: [{ name: 'Toán cao cấp', address: 'TC-101', length: 1 }, ...Array(15).fill(null)]
 				}
 			];
 
-			const processedDays = mockWeek.map(day => {
+			const processedDays = mockWeek.map((day) => {
 				const daySubjects = day.shift
 					? day.shift
 							.map((subject, shiftIndex) => ({
 								...subject,
 								shiftNumber: shiftIndex + 1
 							}))
-							.filter(subject => subject.name)
+							.filter((subject) => subject.name)
 					: [];
 
 				return {
@@ -168,12 +190,13 @@ describe('Calendar Layout Integration', () => {
 			testCases.forEach(({ shift, expectedSession, expectedColor }) => {
 				const session = getShiftSession(shift);
 				expect(session).toBe(expectedSession);
-				
-				const color = session === 'morning' 
-					? 'bg-blue-500' 
-					: session === 'afternoon' 
-						? 'bg-orange-500' 
-						: 'bg-purple-500';
+
+				const color =
+					session === 'morning'
+						? 'bg-blue-500'
+						: session === 'afternoon'
+							? 'bg-orange-500'
+							: 'bg-purple-500';
 				expect(color).toBe(expectedColor);
 			});
 		});
@@ -194,11 +217,11 @@ describe('Calendar Layout Integration', () => {
 			];
 
 			// Desktop layout: Group by day, then display subjects horizontally
-			const desktopLayout = mockWeek.map(day => {
+			const desktopLayout = mockWeek.map((day) => {
 				const subjects = day.shift
 					.map((subject, index) => ({ ...subject, shiftNumber: index + 1 }))
-					.filter(subject => subject.name);
-				
+					.filter((subject) => subject.name);
+
 				return {
 					day: day.time,
 					subjects,
@@ -207,11 +230,11 @@ describe('Calendar Layout Integration', () => {
 			});
 
 			// Mobile layout: Each day is a separate card
-			const mobileLayout = mockWeek.map(day => {
+			const mobileLayout = mockWeek.map((day) => {
 				const subjects = day.shift
 					.map((subject, index) => ({ ...subject, shiftNumber: index + 1 }))
-					.filter(subject => subject.name);
-				
+					.filter((subject) => subject.name);
+
 				return {
 					day: day.time,
 					subjects,
@@ -248,11 +271,11 @@ describe('Calendar Layout Integration', () => {
 			const largeWeek = createMockWeek(7, 8); // 7 days, 8 subjects per day
 
 			// Process all days
-			const processedDays = largeWeek.map(day => {
+			const processedDays = largeWeek.map((day) => {
 				const subjects = day.shift
 					.map((subject, index) => ({ ...subject, shiftNumber: index + 1 }))
-					.filter(subject => subject.name);
-				
+					.filter((subject) => subject.name);
+
 				return { ...day, subjects };
 			});
 
@@ -280,7 +303,7 @@ describe('Calendar Layout Integration', () => {
 
 			const subjects = mockDay.shift
 				.map((subject, index) => ({ ...subject, shiftNumber: index + 1 }))
-				.filter(subject => subject.name);
+				.filter((subject) => subject.name);
 
 			const subjectCount = subjects.length;
 			const countText = `${subjectCount} môn học`;
@@ -291,8 +314,10 @@ describe('Calendar Layout Integration', () => {
 
 		test('should handle hover states and interactions', () => {
 			// Test hover state classes
-			const hoverClasses = 'group relative p-4 rounded-lg border bg-card hover:shadow-md transition-all duration-200';
-			const titleHoverClasses = 'font-semibold text-sm mb-2 line-clamp-2 group-hover:text-primary transition-colors';
+			const hoverClasses =
+				'group relative p-4 rounded-lg border bg-card hover:shadow-md transition-all duration-200';
+			const titleHoverClasses =
+				'font-semibold text-sm mb-2 line-clamp-2 group-hover:text-primary transition-colors';
 
 			expect(hoverClasses).toContain('hover:shadow-md');
 			expect(hoverClasses).toContain('transition-all');

@@ -174,6 +174,43 @@ export interface AppError {
 	details?: any;
 }
 
+// Notification Types
+export interface NotificationSettings {
+	enabled: boolean;
+	permissions: {
+		granted: boolean;
+		requested: boolean;
+	};
+	timing: {
+		oneDayBefore: boolean;
+		oneHourBefore: boolean;
+		atClassTime: boolean;
+	};
+}
+
+export interface ScheduledNotification {
+	id: string;
+	subjectId: string;
+	subjectName: string;
+	subjectCode: string;
+	instructor: string;
+	room: string;
+	classTime: Date;
+	notificationTime: Date;
+	type: 'one-day' | 'one-hour' | 'at-time';
+	scheduled: boolean;
+	timeoutId?: number;
+}
+
+export interface NotificationData {
+	title: string;
+	body: string;
+	icon?: string;
+	badge?: string;
+	tag?: string;
+	data?: any;
+}
+
 // Navigation Types
 export interface NavItem {
 	title: string;

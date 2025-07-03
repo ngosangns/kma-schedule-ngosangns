@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,14 @@ import { LoadingSpinner, PageLoader } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger
+} from '@/components/ui/dialog';
+import { NotificationSettings } from '@/components/ui/notification-settings';
+import {
 	Download,
 	LogOut,
 	ChevronLeft,
@@ -28,10 +36,12 @@ import {
 	List,
 	CalendarDays,
 	User,
-	RefreshCw
+	RefreshCw,
+	Bell
 } from 'lucide-react';
 import { useAuth, useCalendar } from '@/contexts/AppContext';
 import { useNotifications } from '@/hooks/use-notifications';
+import { notificationService } from '@/lib/ts/notifications';
 import { loadData, saveData } from '@/lib/ts/storage';
 import {
 	fetchCalendarWithGet,
@@ -65,9 +75,10 @@ export default function CalendarPage() {
 	const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
 	const [currentWeek, setCurrentWeek] = useState<any[]>([]);
 	const [viewMode, setViewMode] = useState<ViewMode>('calendar');
+	const [showNotificationSettings, setShowNotificationSettings] = useState(false);
 
 	// Tạo function để generate tuần trống
-	const generateEmptyWeeks = (startWeekOffset = 0, numWeeks = 4) => {
+	const generateEmptyWeeks = useCallback((startWeekOffset = 0, numWeeks = 4) => {
 		const weeks = [];
 		const today = new Date();
 
@@ -87,7 +98,7 @@ export default function CalendarPage() {
 			weeks.push(week);
 		}
 		return weeks;
-	};
+	}, []);
 
 	// Load initial data
 	const [data, setData] = useState<{
@@ -103,6 +114,19 @@ export default function CalendarPage() {
 		mainForm: null,
 		signInToken: null
 	});
+
+	const updateCurrentWeek = useCallback(
+		(weekIndex: number, calendarData?: any) => {
+			const cal = calendarData || data.calendar;
+			if (!cal || !cal.weeks || cal.weeks.length === 0) return;
+
+			const validIndex = Math.max(0, Math.min(weekIndex, cal.weeks.length - 1));
+			const week = cal.weeks[validIndex];
+			setCurrentWeek(week);
+			setCurrentWeekIndex(validIndex);
+		},
+		[data.calendar]
+	);
 
 	useEffect(() => {
 		const storedData = loadData();
@@ -121,7 +145,19 @@ export default function CalendarPage() {
 				mainForm: storedData.mainForm || null,
 				signInToken: storedData.signInToken || null
 			});
-			updateCurrentWeek(0, storedData.calendar);
+			// Inline updateCurrentWeek logic to avoid dependency cycle
+			if (
+				storedData.calendar &&
+				storedData.calendar.weeks &&
+				storedData.calendar.weeks.length > 0
+			) {
+				const validIndex = Math.max(0, Math.min(0, storedData.calendar.weeks.length - 1));
+				const week = storedData.calendar.weeks[validIndex];
+				if (week) {
+					setCurrentWeek(week as any[]);
+					setCurrentWeekIndex(validIndex);
+				}
+			}
 		} else if (storedData && storedData.calendar && storedData.calendar.data_subject) {
 			// Có dữ liệu nhưng không có weeks, kiểm tra xem data_subject có phải là weeks không
 			let weeks = storedData.calendar.weeks;
@@ -154,7 +190,15 @@ export default function CalendarPage() {
 				mainForm: storedData.mainForm || null,
 				signInToken: storedData.signInToken || null
 			});
-			updateCurrentWeek(0, updatedCalendar);
+			// Inline updateCurrentWeek logic to avoid dependency cycle
+			if (updatedCalendar && updatedCalendar.weeks && updatedCalendar.weeks.length > 0) {
+				const validIndex = Math.max(0, Math.min(0, updatedCalendar.weeks.length - 1));
+				const week = updatedCalendar.weeks[validIndex];
+				if (week) {
+					setCurrentWeek(week as any[]);
+					setCurrentWeekIndex(validIndex);
+				}
+			}
 		} else {
 			// Không có dữ liệu gì, tạo hoàn toàn mới
 			const emptyWeeks = generateEmptyWeeks(-1, 4);
@@ -175,17 +219,7 @@ export default function CalendarPage() {
 			setCurrentWeek(emptyWeeks[1] || []);
 			setCurrentWeekIndex(1);
 		}
-	}, []);
-
-	const updateCurrentWeek = (weekIndex: number, calendarData?: any) => {
-		const cal = calendarData || data.calendar;
-		if (!cal || !cal.weeks || cal.weeks.length === 0) return;
-
-		const validIndex = Math.max(0, Math.min(weekIndex, cal.weeks.length - 1));
-		const week = cal.weeks[validIndex];
-		setCurrentWeek(week);
-		setCurrentWeekIndex(validIndex);
-	};
+	}, [generateEmptyWeeks]);
 
 	const handleSemesterChange = async (newSemester: string) => {
 		if (!data.semesters || !data.mainForm || !data.signInToken) return;
@@ -351,7 +385,7 @@ export default function CalendarPage() {
 	};
 
 	// Get first and last study dates from calendar data
-	const getStudyDateRange = () => {
+	const getStudyDateRange = useCallback(() => {
 		if (!data.calendar || !data.calendar.weeks) return { firstDate: null, lastDate: null };
 
 		let firstDate: Date | null = null;
@@ -377,7 +411,7 @@ export default function CalendarPage() {
 		});
 
 		return { firstDate, lastDate };
-	};
+	}, [data.calendar]);
 
 	// Month navigation functions with study date range limits
 	const goToPreviousMonth = () => {
@@ -388,7 +422,11 @@ export default function CalendarPage() {
 		newDate.setMonth(newDate.getMonth() - 1);
 
 		// Check if new month is before first study month
-		const firstStudyMonth = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1);
+		const firstStudyMonth = new Date(
+			(firstDate as Date).getFullYear(),
+			(firstDate as Date).getMonth(),
+			1
+		);
 		if (newDate.getTime() >= firstStudyMonth.getTime()) {
 			setCurrentMonthDate(newDate);
 		}
@@ -402,7 +440,11 @@ export default function CalendarPage() {
 		newDate.setMonth(newDate.getMonth() + 1);
 
 		// Check if new month is after last study month
-		const lastStudyMonth = new Date(lastDate.getFullYear(), lastDate.getMonth(), 1);
+		const lastStudyMonth = new Date(
+			(lastDate as Date).getFullYear(),
+			(lastDate as Date).getMonth(),
+			1
+		);
 		if (newDate.getTime() <= lastStudyMonth.getTime()) {
 			setCurrentMonthDate(newDate);
 		}
@@ -414,8 +456,16 @@ export default function CalendarPage() {
 		if (!firstDate || !lastDate) return { prevDisabled: true, nextDisabled: true };
 
 		const currentMonth = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), 1);
-		const firstStudyMonth = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1);
-		const lastStudyMonth = new Date(lastDate.getFullYear(), lastDate.getMonth(), 1);
+		const firstStudyMonth = new Date(
+			(firstDate as Date).getFullYear(),
+			(firstDate as Date).getMonth(),
+			1
+		);
+		const lastStudyMonth = new Date(
+			(lastDate as Date).getFullYear(),
+			(lastDate as Date).getMonth(),
+			1
+		);
 
 		return {
 			prevDisabled: currentMonth.getTime() <= firstStudyMonth.getTime(),
@@ -426,7 +476,31 @@ export default function CalendarPage() {
 	// Auto-adjust month when switching to month view
 	useEffect(() => {
 		if (viewMode === 'month') {
-			const { firstDate, lastDate } = getStudyDateRange();
+			// Inline getStudyDateRange logic to avoid dependency cycle
+			let firstDate: Date | null = null;
+			let lastDate: Date | null = null;
+
+			if (data.calendar && data.calendar.weeks) {
+				data.calendar.weeks.forEach((week: any) => {
+					if (Array.isArray(week)) {
+						week.forEach((day: any) => {
+							if (day && day.time && day.shift) {
+								const hasSubjects = day.shift.some((subject: any) => subject && subject.name);
+								if (hasSubjects) {
+									const dayDate = new Date(day.time);
+									if (!firstDate || dayDate < firstDate) {
+										firstDate = dayDate;
+									}
+									if (!lastDate || dayDate > lastDate) {
+										lastDate = dayDate;
+									}
+								}
+							}
+						});
+					}
+				});
+			}
+
 			const today = new Date();
 
 			if (firstDate && today.getTime() < (firstDate as Date).getTime()) {
@@ -442,6 +516,45 @@ export default function CalendarPage() {
 			}
 		}
 	}, [viewMode, data.calendar]);
+
+	// Schedule notifications when calendar data changes
+	useEffect(() => {
+		if (data.calendar && data.calendar.data_subject && Array.isArray(data.calendar.data_subject)) {
+			// Clear existing notifications
+			notificationService.clearAllNotifications();
+
+			// Schedule notifications for each subject
+			data.calendar.data_subject.forEach((subject: any) => {
+				if (subject && subject.tkb && Array.isArray(subject.tkb)) {
+					subject.tkb.forEach((timeSlot: any) => {
+						if (timeSlot && timeSlot.dayOfWeek && Array.isArray(timeSlot.dayOfWeek)) {
+							timeSlot.dayOfWeek.forEach((dayInfo: any) => {
+								// Convert to Subject format for notification service
+								const subjectForNotification = {
+									id: `${subject.lop_hoc_phan}-${dayInfo.dow}`,
+									name: subject.hoc_phan || 'Môn học',
+									code: subject.lop_hoc_phan || '',
+									instructor: subject.giang_vien || '',
+									room: timeSlot.address || '',
+									day: dayInfo.dow,
+									startTime: timeSlot.startTime
+										? new Date(timeSlot.startTime).toTimeString().slice(0, 5)
+										: '07:00',
+									endTime: timeSlot.endTime
+										? new Date(timeSlot.endTime).toTimeString().slice(0, 5)
+										: '09:30',
+									shift: 1, // Default shift
+									week: 1 // Default week
+								};
+
+								notificationService.scheduleNotificationsForSubject(subjectForNotification);
+							});
+						}
+					});
+				}
+			});
+		}
+	}, [data.calendar]);
 
 	// Generate month calendar data
 	const getMonthCalendarData = () => {
@@ -550,6 +663,20 @@ export default function CalendarPage() {
 					<p className="text-muted-foreground">{student || user?.name || 'Sinh viên'}</p>
 				</div>
 				<div className="flex items-center gap-2">
+					<Dialog open={showNotificationSettings} onOpenChange={setShowNotificationSettings}>
+						<DialogTrigger asChild>
+							<Button variant="outline" size="sm">
+								<Bell className="w-4 h-4 mr-2" />
+								Thông báo
+							</Button>
+						</DialogTrigger>
+						<DialogContent className="max-w-md">
+							<DialogHeader>
+								<DialogTitle>Cài đặt thông báo</DialogTitle>
+							</DialogHeader>
+							<NotificationSettings />
+						</DialogContent>
+					</Dialog>
 					<Button
 						onClick={handleSync}
 						variant="outline"

@@ -1,8 +1,8 @@
-import { 
-	getShiftRange, 
-	getShiftTimeRange, 
-	formatShiftDisplay, 
-	formatTimeDisplay 
+import {
+	getShiftRange,
+	getShiftTimeRange,
+	formatShiftDisplay,
+	formatTimeDisplay
 } from '@/lib/utils';
 
 describe('Shift Range Display Integration', () => {
@@ -15,8 +15,14 @@ describe('Shift Range Display Integration', () => {
 				name: 'Toán cao cấp'
 			};
 
-			const shiftDisplay = formatShiftDisplay(singleShiftSubject.shiftNumber, singleShiftSubject.length);
-			const timeDisplay = formatTimeDisplay(singleShiftSubject.shiftNumber, singleShiftSubject.length);
+			const shiftDisplay = formatShiftDisplay(
+				singleShiftSubject.shiftNumber,
+				singleShiftSubject.length
+			);
+			const timeDisplay = formatTimeDisplay(
+				singleShiftSubject.shiftNumber,
+				singleShiftSubject.length
+			);
 
 			expect(shiftDisplay).toBe('Tiết 1');
 			expect(timeDisplay).toBe('07:00 - 07:50');
@@ -48,8 +54,14 @@ describe('Shift Range Display Integration', () => {
 				name: 'Lập trình Web'
 			};
 
-			const shiftDisplay = formatShiftDisplay(multipleShiftSubject.shiftNumber, multipleShiftSubject.length);
-			const timeDisplay = formatTimeDisplay(multipleShiftSubject.shiftNumber, multipleShiftSubject.length);
+			const shiftDisplay = formatShiftDisplay(
+				multipleShiftSubject.shiftNumber,
+				multipleShiftSubject.length
+			);
+			const timeDisplay = formatTimeDisplay(
+				multipleShiftSubject.shiftNumber,
+				multipleShiftSubject.length
+			);
 
 			expect(shiftDisplay).toBe('Tiết 1-3');
 			expect(timeDisplay).toBe('07:00 - 09:50');
@@ -57,20 +69,20 @@ describe('Shift Range Display Integration', () => {
 
 		test('should handle different multiple shift scenarios', () => {
 			const testCases = [
-				{ 
-					start: 1, 
-					length: 3, 
-					expected: { display: 'Tiết 1-3', time: '07:00 - 09:50' } 
+				{
+					start: 1,
+					length: 3,
+					expected: { display: 'Tiết 1-3', time: '07:00 - 09:50' }
 				},
-				{ 
-					start: 7, 
-					length: 2, 
-					expected: { display: 'Tiết 7-8', time: '13:00 - 14:50' } 
+				{
+					start: 7,
+					length: 2,
+					expected: { display: 'Tiết 7-8', time: '13:00 - 14:50' }
 				},
-				{ 
-					start: 13, 
-					length: 3, 
-					expected: { display: 'Tiết 13-15', time: '19:00 - 21:50' } 
+				{
+					start: 13,
+					length: 3,
+					expected: { display: 'Tiết 13-15', time: '19:00 - 21:50' }
 				}
 			];
 
@@ -88,31 +100,39 @@ describe('Shift Range Display Integration', () => {
 		test('should handle typical morning class (3 shifts)', () => {
 			// Typical morning class: Tiết 1-3 (07:00 - 09:50)
 			const morningClass = { shiftNumber: 1, length: 3 };
-			
+
 			expect(formatShiftDisplay(morningClass.shiftNumber, morningClass.length)).toBe('Tiết 1-3');
-			expect(formatTimeDisplay(morningClass.shiftNumber, morningClass.length)).toBe('07:00 - 09:50');
+			expect(formatTimeDisplay(morningClass.shiftNumber, morningClass.length)).toBe(
+				'07:00 - 09:50'
+			);
 		});
 
 		test('should handle typical afternoon class (2 shifts)', () => {
 			// Typical afternoon class: Tiết 7-8 (13:00 - 14:50)
 			const afternoonClass = { shiftNumber: 7, length: 2 };
-			
-			expect(formatShiftDisplay(afternoonClass.shiftNumber, afternoonClass.length)).toBe('Tiết 7-8');
-			expect(formatTimeDisplay(afternoonClass.shiftNumber, afternoonClass.length)).toBe('13:00 - 14:50');
+
+			expect(formatShiftDisplay(afternoonClass.shiftNumber, afternoonClass.length)).toBe(
+				'Tiết 7-8'
+			);
+			expect(formatTimeDisplay(afternoonClass.shiftNumber, afternoonClass.length)).toBe(
+				'13:00 - 14:50'
+			);
 		});
 
 		test('should handle evening class (3 shifts)', () => {
 			// Evening class: Tiết 13-15 (19:00 - 21:50)
 			const eveningClass = { shiftNumber: 13, length: 3 };
-			
+
 			expect(formatShiftDisplay(eveningClass.shiftNumber, eveningClass.length)).toBe('Tiết 13-15');
-			expect(formatTimeDisplay(eveningClass.shiftNumber, eveningClass.length)).toBe('19:00 - 21:50');
+			expect(formatTimeDisplay(eveningClass.shiftNumber, eveningClass.length)).toBe(
+				'19:00 - 21:50'
+			);
 		});
 
 		test('should handle lab sessions (4 shifts)', () => {
 			// Lab session: Tiết 1-4 (07:00 - 10:50)
 			const labSession = { shiftNumber: 1, length: 4 };
-			
+
 			expect(formatShiftDisplay(labSession.shiftNumber, labSession.length)).toBe('Tiết 1-4');
 			expect(formatTimeDisplay(labSession.shiftNumber, labSession.length)).toBe('07:00 - 10:50');
 		});
@@ -121,7 +141,7 @@ describe('Shift Range Display Integration', () => {
 	describe('Edge Cases and Error Handling', () => {
 		test('should handle missing length (default to 1)', () => {
 			const subjectWithoutLength = { shiftNumber: 5 };
-			
+
 			const shiftDisplay = formatShiftDisplay(subjectWithoutLength.shiftNumber, undefined as any);
 			const timeDisplay = formatTimeDisplay(subjectWithoutLength.shiftNumber, undefined as any);
 
@@ -207,8 +227,8 @@ describe('Shift Range Display Integration', () => {
 			}));
 
 			const startTime = Date.now();
-			
-			subjects.forEach(subject => {
+
+			subjects.forEach((subject) => {
 				formatShiftDisplay(subject.shiftNumber, subject.length);
 				formatTimeDisplay(subject.shiftNumber, subject.length);
 			});
