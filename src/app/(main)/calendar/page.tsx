@@ -655,14 +655,65 @@ export default function CalendarPage() {
 		);
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-4 sm:space-y-6">
 			{/* Header */}
-			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-				<div>
-					<h1 className="text-2xl font-bold">Thời khóa biểu</h1>
-					<p className="text-muted-foreground">{student || user?.name || 'Sinh viên'}</p>
+			<div className="flex flex-col gap-4">
+				<div className="text-center sm:text-left">
+					<h1 className="text-xl sm:text-2xl font-bold">Thời khóa biểu</h1>
+					<p className="text-sm sm:text-base text-muted-foreground">
+						{student || user?.name || 'Sinh viên'}
+					</p>
 				</div>
-				<div className="flex items-center gap-2">
+
+				{/* Mobile Action Buttons */}
+				<div className="flex flex-col sm:hidden gap-2">
+					<div className="flex gap-2">
+						<Dialog open={showNotificationSettings} onOpenChange={setShowNotificationSettings}>
+							<DialogTrigger asChild>
+								<Button variant="outline" size="sm" className="flex-1">
+									<Bell className="w-4 h-4 mr-2" />
+									Thông báo
+								</Button>
+							</DialogTrigger>
+							<DialogContent className="max-w-md mx-4">
+								<DialogHeader>
+									<DialogTitle>Cài đặt thông báo</DialogTitle>
+								</DialogHeader>
+								<NotificationSettings />
+							</DialogContent>
+						</Dialog>
+						<Button
+							onClick={handleSync}
+							variant="outline"
+							size="sm"
+							className="flex-1"
+							disabled={loading || !data.signInToken}
+						>
+							<RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+							Đồng bộ
+						</Button>
+					</div>
+					<div className="flex gap-2">
+						<Button
+							onClick={handleExportCalendar}
+							variant="outline"
+							size="sm"
+							className="flex-1"
+							disabled={!student || !calendar || !calendar.data_subject?.length}
+						>
+							<Download className="w-4 h-4 mr-2" />
+							<span className="hidden xs:inline">Xuất Google Calendar</span>
+							<span className="xs:hidden">Xuất lịch</span>
+						</Button>
+						<Button onClick={handleLogout} variant="outline" size="sm" className="flex-1">
+							<LogOut className="w-4 h-4 mr-2" />
+							Đăng xuất
+						</Button>
+					</div>
+				</div>
+
+				{/* Desktop Action Buttons */}
+				<div className="hidden sm:flex items-center justify-end gap-2">
 					<Dialog open={showNotificationSettings} onOpenChange={setShowNotificationSettings}>
 						<DialogTrigger asChild>
 							<Button variant="outline" size="sm">
@@ -704,18 +755,18 @@ export default function CalendarPage() {
 
 			{/* Controls */}
 			<Card>
-				<CardContent className="p-4">
-					<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+				<CardContent className="p-3 sm:p-4">
+					<div className="flex flex-col gap-4">
 						{/* Semester Selection */}
-						<div className="flex items-center gap-2">
-							<span className="text-sm font-medium">Học kỳ:</span>
+						<div className="flex flex-col sm:flex-row sm:items-center gap-2">
+							<span className="text-sm font-medium whitespace-nowrap">Học kỳ:</span>
 							{data.semesters && data.semesters.semesters && (
 								<Select
 									value={data.semesters.currentSemester}
 									onValueChange={handleSemesterChange}
 									disabled={loading}
 								>
-									<SelectTrigger className="w-[200px]">
+									<SelectTrigger className="w-full sm:w-[200px]">
 										{loading ? (
 											<div className="flex items-center gap-2">
 												<LoadingSpinner size="sm" />
@@ -741,29 +792,35 @@ export default function CalendarPage() {
 							)}
 						</div>
 
-						{/* View Mode and Filters */}
-						<div className="flex items-center gap-2">
-							<div className="flex items-center gap-1 border rounded-md">
+						{/* View Mode Buttons */}
+						<div className="flex justify-center sm:justify-end">
+							<div className="flex items-center gap-1 border rounded-lg p-1 bg-muted/20">
 								<Button
 									variant={viewMode === 'calendar' ? 'default' : 'ghost'}
 									size="sm"
 									onClick={() => setViewMode('calendar')}
+									className="flex-1 sm:flex-none"
 								>
-									<Grid3X3 className="w-4 h-4" />
+									<Grid3X3 className="w-4 h-4 sm:mr-2" />
+									<span className="hidden sm:inline">Tuần</span>
 								</Button>
 								<Button
 									variant={viewMode === 'list' ? 'default' : 'ghost'}
 									size="sm"
 									onClick={() => setViewMode('list')}
+									className="flex-1 sm:flex-none"
 								>
-									<List className="w-4 h-4" />
+									<List className="w-4 h-4 sm:mr-2" />
+									<span className="hidden sm:inline">Danh sách</span>
 								</Button>
 								<Button
 									variant={viewMode === 'month' ? 'default' : 'ghost'}
 									size="sm"
 									onClick={() => setViewMode('month')}
+									className="flex-1 sm:flex-none"
 								>
-									<CalendarDays className="w-4 h-4" />
+									<CalendarDays className="w-4 h-4 sm:mr-2" />
+									<span className="hidden sm:inline">Tháng</span>
 								</Button>
 							</div>
 						</div>
@@ -782,7 +839,7 @@ export default function CalendarPage() {
 			{/* Week/Month Navigation */}
 			{hasRealScheduleData && (
 				<Card>
-					<CardContent className="p-4">
+					<CardContent className="p-3 sm:p-4">
 						{viewMode === 'month' ? (
 							/* Month Navigation */
 							<div className="flex items-center justify-between">
@@ -791,19 +848,20 @@ export default function CalendarPage() {
 									size="sm"
 									onClick={goToPreviousMonth}
 									disabled={isNavigationDisabled().prevDisabled}
+									className="flex-shrink-0"
 								>
-									<ChevronLeft className="w-4 h-4 mr-2" />
-									Tháng trước
+									<ChevronLeft className="w-4 h-4 sm:mr-2" />
+									<span className="hidden sm:inline">Tháng trước</span>
 								</Button>
 
-								<div className="text-center">
-									<p className="font-medium">
+								<div className="text-center flex-1 px-2">
+									<p className="font-medium text-sm sm:text-base">
 										{currentMonthDate.toLocaleDateString('vi-VN', {
 											month: 'long',
 											year: 'numeric'
 										})}
 									</p>
-									<p className="text-sm text-muted-foreground">Xem theo tháng</p>
+									<p className="text-xs sm:text-sm text-muted-foreground">Xem theo tháng</p>
 								</div>
 
 								<Button
@@ -811,9 +869,10 @@ export default function CalendarPage() {
 									size="sm"
 									onClick={goToNextMonth}
 									disabled={isNavigationDisabled().nextDisabled}
+									className="flex-shrink-0"
 								>
-									Tháng sau
-									<ChevronRight className="w-4 h-4 ml-2" />
+									<span className="hidden sm:inline">Tháng sau</span>
+									<ChevronRight className="w-4 h-4 sm:ml-2" />
 								</Button>
 							</div>
 						) : (
@@ -824,13 +883,14 @@ export default function CalendarPage() {
 									size="sm"
 									onClick={() => updateCurrentWeek(currentWeekIndex - 1)}
 									disabled={!data.calendar.weeks || currentWeekIndex === 0}
+									className="flex-shrink-0"
 								>
-									<ChevronLeft className="w-4 h-4 mr-2" />
-									Tuần trước
+									<ChevronLeft className="w-4 h-4 sm:mr-2" />
+									<span className="hidden sm:inline">Tuần trước</span>
 								</Button>
 
-								<div className="text-center">
-									<p className="font-medium">
+								<div className="text-center flex-1 px-2">
+									<p className="font-medium text-sm sm:text-base">
 										{data.calendar.weeks && data.calendar.weeks.length > 0 ? (
 											<>
 												Tuần {currentWeekIndex + 1} / {data.calendar.weeks.length}
@@ -840,7 +900,7 @@ export default function CalendarPage() {
 										)}
 									</p>
 									{currentWeek && currentWeek.length > 0 && (
-										<p className="text-sm text-muted-foreground">
+										<p className="text-xs sm:text-sm text-muted-foreground">
 											{formatDate(currentWeek[0].time)} -{' '}
 											{formatDate(currentWeek[currentWeek.length - 1].time)}
 										</p>
@@ -854,9 +914,10 @@ export default function CalendarPage() {
 									disabled={
 										!data.calendar.weeks || currentWeekIndex === data.calendar.weeks.length - 1
 									}
+									className="flex-shrink-0"
 								>
-									Tuần sau
-									<ChevronRight className="w-4 h-4 ml-2" />
+									<span className="hidden sm:inline">Tuần sau</span>
+									<ChevronRight className="w-4 h-4 sm:ml-2" />
 								</Button>
 							</div>
 						)}
@@ -960,27 +1021,34 @@ export default function CalendarPage() {
 
 						{/* Mobile/Tablet Layout - Compact Cards */}
 						<div className="lg:hidden">
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								{currentWeek.map((day: any, dayIndex: number) => (
-									<Card key={dayIndex} className="min-h-[200px]">
-										<CardContent className="p-4">
-											<div className="text-center mb-4">
-												<p className="font-semibold text-sm">
-													{getDayName(new Date(day.time).getDay())}
-												</p>
-												<p className="text-xs text-muted-foreground">
-													{formatDate(day.time, 'DD/MM')}
-												</p>
-											</div>
-											<div className="space-y-3">
-												{day.shift && day.shift.length > 0 ? (
-													day.shift
-														.map((subject: any, shiftIndex: number) => ({
-															...subject,
-															shiftNumber: shiftIndex + 1
-														}))
-														.filter((subject: any) => subject.name)
-														.map((subject: any, subjectIndex: number) => {
+							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+								{currentWeek.map((day: any, dayIndex: number) => {
+									const daySubjects = day.shift
+										? day.shift
+												.map((subject: any, shiftIndex: number) => ({
+													...subject,
+													shiftNumber: shiftIndex + 1
+												}))
+												.filter((subject: any) => subject.name)
+										: [];
+
+									return (
+										<Card key={dayIndex} className="min-h-[180px] sm:min-h-[200px] overflow-hidden">
+											<CardContent className="p-3 sm:p-4">
+												{/* Day Header */}
+												<div className="text-center mb-3 sm:mb-4 pb-2 border-b border-border/50">
+													<p className="font-semibold text-sm sm:text-base">
+														{getDayName(new Date(day.time).getDay())}
+													</p>
+													<p className="text-xs sm:text-sm text-muted-foreground">
+														{formatDate(day.time, 'DD/MM')}
+													</p>
+												</div>
+
+												{/* Subjects */}
+												<div className="space-y-2 sm:space-y-3">
+													{daySubjects.length > 0 ? (
+														daySubjects.map((subject: any, subjectIndex: number) => {
 															const shiftDisplay = formatShiftDisplay(
 																subject.shiftNumber,
 																subject.length || 1
@@ -993,37 +1061,48 @@ export default function CalendarPage() {
 															return (
 																<div
 																	key={subjectIndex}
-																	className="p-3 rounded-lg border bg-card text-card-foreground"
+																	className="p-3 rounded-lg border bg-muted/20 hover:bg-muted/30 transition-colors touch-manipulation"
 																>
-																	<div className="flex items-center gap-2 mb-2">
-																		<Badge variant="default" className="text-xs px-2 py-1">
+																	{/* Time and Badge */}
+																	<div className="flex items-center justify-between mb-2">
+																		<Badge
+																			variant="default"
+																			className="text-xs px-2 py-1 font-medium"
+																		>
 																			{shiftDisplay}
 																		</Badge>
 																		<span className="text-xs text-muted-foreground font-mono">
 																			{timeDisplay}
 																		</span>
 																	</div>
-																	<p className="font-medium text-sm mb-2 line-clamp-2">
+
+																	{/* Subject Name */}
+																	<p className="font-medium text-sm mb-2 line-clamp-2 leading-relaxed">
 																		{subject.name}
 																	</p>
+
+																	{/* Location */}
 																	{subject.address && (
 																		<div className="flex items-center gap-1 text-xs text-muted-foreground">
-																			<MapPin className="w-3 h-3" />
+																			<MapPin className="w-3 h-3 flex-shrink-0" />
 																			<span className="truncate">{subject.address}</span>
 																		</div>
 																	)}
 																</div>
 															);
 														})
-												) : (
-													<div className="text-center py-6">
-														<p className="text-xs text-muted-foreground">Không có lịch học</p>
-													</div>
-												)}
-											</div>
-										</CardContent>
-									</Card>
-								))}
+													) : (
+														<div className="text-center py-8">
+															<p className="text-xs sm:text-sm text-muted-foreground">
+																Không có lịch học
+															</p>
+														</div>
+													)}
+												</div>
+											</CardContent>
+										</Card>
+									);
+								})}
 							</div>
 						</div>
 					</div>
@@ -1041,7 +1120,7 @@ export default function CalendarPage() {
 
 			{/* List View */}
 			{viewMode === 'list' && (
-				<div className="space-y-4">
+				<div className="space-y-3 sm:space-y-4">
 					{getFilteredSubjects().length > 0 ? (
 						getFilteredSubjects().map((subject: any, index: number) => {
 							const shiftDisplay = formatShiftDisplay(subject.shiftNumber, subject.length || 1);
@@ -1049,9 +1128,56 @@ export default function CalendarPage() {
 							const dayOfWeek = new Date(subject.dayTime).getDay();
 
 							return (
-								<Card key={index} className="hover:shadow-md transition-shadow">
-									<CardContent className="p-4">
-										<div className="flex flex-col lg:flex-row lg:items-center gap-4">
+								<Card key={index} className="hover:shadow-md transition-shadow touch-manipulation">
+									<CardContent className="p-3 sm:p-4">
+										{/* Mobile Layout */}
+										<div className="sm:hidden">
+											{/* Header with day and time */}
+											<div className="flex items-center justify-between mb-3 pb-2 border-b border-border/50">
+												<div className="flex items-center gap-2">
+													<CalendarIcon className="w-4 h-4 text-primary" />
+													<span className="font-semibold text-primary text-sm">
+														{getDayName(dayOfWeek)}
+													</span>
+												</div>
+												<Badge variant="default" className="text-xs px-2 py-1">
+													{shiftDisplay}
+												</Badge>
+											</div>
+
+											{/* Subject name */}
+											<div className="flex items-start gap-2 mb-3">
+												<BookOpen className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+												<h3 className="font-semibold text-base leading-tight">{subject.name}</h3>
+											</div>
+
+											{/* Time */}
+											<div className="text-sm text-muted-foreground font-mono mb-2">
+												{timeDisplay}
+											</div>
+
+											{/* Details */}
+											<div className="space-y-2 text-sm">
+												{/* Location */}
+												<div className="flex items-center gap-2">
+													<MapPin className="w-4 h-4 text-orange-600 flex-shrink-0" />
+													<span className="truncate">
+														{subject.address || 'Chưa có thông tin phòng'}
+													</span>
+												</div>
+
+												{/* Instructor */}
+												<div className="flex items-center gap-2">
+													<User className="w-4 h-4 text-green-600 flex-shrink-0" />
+													<span className="truncate">
+														{subject.instructor || 'Chưa có thông tin GV'}
+													</span>
+												</div>
+											</div>
+										</div>
+
+										{/* Desktop/Tablet Layout */}
+										<div className="hidden sm:flex sm:items-center gap-4">
 											{/* Time Info */}
 											<div className="flex-shrink-0 lg:w-48">
 												<div className="flex items-center gap-2 mb-1">
@@ -1072,7 +1198,7 @@ export default function CalendarPage() {
 													<h3 className="font-semibold text-lg truncate">{subject.name}</h3>
 												</div>
 
-												<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+												<div className="grid grid-cols-1 lg:grid-cols-2 gap-3 text-sm">
 													{/* Location */}
 													<div className="flex items-center gap-2">
 														<MapPin className="w-4 h-4 text-orange-600 flex-shrink-0" />
@@ -1104,7 +1230,7 @@ export default function CalendarPage() {
 						})
 					) : (
 						<Card>
-							<CardContent className="p-8 text-center">
+							<CardContent className="p-6 sm:p-8 text-center">
 								<EmptyState
 									icon={CalendarIcon}
 									title="Không có lịch học"

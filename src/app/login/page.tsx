@@ -103,24 +103,28 @@ export default function LoginPage() {
 	}
 
 	return (
-		<div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted/20">
-			<div className="w-full max-w-md space-y-6">
+		<div className="min-h-screen flex items-center justify-center p-3 sm:p-4 bg-gradient-to-br from-background to-muted/20">
+			<div className="w-full max-w-md space-y-4 sm:space-y-6">
 				{/* Header */}
 				<div className="text-center space-y-2">
-					<h1 className="text-3xl font-bold">ACTVN Schedule</h1>
-					<p className="text-muted-foreground">Đăng nhập để xem thời khóa biểu của bạn</p>
+					<h1 className="text-2xl sm:text-3xl font-bold">ACTVN Schedule</h1>
+					<p className="text-sm sm:text-base text-muted-foreground">
+						Đăng nhập để xem thời khóa biểu của bạn
+					</p>
 				</div>
 
 				{/* Login Form */}
 				<Card>
-					<CardHeader>
-						<CardTitle className="flex items-center gap-2">
+					<CardHeader className="pb-4 sm:pb-6">
+						<CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
 							<User className="h-5 w-5" />
 							Đăng nhập
 						</CardTitle>
-						<CardDescription>Sử dụng tài khoản ACTVN của bạn để đăng nhập</CardDescription>
+						<CardDescription className="text-sm">
+							Sử dụng tài khoản ACTVN của bạn để đăng nhập
+						</CardDescription>
 					</CardHeader>
-					<CardContent>
+					<CardContent className="pt-0">
 						<Form {...loginForm}>
 							<form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
 								<FormField
@@ -128,12 +132,13 @@ export default function LoginPage() {
 									name="username"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>Tên đăng nhập</FormLabel>
+											<FormLabel className="text-sm font-medium">Tên đăng nhập</FormLabel>
 											<FormControl>
 												<Input
 													{...field}
 													placeholder="Nhập tên đăng nhập"
 													disabled={loginForm.formState.isSubmitting}
+													className="h-11 text-base"
 												/>
 											</FormControl>
 											<FormMessage />
@@ -146,13 +151,14 @@ export default function LoginPage() {
 									name="password"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>Mật khẩu</FormLabel>
+											<FormLabel className="text-sm font-medium">Mật khẩu</FormLabel>
 											<FormControl>
 												<Input
 													{...field}
 													type="password"
 													placeholder="Nhập mật khẩu"
 													disabled={loginForm.formState.isSubmitting}
+													className="h-11 text-base"
 												/>
 											</FormControl>
 											<FormMessage />
@@ -162,7 +168,7 @@ export default function LoginPage() {
 
 								<Button
 									type="submit"
-									className="w-full"
+									className="w-full h-11 text-base font-medium"
 									disabled={loginForm.formState.isSubmitting}
 								>
 									{loginForm.formState.isSubmitting ? (
@@ -192,7 +198,7 @@ export default function LoginPage() {
 
 					<Button
 						variant="outline"
-						className="w-full"
+						className="w-full h-11 text-base font-medium"
 						onClick={() => setShowManualInput(!showManualInput)}
 					>
 						<FileText className="mr-2 h-4 w-4" />
@@ -203,14 +209,16 @@ export default function LoginPage() {
 				{/* Manual Input Form */}
 				{showManualInput && (
 					<Card>
-						<CardHeader>
-							<CardTitle className="flex items-center gap-2">
+						<CardHeader className="pb-4 sm:pb-6">
+							<CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
 								<FileText className="h-5 w-5" />
 								Nhập dữ liệu thủ công
 							</CardTitle>
-							<CardDescription>Dán nội dung HTML từ trang thời khóa biểu ACTVN</CardDescription>
+							<CardDescription className="text-sm">
+								Dán nội dung HTML từ trang thời khóa biểu ACTVN
+							</CardDescription>
 						</CardHeader>
-						<CardContent>
+						<CardContent className="pt-0">
 							<Form {...responseForm}>
 								<form
 									onSubmit={responseForm.handleSubmit(handleManualResponse)}
@@ -221,12 +229,12 @@ export default function LoginPage() {
 										name="userResponse"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel>Nội dung HTML</FormLabel>
+												<FormLabel className="text-sm font-medium">Nội dung HTML</FormLabel>
 												<FormControl>
 													<Textarea
 														{...field}
 														placeholder="Dán nội dung HTML từ trang thời khóa biểu..."
-														className="min-h-[120px] font-mono text-sm"
+														className="min-h-[120px] sm:min-h-[140px] font-mono text-sm resize-none"
 														disabled={responseForm.formState.isSubmitting}
 													/>
 												</FormControl>
@@ -237,7 +245,7 @@ export default function LoginPage() {
 
 									<Button
 										type="submit"
-										className="w-full"
+										className="w-full h-11 text-base font-medium"
 										disabled={responseForm.formState.isSubmitting}
 									>
 										{responseForm.formState.isSubmitting ? (
@@ -251,13 +259,13 @@ export default function LoginPage() {
 
 							<Alert className="mt-4">
 								<AlertCircle className="h-4 w-4" />
-								<AlertDescription>
+								<AlertDescription className="text-sm leading-relaxed">
 									<strong>Hướng dẫn:</strong> Truy cập{' '}
 									<a
 										href="https://actvn.edu.vn"
 										target="_blank"
 										rel="noopener noreferrer"
-										className="underline inline-flex items-center gap-1"
+										className="underline inline-flex items-center gap-1 text-primary"
 									>
 										trang ACTVN
 										<ExternalLink className="h-3 w-3" />

@@ -25,6 +25,74 @@
 		--ring: 212.7 26.8% 83.9%;
 		--radius: 0.5rem;
 	}
+
+	/* Mobile-optimized base styles */
+	* {
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	html {
+		-webkit-text-size-adjust: 100%;
+		-ms-text-size-adjust: 100%;
+	}
+
+	body {
+		font-feature-settings:
+			'rlig' 1,
+			'calt' 1;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	/* Improve touch targets on mobile */
+	@media (max-width: 768px) {
+		button,
+		[role='button'],
+		input[type='submit'],
+		input[type='button'],
+		input[type='reset'] {
+			min-height: 44px;
+			min-width: 44px;
+		}
+	}
+}
+
+@layer utilities {
+	/* Mobile-specific utilities */
+	.touch-manipulation {
+		touch-action: manipulation;
+	}
+
+	.line-clamp-2 {
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.line-clamp-3 {
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	/* Safe area insets for mobile devices */
+	.safe-top {
+		padding-top: env(safe-area-inset-top);
+	}
+
+	.safe-bottom {
+		padding-bottom: env(safe-area-inset-bottom);
+	}
+
+	.safe-left {
+		padding-left: env(safe-area-inset-left);
+	}
+
+	.safe-right {
+		padding-right: env(safe-area-inset-right);
+	}
 }
 
 @layer base {
