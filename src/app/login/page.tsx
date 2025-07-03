@@ -67,7 +67,7 @@ export default function LoginPage() {
 			setIsRedirecting(true);
 			toast({
 				title: 'Đăng nhập thành công!',
-				description: 'Chào mừng bạn quay trở lại. Đang chuyển hướng...'
+				description: 'Chào mừng bạn quay trở lại'
 			});
 			// Small delay to show the toast before redirecting
 			setTimeout(() => {
@@ -82,7 +82,7 @@ export default function LoginPage() {
 			setIsRedirecting(true);
 			toast({
 				title: 'Xử lý dữ liệu thành công!',
-				description: 'Dữ liệu đã được xử lý thành công. Đang chuyển hướng...'
+				description: 'Dữ liệu đã được xử lý thành công'
 			});
 			// Small delay to show the toast before redirecting
 			setTimeout(() => {

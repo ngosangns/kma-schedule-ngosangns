@@ -5,30 +5,14 @@ import { Calendar, Plus, Bug, Zap, Palette, Shield } from 'lucide-react';
 
 const changelogs = [
 	{
-		version: 'v2024.01',
-		date: '2024-01-15',
+		version: 'v2025.07',
+		date: '2025-07-01',
 		type: 'major',
-		title: 'Tái thiết kế hoàn toàn với shadcn/ui',
+		title: 'Nâng cấp giao diện',
 		changes: [
 			{
 				type: 'feature',
 				description: 'Giao diện mới với shadcn/ui components'
-			},
-			{
-				type: 'feature',
-				description: 'Responsive design tối ưu cho mobile'
-			},
-			{
-				type: 'feature',
-				description: 'Dark mode mặc định'
-			},
-			{
-				type: 'feature',
-				description: 'Form validation với react-hook-form và zod'
-			},
-			{
-				type: 'feature',
-				description: 'State management với React Context'
 			},
 			{
 				type: 'improvement',
@@ -37,6 +21,10 @@ const changelogs = [
 			{
 				type: 'improvement',
 				description: 'Better error handling và user feedback'
+			},
+			{
+				type: 'feature',
+				description: 'Thêm chế độ xem tháng (Month View)'
 			}
 		]
 	},
