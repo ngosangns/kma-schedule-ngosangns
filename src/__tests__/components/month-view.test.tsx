@@ -302,4 +302,121 @@ describe('Month View Logic', () => {
 			expect(totalDays).toBe(42);
 		});
 	});
+
+	describe('Month Navigation Limits', () => {
+		const mockCalendarWithDateRange = {
+			weeks: [
+				[
+					{
+						time: new Date('2024-01-15').getTime(),
+						shift: [
+							null,
+							null,
+							{ name: 'Toán học', address: 'Phòng 101', instructor: 'GV A' },
+							null
+						]
+					}
+				],
+				[
+					{
+						time: new Date('2024-03-20').getTime(),
+						shift: [null, { name: 'Vật lý', address: 'Phòng 102', instructor: 'GV B' }, null, null]
+					}
+				]
+			]
+		};
+
+		const getStudyDateRange = (calendarData: any) => {
+			if (!calendarData || !calendarData.weeks) return { firstDate: null, lastDate: null };
+
+			let firstDate: Date | null = null;
+			let lastDate: Date | null = null;
+
+			calendarData.weeks.forEach((week: any) => {
+				if (Array.isArray(week)) {
+					week.forEach((day: any) => {
+						if (day && day.time && day.shift) {
+							const hasSubjects = day.shift.some((subject: any) => subject && subject.name);
+							if (hasSubjects) {
+								const dayDate = new Date(day.time);
+								if (!firstDate || dayDate < firstDate) {
+									firstDate = dayDate;
+								}
+								if (!lastDate || dayDate > lastDate) {
+									lastDate = dayDate;
+								}
+							}
+						}
+					});
+				}
+			});
+
+			return { firstDate, lastDate };
+		};
+
+		const isNavigationDisabled = (currentMonthDate: Date, calendarData: any) => {
+			const { firstDate, lastDate } = getStudyDateRange(calendarData);
+			if (!firstDate || !lastDate) return { prevDisabled: true, nextDisabled: true };
+
+			const currentMonth = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), 1);
+			const firstStudyMonth = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1);
+			const lastStudyMonth = new Date(lastDate.getFullYear(), lastDate.getMonth(), 1);
+
+			return {
+				prevDisabled: currentMonth.getTime() <= firstStudyMonth.getTime(),
+				nextDisabled: currentMonth.getTime() >= lastStudyMonth.getTime()
+			};
+		};
+
+		it('should correctly identify study date range', () => {
+			const { firstDate, lastDate } = getStudyDateRange(mockCalendarWithDateRange);
+
+			expect(firstDate).not.toBeNull();
+			expect(lastDate).not.toBeNull();
+			expect(firstDate!.getTime()).toBe(new Date('2024-01-15').getTime());
+			expect(lastDate!.getTime()).toBe(new Date('2024-03-20').getTime());
+		});
+
+		it('should disable previous navigation when at first study month', () => {
+			const currentMonth = new Date(2024, 0, 1); // January 2024
+			const { prevDisabled, nextDisabled } = isNavigationDisabled(
+				currentMonth,
+				mockCalendarWithDateRange
+			);
+
+			expect(prevDisabled).toBe(true);
+			expect(nextDisabled).toBe(false);
+		});
+
+		it('should disable next navigation when at last study month', () => {
+			const currentMonth = new Date(2024, 2, 1); // March 2024
+			const { prevDisabled, nextDisabled } = isNavigationDisabled(
+				currentMonth,
+				mockCalendarWithDateRange
+			);
+
+			expect(prevDisabled).toBe(false);
+			expect(nextDisabled).toBe(true);
+		});
+
+		it('should enable both navigation when in middle month', () => {
+			const currentMonth = new Date(2024, 1, 1); // February 2024
+			const { prevDisabled, nextDisabled } = isNavigationDisabled(
+				currentMonth,
+				mockCalendarWithDateRange
+			);
+
+			expect(prevDisabled).toBe(false);
+			expect(nextDisabled).toBe(false);
+		});
+
+		it('should disable both navigation when no study data', () => {
+			const currentMonth = new Date(2024, 1, 1);
+			const emptyCalendar = { weeks: [] };
+			const { prevDisabled, nextDisabled } = isNavigationDisabled(currentMonth, emptyCalendar);
+
+			expect(prevDisabled).toBe(true);
+			expect(nextDisabled).toBe(true);
+		});
+	});
 });

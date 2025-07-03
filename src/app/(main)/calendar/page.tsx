@@ -379,17 +379,48 @@ export default function CalendarPage() {
 		return { firstDate, lastDate };
 	};
 
-	// Month navigation functions
+	// Month navigation functions with study date range limits
 	const goToPreviousMonth = () => {
+		const { firstDate } = getStudyDateRange();
+		if (!firstDate) return;
+
 		const newDate = new Date(currentMonthDate);
 		newDate.setMonth(newDate.getMonth() - 1);
-		setCurrentMonthDate(newDate);
+
+		// Check if new month is before first study month
+		const firstStudyMonth = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1);
+		if (newDate.getTime() >= firstStudyMonth.getTime()) {
+			setCurrentMonthDate(newDate);
+		}
 	};
 
 	const goToNextMonth = () => {
+		const { lastDate } = getStudyDateRange();
+		if (!lastDate) return;
+
 		const newDate = new Date(currentMonthDate);
 		newDate.setMonth(newDate.getMonth() + 1);
-		setCurrentMonthDate(newDate);
+
+		// Check if new month is after last study month
+		const lastStudyMonth = new Date(lastDate.getFullYear(), lastDate.getMonth(), 1);
+		if (newDate.getTime() <= lastStudyMonth.getTime()) {
+			setCurrentMonthDate(newDate);
+		}
+	};
+
+	// Check if navigation buttons should be disabled
+	const isNavigationDisabled = () => {
+		const { firstDate, lastDate } = getStudyDateRange();
+		if (!firstDate || !lastDate) return { prevDisabled: true, nextDisabled: true };
+
+		const currentMonth = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), 1);
+		const firstStudyMonth = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1);
+		const lastStudyMonth = new Date(lastDate.getFullYear(), lastDate.getMonth(), 1);
+
+		return {
+			prevDisabled: currentMonth.getTime() <= firstStudyMonth.getTime(),
+			nextDisabled: currentMonth.getTime() >= lastStudyMonth.getTime()
+		};
 	};
 
 	// Auto-adjust month when switching to month view
@@ -628,7 +659,12 @@ export default function CalendarPage() {
 						{viewMode === 'month' ? (
 							/* Month Navigation */
 							<div className="flex items-center justify-between">
-								<Button variant="outline" size="sm" onClick={goToPreviousMonth}>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={goToPreviousMonth}
+									disabled={isNavigationDisabled().prevDisabled}
+								>
 									<ChevronLeft className="w-4 h-4 mr-2" />
 									Tháng trước
 								</Button>
@@ -643,7 +679,12 @@ export default function CalendarPage() {
 									<p className="text-sm text-muted-foreground">Xem theo tháng</p>
 								</div>
 
-								<Button variant="outline" size="sm" onClick={goToNextMonth}>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={goToNextMonth}
+									disabled={isNavigationDisabled().nextDisabled}
+								>
 									Tháng sau
 									<ChevronRight className="w-4 h-4 ml-2" />
 								</Button>
