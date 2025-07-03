@@ -22,6 +22,7 @@ import {
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { AlertCircle, ExternalLink, User, Lock, FileText } from 'lucide-react';
 import { useCalendarData } from '@/hooks/use-calendar-data';
+import { useToast } from '@/hooks/use-toast';
 
 // Form validation schemas
 const loginSchema = z.object({
@@ -39,7 +40,9 @@ type ResponseFormData = z.infer<typeof responseSchema>;
 export default function LoginPage() {
 	const router = useRouter();
 	const { loginWithCredentials, processManualData } = useCalendarData();
+	const { toast } = useToast();
 	const [showManualInput, setShowManualInput] = useState(false);
+	const [isRedirecting, setIsRedirecting] = useState(false);
 
 	// Login form
 	const loginForm = useForm<LoginFormData>({
@@ -59,18 +62,45 @@ export default function LoginPage() {
 	});
 
 	const handleLogin = async (data: LoginFormData) => {
-		const result = await loginWithCredentials(data.username, data.password);
+		const result = await loginWithCredentials(data.username, data.password, false); // Don't set global loading
 		if (result.success) {
-			router.push('/calendar');
+			setIsRedirecting(true);
+			toast({
+				title: 'Đăng nhập thành công!',
+				description: 'Chào mừng bạn quay trở lại. Đang chuyển hướng...'
+			});
+			// Small delay to show the toast before redirecting
+			setTimeout(() => {
+				router.push('/calendar');
+			}, 1000);
 		}
 	};
 
 	const handleManualResponse = async (data: ResponseFormData) => {
 		const result = await processManualData(data.userResponse);
 		if (result.success) {
-			router.push('/calendar');
+			setIsRedirecting(true);
+			toast({
+				title: 'Xử lý dữ liệu thành công!',
+				description: 'Dữ liệu đã được xử lý thành công. Đang chuyển hướng...'
+			});
+			// Small delay to show the toast before redirecting
+			setTimeout(() => {
+				router.push('/calendar');
+			}, 1000);
 		}
 	};
+
+	if (isRedirecting) {
+		return (
+			<div className="min-h-screen flex items-center justify-center bg-background">
+				<div className="flex flex-col items-center space-y-4">
+					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+					<p className="text-sm text-muted-foreground">Đang chuyển hướng...</p>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted/20">

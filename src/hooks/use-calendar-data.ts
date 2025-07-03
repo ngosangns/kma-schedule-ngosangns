@@ -22,8 +22,10 @@ export function useCalendarData() {
 	const [isProcessing, setIsProcessing] = useState(false);
 
 	const loginWithCredentials = useCallback(
-		async (username: string, password: string) => {
-			setLoading();
+		async (username: string, password: string, setGlobalLoading: boolean = true) => {
+			if (setGlobalLoading) {
+				setLoading();
+			}
 
 			try {
 				const signInToken = await loginUser(username, password);
@@ -50,12 +52,16 @@ export function useCalendarData() {
 				setCalendar(calendar as any);
 				setStudent(student);
 
-				showSuccess('Đăng nhập thành công!');
+				if (setGlobalLoading) {
+					showSuccess('Đăng nhập thành công!');
+				}
 				return { success: true, data: { calendar, student, mainForm, semesters } };
 			} catch (error) {
 				console.error('Login error:', error);
 				const errorMessage = getErrorMessage(error);
-				setError(errorMessage);
+				if (setGlobalLoading) {
+					setError(errorMessage);
+				}
 				showError('Đăng nhập thất bại', errorMessage);
 				logoutUser();
 				return { success: false, error: errorMessage };

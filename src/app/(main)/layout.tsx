@@ -7,7 +7,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 			<Header />
 
 			<main
-				className="flex-1 container mx-auto px-4 py-6 max-w-7xl"
+				className="flex-1 container mx-auto px-4 py-6 max-w-7xl pt-20"
 				tabIndex={-1}
 				role="main"
 				aria-label="Main content"

@@ -114,21 +114,22 @@ export function getErrorMessage(error: unknown): string {
 // Schedule utilities
 export function getShiftTime(shift: number): { start: string; end: string } {
 	const shifts = {
-		1: { start: '07:00', end: '07:50' },
-		2: { start: '08:00', end: '08:50' },
-		3: { start: '09:00', end: '09:50' },
-		4: { start: '10:00', end: '10:50' },
-		5: { start: '11:00', end: '11:50' },
-		6: { start: '12:00', end: '12:50' },
-		7: { start: '13:00', end: '13:50' },
-		8: { start: '14:00', end: '14:50' },
-		9: { start: '15:00', end: '15:50' },
-		10: { start: '16:00', end: '16:50' },
-		11: { start: '17:00', end: '17:50' },
-		12: { start: '18:00', end: '18:50' },
-		13: { start: '19:00', end: '19:50' },
-		14: { start: '20:00', end: '20:50' },
-		15: { start: '21:00', end: '21:50' }
+		1: { start: '07:00', end: '07:45' },
+		2: { start: '07:50', end: '08:35' },
+		3: { start: '08:40', end: '09:25' },
+		4: { start: '09:35', end: '10:20' },
+		5: { start: '10:25', end: '11:10' },
+		6: { start: '11:15', end: '12:00' },
+		7: { start: '12:30', end: '13:15' },
+		8: { start: '13:20', end: '14:05' },
+		9: { start: '14:10', end: '14:55' },
+		10: { start: '15:05', end: '15:50' },
+		11: { start: '15:55', end: '16:40' },
+		12: { start: '16:45', end: '17:30' },
+		13: { start: '18:00', end: '18:45' },
+		14: { start: '18:45', end: '19:30' },
+		15: { start: '19:45', end: '20:30' },
+		16: { start: '20:30', end: '21:15' }
 	};
 
 	return shifts[shift as keyof typeof shifts] || { start: '00:00', end: '00:00' };

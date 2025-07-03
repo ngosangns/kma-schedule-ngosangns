@@ -65,7 +65,7 @@ export default function AboutPage() {
 								</div>
 								<div>
 									<p className="font-medium">ngosangns</p>
-									<p className="text-sm text-muted-foreground">Lead Developer</p>
+									<p className="text-sm text-muted-foreground">Developer</p>
 								</div>
 							</div>
 						</div>

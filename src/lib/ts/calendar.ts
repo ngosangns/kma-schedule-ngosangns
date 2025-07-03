@@ -177,8 +177,22 @@ export function processSemesters(response: string): {
 		}
 	}
 
+	// Sort semesters by year and semester number (most recent first)
+	semesters.sort((a, b) => {
+		const yearA = parseInt(a.to);
+		const yearB = parseInt(b.to);
+		if (yearA !== yearB) {
+			return yearB - yearA; // Newer year first
+		}
+		// If same year, sort by semester number (2 before 1)
+		return parseInt(b.th) - parseInt(a.th);
+	});
+
+	// Take only the 10 most recent semesters
+	const recentSemesters = semesters;
+
 	return {
-		semesters: semesters,
+		semesters: recentSemesters,
 		currentSemester: currentSemester
 	};
 }

@@ -12,16 +12,10 @@ import {
 	SelectTrigger,
 	SelectValue
 } from '@/components/ui/select';
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow
-} from '@/components/ui/table';
+
 import { LoadingSpinner, PageLoader } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
 	Download,
 	LogOut,
@@ -31,12 +25,16 @@ import {
 	MapPin,
 	BookOpen,
 	Grid3X3,
-	List
+	List,
+	CalendarDays,
+	User,
+	RefreshCw
 } from 'lucide-react';
 import { useAuth, useCalendar } from '@/contexts/AppContext';
 import { useNotifications } from '@/hooks/use-notifications';
 import { loadData, saveData } from '@/lib/ts/storage';
 import {
+	fetchCalendarWithGet,
 	fetchCalendarWithPost,
 	processCalendar,
 	processMainForm,
@@ -48,14 +46,13 @@ import {
 import { logout } from '@/lib/ts/user';
 import {
 	formatDate,
-	getShiftSession,
 	getDayName,
 	formatSemesterName,
 	formatShiftDisplay,
 	formatTimeDisplay
 } from '@/lib/utils';
 
-type ViewMode = 'calendar' | 'list' | 'agenda';
+type ViewMode = 'calendar' | 'list' | 'month';
 
 export default function CalendarPage() {
 	const router = useRouter();
@@ -65,9 +62,9 @@ export default function CalendarPage() {
 
 	const [loading, setLoading] = useState(false);
 	const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
+	const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
 	const [currentWeek, setCurrentWeek] = useState<any[]>([]);
 	const [viewMode, setViewMode] = useState<ViewMode>('calendar');
-	const [selectedSession, setSelectedSession] = useState<string>('all');
 
 	// Tạo function để generate tuần trống
 	const generateEmptyWeeks = (startWeekOffset = 0, numWeeks = 4) => {
@@ -250,6 +247,62 @@ export default function CalendarPage() {
 		}
 	};
 
+	const handleSync = async () => {
+		if (!data.signInToken) {
+			showError('Lỗi đồng bộ', 'Không tìm thấy thông tin đăng nhập');
+			return;
+		}
+
+		setLoading(true);
+
+		try {
+			// Fetch fresh data from server
+			const response = await fetchCalendarWithGet(data.signInToken);
+			const filteredResponse = filterTrashInHtml(response);
+			const newCalendar = await processCalendar(filteredResponse);
+			const newStudent = processStudent(filteredResponse);
+			const newMainForm = processMainForm(filteredResponse);
+			const newSemesters = processSemesters(filteredResponse);
+
+			// Validate the new data
+			if (!newCalendar) {
+				throw new Error('Dữ liệu lịch học không hợp lệ');
+			}
+
+			// Update the data
+			const newData = {
+				...data,
+				calendar: newCalendar,
+				student: newStudent,
+				mainForm: newMainForm,
+				semesters: newSemesters
+			};
+
+			setData(newData);
+			setCalendar(newCalendar as any);
+			setStudent(newStudent);
+			saveData({
+				signInToken: data.signInToken || undefined,
+				mainForm: newMainForm,
+				semesters: newSemesters,
+				calendar: newCalendar,
+				student: newStudent
+			});
+
+			// Maintain current week position if possible
+			updateCurrentWeek(currentWeekIndex, newCalendar);
+
+			showSuccess('Đã đồng bộ dữ liệu thành công!');
+		} catch (error) {
+			console.error('Sync error:', error);
+			const errorMessage =
+				error instanceof Error ? error.message : 'Có lỗi xảy ra khi đồng bộ dữ liệu!';
+			showError('Đồng bộ thất bại', errorMessage);
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	const handleLogout = () => {
 		logout();
 		authLogout();
@@ -284,17 +337,150 @@ export default function CalendarPage() {
 			}
 		});
 
-		if (selectedSession !== 'all') {
-			subjects = subjects.filter((subject) => {
-				const session = getShiftSession(subject.shiftNumber);
-				return session === selectedSession;
-			});
-		}
-
 		return subjects.sort((a, b) => {
 			if (a.day !== b.day) return a.day - b.day;
 			return a.shift - b.shift;
 		});
+	};
+
+	// Get first and last study dates from calendar data
+	const getStudyDateRange = () => {
+		if (!data.calendar || !data.calendar.weeks) return { firstDate: null, lastDate: null };
+
+		let firstDate: Date | null = null;
+		let lastDate: Date | null = null;
+
+		data.calendar.weeks.forEach((week: any) => {
+			if (Array.isArray(week)) {
+				week.forEach((day: any) => {
+					if (day && day.time && day.shift) {
+						const hasSubjects = day.shift.some((subject: any) => subject && subject.name);
+						if (hasSubjects) {
+							const dayDate = new Date(day.time);
+							if (!firstDate || dayDate < firstDate) {
+								firstDate = dayDate;
+							}
+							if (!lastDate || dayDate > lastDate) {
+								lastDate = dayDate;
+							}
+						}
+					}
+				});
+			}
+		});
+
+		return { firstDate, lastDate };
+	};
+
+	// Month navigation functions
+	const goToPreviousMonth = () => {
+		const newDate = new Date(currentMonthDate);
+		newDate.setMonth(newDate.getMonth() - 1);
+		setCurrentMonthDate(newDate);
+	};
+
+	const goToNextMonth = () => {
+		const newDate = new Date(currentMonthDate);
+		newDate.setMonth(newDate.getMonth() + 1);
+		setCurrentMonthDate(newDate);
+	};
+
+	// Auto-adjust month when switching to month view
+	useEffect(() => {
+		if (viewMode === 'month') {
+			const { firstDate, lastDate } = getStudyDateRange();
+			const today = new Date();
+
+			if (firstDate && today.getTime() < (firstDate as Date).getTime()) {
+				// If current date is before first study date, go to first study month
+				setCurrentMonthDate(
+					new Date((firstDate as Date).getFullYear(), (firstDate as Date).getMonth(), 1)
+				);
+			} else if (lastDate && today.getTime() > (lastDate as Date).getTime()) {
+				// If current date is after last study date, go to last study month
+				setCurrentMonthDate(
+					new Date((lastDate as Date).getFullYear(), (lastDate as Date).getMonth(), 1)
+				);
+			}
+		}
+	}, [viewMode, data.calendar]);
+
+	// Generate month calendar data
+	const getMonthCalendarData = () => {
+		if (!data.calendar || !data.calendar.weeks) return [];
+
+		const monthData: any[] = [];
+		const today = new Date();
+		const currentMonth = currentMonthDate.getMonth();
+		const currentYear = currentMonthDate.getFullYear();
+
+		// Get first day of month
+		const firstDay = new Date(currentYear, currentMonth, 1);
+
+		// Get first day of week for the first day of month (0 = Sunday, 1 = Monday, etc.)
+		const firstDayOfWeek = firstDay.getDay();
+		const startDate = new Date(firstDay);
+		startDate.setDate(startDate.getDate() - firstDayOfWeek);
+
+		// Generate 6 weeks (42 days) to cover the entire month view
+		for (let week = 0; week < 6; week++) {
+			const weekData: any[] = [];
+			for (let day = 0; day < 7; day++) {
+				const currentDate = new Date(startDate);
+				currentDate.setDate(startDate.getDate() + week * 7 + day);
+
+				// Find subjects for this date
+				const daySubjects: any[] = [];
+
+				// Search through all weeks and days in calendar data
+				if (data.calendar.weeks && Array.isArray(data.calendar.weeks)) {
+					data.calendar.weeks.forEach((calendarWeek: any) => {
+						if (Array.isArray(calendarWeek)) {
+							calendarWeek.forEach((dayData: any) => {
+								if (dayData && dayData.time) {
+									const dayDate = new Date(dayData.time);
+									// Compare dates by setting time to 00:00:00 for accurate comparison
+									const currentDateNormalized = new Date(
+										currentDate.getFullYear(),
+										currentDate.getMonth(),
+										currentDate.getDate()
+									);
+									const dayDateNormalized = new Date(
+										dayDate.getFullYear(),
+										dayDate.getMonth(),
+										dayDate.getDate()
+									);
+
+									if (currentDateNormalized.getTime() === dayDateNormalized.getTime()) {
+										if (dayData.shift && Array.isArray(dayData.shift)) {
+											dayData.shift.forEach((subject: any, shiftIndex: number) => {
+												if (subject && subject.name) {
+													daySubjects.push({
+														...subject,
+														shiftNumber: shiftIndex + 1,
+														time: dayData.time
+													});
+												}
+											});
+										}
+									}
+								}
+							});
+						}
+					});
+				}
+
+				weekData.push({
+					date: new Date(currentDate),
+					isCurrentMonth: currentDate.getMonth() === currentMonth,
+					isToday: currentDate.toDateString() === today.toDateString(),
+					subjects: daySubjects
+				});
+			}
+			monthData.push(weekData);
+		}
+
+		return monthData;
 	};
 
 	if (!data.calendar) {
@@ -326,6 +512,15 @@ export default function CalendarPage() {
 					<p className="text-muted-foreground">{student || user?.name || 'Sinh viên'}</p>
 				</div>
 				<div className="flex items-center gap-2">
+					<Button
+						onClick={handleSync}
+						variant="outline"
+						size="sm"
+						disabled={loading || !data.signInToken}
+					>
+						<RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+						Đồng bộ
+					</Button>
 					<Button
 						onClick={handleExportCalendar}
 						variant="outline"
@@ -398,19 +593,14 @@ export default function CalendarPage() {
 								>
 									<List className="w-4 h-4" />
 								</Button>
+								<Button
+									variant={viewMode === 'month' ? 'default' : 'ghost'}
+									size="sm"
+									onClick={() => setViewMode('month')}
+								>
+									<CalendarDays className="w-4 h-4" />
+								</Button>
 							</div>
-
-							<Select value={selectedSession} onValueChange={setSelectedSession}>
-								<SelectTrigger className="w-[140px]">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="all">Tất cả</SelectItem>
-									<SelectItem value="morning">Buổi sáng</SelectItem>
-									<SelectItem value="afternoon">Buổi chiều</SelectItem>
-									<SelectItem value="evening">Buổi tối</SelectItem>
-								</SelectContent>
-							</Select>
 						</div>
 					</div>
 				</CardContent>
@@ -424,51 +614,77 @@ export default function CalendarPage() {
 				</Card>
 			)}
 
-			{/* Week Navigation */}
+			{/* Week/Month Navigation */}
 			{hasRealScheduleData && (
 				<Card>
 					<CardContent className="p-4">
-						<div className="flex items-center justify-between">
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={() => updateCurrentWeek(currentWeekIndex - 1)}
-								disabled={!data.calendar.weeks || currentWeekIndex === 0}
-							>
-								<ChevronLeft className="w-4 h-4 mr-2" />
-								Tuần trước
-							</Button>
+						{viewMode === 'month' ? (
+							/* Month Navigation */
+							<div className="flex items-center justify-between">
+								<Button variant="outline" size="sm" onClick={goToPreviousMonth}>
+									<ChevronLeft className="w-4 h-4 mr-2" />
+									Tháng trước
+								</Button>
 
-							<div className="text-center">
-								<p className="font-medium">
-									{data.calendar.weeks && data.calendar.weeks.length > 0 ? (
-										<>
-											Tuần {currentWeekIndex + 1} / {data.calendar.weeks.length}
-										</>
-									) : (
-										<>Tuần hiện tại</>
-									)}
-								</p>
-								{currentWeek && currentWeek.length > 0 && (
-									<p className="text-sm text-muted-foreground">
-										{formatDate(currentWeek[0].time)} -{' '}
-										{formatDate(currentWeek[currentWeek.length - 1].time)}
+								<div className="text-center">
+									<p className="font-medium">
+										{currentMonthDate.toLocaleDateString('vi-VN', {
+											month: 'long',
+											year: 'numeric'
+										})}
 									</p>
-								)}
-							</div>
+									<p className="text-sm text-muted-foreground">Xem theo tháng</p>
+								</div>
 
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={() => updateCurrentWeek(currentWeekIndex + 1)}
-								disabled={
-									!data.calendar.weeks || currentWeekIndex === data.calendar.weeks.length - 1
-								}
-							>
-								Tuần sau
-								<ChevronRight className="w-4 h-4 ml-2" />
-							</Button>
-						</div>
+								<Button variant="outline" size="sm" onClick={goToNextMonth}>
+									Tháng sau
+									<ChevronRight className="w-4 h-4 ml-2" />
+								</Button>
+							</div>
+						) : (
+							/* Week Navigation */
+							<div className="flex items-center justify-between">
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => updateCurrentWeek(currentWeekIndex - 1)}
+									disabled={!data.calendar.weeks || currentWeekIndex === 0}
+								>
+									<ChevronLeft className="w-4 h-4 mr-2" />
+									Tuần trước
+								</Button>
+
+								<div className="text-center">
+									<p className="font-medium">
+										{data.calendar.weeks && data.calendar.weeks.length > 0 ? (
+											<>
+												Tuần {currentWeekIndex + 1} / {data.calendar.weeks.length}
+											</>
+										) : (
+											<>Tuần hiện tại</>
+										)}
+									</p>
+									{currentWeek && currentWeek.length > 0 && (
+										<p className="text-sm text-muted-foreground">
+											{formatDate(currentWeek[0].time)} -{' '}
+											{formatDate(currentWeek[currentWeek.length - 1].time)}
+										</p>
+									)}
+								</div>
+
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => updateCurrentWeek(currentWeekIndex + 1)}
+									disabled={
+										!data.calendar.weeks || currentWeekIndex === data.calendar.weeks.length - 1
+									}
+								>
+									Tuần sau
+									<ChevronRight className="w-4 h-4 ml-2" />
+								</Button>
+							</div>
+						)}
 					</CardContent>
 				</Card>
 			)}
@@ -487,12 +703,7 @@ export default function CalendarPage() {
 													...subject,
 													shiftNumber: shiftIndex + 1
 												}))
-												.filter((subject: any) => {
-													if (!subject.name) return false;
-													if (selectedSession === 'all') return true;
-													const session = getShiftSession(subject.shiftNumber);
-													return session === selectedSession;
-												})
+												.filter((subject: any) => subject.name)
 										: [];
 
 									if (daySubjects.length === 0) return null;
@@ -529,7 +740,6 @@ export default function CalendarPage() {
 																subject.shiftNumber,
 																subject.length || 1
 															);
-															const session = getShiftSession(subject.shiftNumber);
 
 															return (
 																<div
@@ -538,16 +748,7 @@ export default function CalendarPage() {
 																>
 																	{/* Time and Session Badge */}
 																	<div className="flex items-center justify-between mb-3">
-																		<Badge
-																			variant={
-																				session === 'morning'
-																					? 'default'
-																					: session === 'afternoon'
-																						? 'secondary'
-																						: 'outline'
-																			}
-																			className="text-xs font-medium"
-																		>
+																		<Badge variant="default" className="text-xs font-medium">
 																			{shiftDisplay}
 																		</Badge>
 																		<span className="text-xs text-muted-foreground font-mono">
@@ -569,15 +770,7 @@ export default function CalendarPage() {
 																	)}
 
 																	{/* Session Indicator */}
-																	<div
-																		className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${
-																			session === 'morning'
-																				? 'bg-blue-500'
-																				: session === 'afternoon'
-																					? 'bg-orange-500'
-																					: 'bg-purple-500'
-																		}`}
-																	/>
+																	<div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg bg-primary" />
 																</div>
 															);
 														})}
@@ -611,12 +804,7 @@ export default function CalendarPage() {
 															...subject,
 															shiftNumber: shiftIndex + 1
 														}))
-														.filter((subject: any) => {
-															if (!subject.name) return false;
-															if (selectedSession === 'all') return true;
-															const session = getShiftSession(subject.shiftNumber);
-															return session === selectedSession;
-														})
+														.filter((subject: any) => subject.name)
 														.map((subject: any, subjectIndex: number) => {
 															const shiftDisplay = formatShiftDisplay(
 																subject.shiftNumber,
@@ -626,23 +814,14 @@ export default function CalendarPage() {
 																subject.shiftNumber,
 																subject.length || 1
 															);
-															const session = getShiftSession(subject.shiftNumber);
+
 															return (
 																<div
 																	key={subjectIndex}
 																	className="p-3 rounded-lg border bg-card text-card-foreground"
 																>
 																	<div className="flex items-center gap-2 mb-2">
-																		<Badge
-																			variant={
-																				session === 'morning'
-																					? 'default'
-																					: session === 'afternoon'
-																						? 'secondary'
-																						: 'outline'
-																			}
-																			className="text-xs px-2 py-1"
-																		>
+																		<Badge variant="default" className="text-xs px-2 py-1">
 																			{shiftDisplay}
 																		</Badge>
 																		<span className="text-xs text-muted-foreground font-mono">
@@ -687,67 +866,209 @@ export default function CalendarPage() {
 
 			{/* List View */}
 			{viewMode === 'list' && (
-				<Card>
-					<CardContent className="p-0">
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead>Thời gian</TableHead>
-									<TableHead>Môn học</TableHead>
-									<TableHead>Phòng</TableHead>
-									<TableHead>Giảng viên</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{getFilteredSubjects().map((subject: any, index: number) => {
-									const shiftDisplay = formatShiftDisplay(subject.shiftNumber, subject.length || 1);
-									const timeDisplay = formatTimeDisplay(subject.shiftNumber, subject.length || 1);
-									const dayOfWeek = new Date(subject.dayTime).getDay();
-									return (
-										<TableRow key={index}>
-											<TableCell>
-												<div className="flex flex-col">
-													<span className="font-medium">
-														{getDayName(dayOfWeek)} - {shiftDisplay}
+				<div className="space-y-4">
+					{getFilteredSubjects().length > 0 ? (
+						getFilteredSubjects().map((subject: any, index: number) => {
+							const shiftDisplay = formatShiftDisplay(subject.shiftNumber, subject.length || 1);
+							const timeDisplay = formatTimeDisplay(subject.shiftNumber, subject.length || 1);
+							const dayOfWeek = new Date(subject.dayTime).getDay();
+
+							return (
+								<Card key={index} className="hover:shadow-md transition-shadow">
+									<CardContent className="p-4">
+										<div className="flex flex-col lg:flex-row lg:items-center gap-4">
+											{/* Time Info */}
+											<div className="flex-shrink-0 lg:w-48">
+												<div className="flex items-center gap-2 mb-1">
+													<CalendarIcon className="w-4 h-4 text-primary" />
+													<span className="font-semibold text-primary">
+														{getDayName(dayOfWeek)}
 													</span>
-													<span className="text-sm text-muted-foreground">{timeDisplay}</span>
 												</div>
-											</TableCell>
-											<TableCell>
-												<div className="flex items-center gap-2">
-													<BookOpen className="w-4 h-4" />
-													<span className="font-medium">{subject.name}</span>
+												<div className="text-sm text-muted-foreground ml-6">
+													<div className="font-mono">{timeDisplay}</div>
 												</div>
-											</TableCell>
-											<TableCell>
-												{subject.address ? (
-													<div className="flex items-center gap-1">
-														<MapPin className="w-4 h-4" />
-														<span>{subject.address}</span>
+											</div>
+
+											{/* Subject Info */}
+											<div className="flex-1 min-w-0">
+												<div className="flex items-center gap-2 mb-2">
+													<BookOpen className="w-5 h-5 text-blue-600" />
+													<h3 className="font-semibold text-lg truncate">{subject.name}</h3>
+												</div>
+
+												<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+													{/* Location */}
+													<div className="flex items-center gap-2">
+														<MapPin className="w-4 h-4 text-orange-600 flex-shrink-0" />
+														<span className="truncate">
+															{subject.address || 'Chưa có thông tin phòng'}
+														</span>
 													</div>
-												) : (
-													<span className="text-muted-foreground">Chưa có thông tin</span>
-												)}
-											</TableCell>
-											<TableCell>{subject.instructor || 'N/A'}</TableCell>
-										</TableRow>
-									);
-								})}
-							</TableBody>
-						</Table>
-						{getFilteredSubjects().length === 0 && (
-							<div className="p-8 text-center">
+
+													{/* Instructor */}
+													<div className="flex items-center gap-2">
+														<User className="w-4 h-4 text-green-600 flex-shrink-0" />
+														<span className="truncate">
+															{subject.instructor || 'Chưa có thông tin GV'}
+														</span>
+													</div>
+												</div>
+											</div>
+
+											{/* Badge */}
+											<div className="flex-shrink-0">
+												<Badge variant="default" className="text-xs">
+													{shiftDisplay}
+												</Badge>
+											</div>
+										</div>
+									</CardContent>
+								</Card>
+							);
+						})
+					) : (
+						<Card>
+							<CardContent className="p-8 text-center">
 								<EmptyState
 									icon={CalendarIcon}
 									title="Không có lịch học"
 									description={
 										hasSubjects
-											? 'Không có lịch học nào trong tuần này với bộ lọc đã chọn.'
+											? 'Không có lịch học nào trong tuần này.'
 											: 'Học kỳ này chưa có lịch học hoặc chưa được cập nhật.'
 									}
 								/>
+							</CardContent>
+						</Card>
+					)}
+				</div>
+			)}
+
+			{/* Month View */}
+			{viewMode === 'month' && (
+				<Card>
+					<CardContent className="p-4">
+						<div className="space-y-4">
+							{/* Month Header */}
+							<div className="text-center">
+								<h3 className="text-lg font-semibold">
+									{currentMonthDate.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })}
+								</h3>
 							</div>
-						)}
+
+							{/* Calendar Grid */}
+							<div className="grid grid-cols-7 gap-2">
+								{/* Day Headers */}
+								{['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'].map((day) => (
+									<div
+										key={day}
+										className="p-3 text-center text-sm font-semibold text-muted-foreground bg-muted/50 rounded-md"
+									>
+										{day}
+									</div>
+								))}
+
+								{/* Calendar Days */}
+								{getMonthCalendarData().map((week, weekIndex) =>
+									week.map((day: any, dayIndex: number) => (
+										<div
+											key={`${weekIndex}-${dayIndex}`}
+											className={`min-h-[100px] p-2 border rounded-lg transition-all hover:shadow-md ${
+												day.isCurrentMonth
+													? 'bg-background border-border'
+													: 'bg-muted/20 border-muted text-muted-foreground'
+											} ${day.isToday ? 'ring-2 ring-primary bg-primary/5' : ''}`}
+										>
+											<div
+												className={`text-sm font-medium mb-2 ${day.isToday ? 'text-primary' : ''}`}
+											>
+												{day.date.getDate()}
+											</div>
+											<div className="space-y-1">
+												{day.subjects.slice(0, 3).map((subject: any, index: number) => (
+													<Popover key={index}>
+														<PopoverTrigger asChild>
+															<div className="text-xs p-1.5 bg-primary/10 hover:bg-primary/20 rounded border-l-2 border-primary transition-colors cursor-pointer">
+																<div className="font-medium truncate">{subject.name}</div>
+																<div className="text-muted-foreground text-xs">
+																	{formatTimeDisplay(subject.shiftNumber, subject.length || 1)}
+																</div>
+																{subject.address && (
+																	<div className="text-muted-foreground truncate">
+																		{subject.address}
+																	</div>
+																)}
+															</div>
+														</PopoverTrigger>
+														<PopoverContent className="w-80">
+															<div className="space-y-3">
+																<div className="flex items-center gap-2">
+																	<BookOpen className="w-5 h-5 text-blue-600" />
+																	<h3 className="font-semibold text-lg">{subject.name}</h3>
+																</div>
+
+																<div className="grid grid-cols-1 gap-2 text-sm">
+																	<div className="flex items-center gap-2">
+																		<CalendarIcon className="w-4 h-4 text-primary" />
+																		<span className="font-medium">Thời gian:</span>
+																		<span>
+																			{formatTimeDisplay(subject.shiftNumber, subject.length || 1)}
+																		</span>
+																	</div>
+
+																	<div className="flex items-center gap-2">
+																		<Badge variant="outline" className="text-xs">
+																			Tiết {subject.shiftNumber}
+																		</Badge>
+																		<span className="text-muted-foreground">
+																			({subject.length || 1} tiết)
+																		</span>
+																	</div>
+
+																	{subject.address && (
+																		<div className="flex items-center gap-2">
+																			<MapPin className="w-4 h-4 text-orange-600" />
+																			<span className="font-medium">Phòng:</span>
+																			<span>{subject.address}</span>
+																		</div>
+																	)}
+
+																	{subject.instructor && (
+																		<div className="flex items-center gap-2">
+																			<User className="w-4 h-4 text-green-600" />
+																			<span className="font-medium">Giảng viên:</span>
+																			<span>{subject.instructor}</span>
+																		</div>
+																	)}
+
+																	{subject.note && (
+																		<div className="mt-2 p-2 bg-muted/50 rounded">
+																			<span className="font-medium">Ghi chú:</span>
+																			<p className="text-muted-foreground mt-1">{subject.note}</p>
+																		</div>
+																	)}
+																</div>
+															</div>
+														</PopoverContent>
+													</Popover>
+												))}
+												{day.subjects.length > 3 && (
+													<div className="text-xs text-muted-foreground font-medium p-1">
+														+{day.subjects.length - 3} môn khác
+													</div>
+												)}
+												{day.subjects.length === 0 && day.isCurrentMonth && (
+													<div className="text-xs text-muted-foreground/50 italic">
+														Không có lịch
+													</div>
+												)}
+											</div>
+										</div>
+									))
+								)}
+							</div>
+						</div>
 					</CardContent>
 				</Card>
 			)}
