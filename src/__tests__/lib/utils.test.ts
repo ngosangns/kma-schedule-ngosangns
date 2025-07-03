@@ -14,6 +14,11 @@ import {
 	getDayName,
 	getShiftTime,
 	getShiftSession,
+	formatSemesterName,
+	getShiftRange,
+	getShiftTimeRange,
+	formatShiftDisplay,
+	formatTimeDisplay,
 	getFromStorage,
 	setToStorage,
 	removeFromStorage,
@@ -274,6 +279,88 @@ describe('utils', () => {
 			it('should handle invalid shift numbers', () => {
 				expect(getShiftSession(0)).toBe('evening');
 				expect(getShiftSession(16)).toBe('evening');
+			});
+		});
+
+		describe('formatSemesterName', () => {
+			it('should format semester name correctly', () => {
+				expect(formatSemesterName('1_2025_2026')).toBe('Kỳ 1 - 2025 - 2026');
+				expect(formatSemesterName('2_2024_2025')).toBe('Kỳ 2 - 2024 - 2025');
+				expect(formatSemesterName('3_2023_2024')).toBe('Kỳ 3 - 2023 - 2024');
+			});
+
+			it('should handle invalid formats gracefully', () => {
+				expect(formatSemesterName('invalid')).toBe('invalid');
+				expect(formatSemesterName('1_2025')).toBe('1_2025');
+				expect(formatSemesterName('1_2025_2026_extra')).toBe('1_2025_2026_extra');
+				expect(formatSemesterName('')).toBe('');
+			});
+
+			it('should handle null and undefined inputs', () => {
+				expect(formatSemesterName(null as any)).toBe('Không xác định');
+				expect(formatSemesterName(undefined as any)).toBe('Không xác định');
+			});
+
+			it('should handle non-string inputs', () => {
+				expect(formatSemesterName(123 as any)).toBe(123);
+				expect(formatSemesterName({} as any)).toEqual({});
+				expect(formatSemesterName([] as any)).toEqual([]);
+			});
+		});
+
+		describe('getShiftRange', () => {
+			it('should calculate correct shift range', () => {
+				expect(getShiftRange(1, 1)).toEqual({ start: 1, end: 1 });
+				expect(getShiftRange(1, 3)).toEqual({ start: 1, end: 3 });
+				expect(getShiftRange(7, 2)).toEqual({ start: 7, end: 8 });
+				expect(getShiftRange(13, 3)).toEqual({ start: 13, end: 15 });
+			});
+
+			it('should handle invalid inputs', () => {
+				expect(getShiftRange(0, 1)).toEqual({ start: 1, end: 1 });
+				expect(getShiftRange(1, 0)).toEqual({ start: 1, end: 1 });
+				expect(getShiftRange(null as any, 1)).toEqual({ start: 1, end: 1 });
+				expect(getShiftRange(1, null as any)).toEqual({ start: 1, end: 1 });
+			});
+		});
+
+		describe('getShiftTimeRange', () => {
+			it('should calculate correct time range for single shift', () => {
+				expect(getShiftTimeRange(1, 1)).toEqual({ start: '07:00', end: '07:50' });
+				expect(getShiftTimeRange(7, 1)).toEqual({ start: '13:00', end: '13:50' });
+			});
+
+			it('should calculate correct time range for multiple shifts', () => {
+				expect(getShiftTimeRange(1, 3)).toEqual({ start: '07:00', end: '09:50' });
+				expect(getShiftTimeRange(7, 2)).toEqual({ start: '13:00', end: '14:50' });
+				expect(getShiftTimeRange(13, 3)).toEqual({ start: '19:00', end: '21:50' });
+			});
+		});
+
+		describe('formatShiftDisplay', () => {
+			it('should format single shift correctly', () => {
+				expect(formatShiftDisplay(1, 1)).toBe('Tiết 1');
+				expect(formatShiftDisplay(7, 1)).toBe('Tiết 7');
+				expect(formatShiftDisplay(15, 1)).toBe('Tiết 15');
+			});
+
+			it('should format multiple shifts correctly', () => {
+				expect(formatShiftDisplay(1, 3)).toBe('Tiết 1-3');
+				expect(formatShiftDisplay(7, 2)).toBe('Tiết 7-8');
+				expect(formatShiftDisplay(13, 3)).toBe('Tiết 13-15');
+			});
+		});
+
+		describe('formatTimeDisplay', () => {
+			it('should format single shift time correctly', () => {
+				expect(formatTimeDisplay(1, 1)).toBe('07:00 - 07:50');
+				expect(formatTimeDisplay(7, 1)).toBe('13:00 - 13:50');
+			});
+
+			it('should format multiple shifts time correctly', () => {
+				expect(formatTimeDisplay(1, 3)).toBe('07:00 - 09:50');
+				expect(formatTimeDisplay(7, 2)).toBe('13:00 - 14:50');
+				expect(formatTimeDisplay(13, 3)).toBe('19:00 - 21:50');
 			});
 		});
 	});

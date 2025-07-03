@@ -122,6 +122,7 @@ export function useCalendarData() {
 			try {
 				const updatedMainForm = { ...mainForm, drpSemester: newSemester };
 
+				// Fetch dữ liệu mới trước khi cập nhật state
 				const response = await fetchCalendarWithPost(updatedMainForm, signInToken);
 				const filteredResponse = filterTrashInHtml(response);
 				const newCalendar = await processCalendar(filteredResponse);
@@ -129,11 +130,26 @@ export function useCalendarData() {
 				const newMainForm = processMainForm(filteredResponse);
 				const newSemesters = processSemesters(filteredResponse);
 
+				// Validate dữ liệu trước khi cập nhật
+				if (!newCalendar || !newSemesters) {
+					throw new Error('Dữ liệu học kỳ không hợp lệ');
+				}
+
+				if (newSemesters.currentSemester !== newSemester) {
+					throw new Error('Không thể chuyển đổi sang học kỳ được chọn');
+				}
+
+				if (!newCalendar.hasOwnProperty('data_subject')) {
+					throw new Error('Dữ liệu lịch học không đúng định dạng');
+				}
+
+				// Chỉ cập nhật state khi validation thành công
 				const newData = {
 					mainForm: newMainForm,
 					semesters: newSemesters,
 					calendar: newCalendar,
-					student: newStudent
+					student: newStudent,
+					signInToken: signInToken // Giữ lại signInToken
 				};
 
 				setCalendar(newCalendar as any);
@@ -144,7 +160,8 @@ export function useCalendarData() {
 				return { success: true, data: newData };
 			} catch (error) {
 				console.error('Semester change error:', error);
-				const errorMessage = 'Có lỗi xảy ra khi lấy dữ liệu!';
+				const errorMessage =
+					error instanceof Error ? error.message : 'Có lỗi xảy ra khi lấy dữ liệu!';
 				showError('Cập nhật học kỳ thất bại', errorMessage);
 				return { success: false, error: errorMessage };
 			} finally {

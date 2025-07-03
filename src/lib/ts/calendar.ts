@@ -379,7 +379,10 @@ export function restructureTKB(data: any) {
 			});
 		}
 	}
-	return { data_subject: days_outline };
+	return {
+		data_subject: data_subject,
+		weeks: days_outline
+	};
 }
 
 export function exportToGoogleCalendar(student: string | null, calendar: any) {

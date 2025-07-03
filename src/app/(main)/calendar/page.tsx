@@ -46,8 +46,14 @@ import {
 	exportToGoogleCalendar
 } from '@/lib/ts/calendar';
 import { logout } from '@/lib/ts/user';
-import { formatDate, getShiftTime, getShiftSession, getDayName } from '@/lib/utils';
-import { Subject } from '@/types';
+import {
+	formatDate,
+	getShiftSession,
+	getDayName,
+	formatSemesterName,
+	formatShiftDisplay,
+	formatTimeDisplay
+} from '@/lib/utils';
 
 type ViewMode = 'calendar' | 'list' | 'agenda';
 
@@ -113,12 +119,29 @@ export default function CalendarPage() {
 			// Có dữ liệu thật từ storage với weeks
 			setData(storedData);
 			updateCurrentWeek(0, storedData.calendar);
-		} else if (storedData && storedData.calendar) {
-			// Có dữ liệu nhưng không có weeks, giữ dữ liệu và tạo empty weeks
-			const emptyWeeks = generateEmptyWeeks(-1, 4);
+		} else if (storedData && storedData.calendar && storedData.calendar.data_subject) {
+			// Có dữ liệu nhưng không có weeks, kiểm tra xem data_subject có phải là weeks không
+			let weeks = storedData.calendar.weeks;
+
+			// Nếu data_subject là array của weeks (từ restructureTKB cũ)
+			if (
+				Array.isArray(storedData.calendar.data_subject) &&
+				storedData.calendar.data_subject.length > 0 &&
+				Array.isArray(storedData.calendar.data_subject[0]) &&
+				storedData.calendar.data_subject[0][0] &&
+				typeof storedData.calendar.data_subject[0][0].time === 'number'
+			) {
+				weeks = storedData.calendar.data_subject;
+			}
+
+			// Nếu vẫn không có weeks, tạo empty weeks
+			if (!weeks || weeks.length === 0) {
+				weeks = generateEmptyWeeks(-1, 4);
+			}
+
 			const updatedCalendar = {
 				...storedData.calendar,
-				weeks: emptyWeeks
+				weeks: weeks
 			};
 
 			const newData = {
@@ -127,8 +150,7 @@ export default function CalendarPage() {
 			};
 
 			setData(newData);
-			setCurrentWeek(emptyWeeks[1]);
-			setCurrentWeekIndex(1);
+			updateCurrentWeek(0, updatedCalendar);
 		} else {
 			// Không có dữ liệu gì, tạo hoàn toàn mới
 			const emptyWeeks = generateEmptyWeeks(-1, 4);
@@ -173,10 +195,8 @@ export default function CalendarPage() {
 
 		try {
 			const updatedMainForm = { ...mainForm, drpSemester: newSemester };
-			const updatedSemesters = { ...semesters, currentSemester: newSemester };
 
-			setData((prev) => ({ ...prev, semesters: updatedSemesters }));
-
+			// Fetch dữ liệu mới trước khi cập nhật UI
 			const response = await fetchCalendarWithPost(updatedMainForm, signInToken);
 			const filteredResponse = filterTrashInHtml(response);
 			const newCalendar = await processCalendar(filteredResponse);
@@ -184,14 +204,31 @@ export default function CalendarPage() {
 			const newMainForm = processMainForm(filteredResponse);
 			const newSemesters = processSemesters(filteredResponse);
 
+			// Kiểm tra xem có dữ liệu hợp lệ không
+			if (!newCalendar || !newSemesters) {
+				throw new Error('Dữ liệu học kỳ không hợp lệ');
+			}
+
+			// Kiểm tra xem học kỳ có thay đổi thành công không
+			if (newSemesters.currentSemester !== newSemester) {
+				throw new Error('Không thể chuyển đổi sang học kỳ được chọn');
+			}
+
+			// Kiểm tra xem có dữ liệu lịch học không (có thể rỗng nhưng phải có structure)
+			if (!newCalendar.hasOwnProperty('data_subject')) {
+				throw new Error('Dữ liệu lịch học không đúng định dạng');
+			}
+
+			// Chỉ cập nhật state khi fetch thành công
 			const newData = {
 				mainForm: newMainForm,
 				semesters: newSemesters,
 				calendar: newCalendar,
-				student: newStudent
+				student: newStudent,
+				signInToken: signInToken // Giữ lại signInToken
 			};
 
-			setData((prev) => ({ ...prev, ...newData }));
+			setData(newData); // Thay thế hoàn toàn dữ liệu cũ
 			setCalendar(newCalendar as any);
 			setStudent(newStudent);
 			saveData(newData);
@@ -200,9 +237,14 @@ export default function CalendarPage() {
 			showSuccess('Đã cập nhật học kỳ thành công!');
 		} catch (error) {
 			console.error('Semester change error:', error);
-			showError('Có lỗi xảy ra khi lấy dữ liệu!');
-			const revertedSemesters = { ...semesters, currentSemester: oldValue };
-			setData((prev) => ({ ...prev, semesters: revertedSemesters }));
+
+			// Hiển thị thông báo lỗi chi tiết hơn
+			const errorMessage =
+				error instanceof Error ? error.message : 'Có lỗi xảy ra khi lấy dữ liệu!';
+			showError('Cập nhật học kỳ thất bại', errorMessage);
+
+			// Không cần revert vì chưa cập nhật state
+			// State vẫn giữ nguyên giá trị cũ
 		} finally {
 			setLoading(false);
 		}
@@ -224,16 +266,27 @@ export default function CalendarPage() {
 	const getFilteredSubjects = () => {
 		if (!currentWeek || !currentWeek.length) return [];
 
-		let subjects: Subject[] = [];
-		currentWeek.forEach((day: any) => {
+		let subjects: any[] = [];
+		currentWeek.forEach((day: any, dayIndex: number) => {
 			if (day.shift && day.shift.length > 0) {
-				subjects = [...subjects, ...day.shift];
+				day.shift.forEach((subject: any, shiftIndex: number) => {
+					if (subject.name) {
+						// Chỉ lấy các ca có môn học
+						subjects.push({
+							...subject,
+							day: dayIndex,
+							shift: shiftIndex + 1,
+							shiftNumber: shiftIndex + 1,
+							dayTime: day.time
+						});
+					}
+				});
 			}
 		});
 
 		if (selectedSession !== 'all') {
 			subjects = subjects.filter((subject) => {
-				const session = getShiftSession(subject.shift);
+				const session = getShiftSession(subject.shiftNumber);
 				return session === selectedSession;
 			});
 		}
@@ -249,7 +302,10 @@ export default function CalendarPage() {
 	}
 
 	// Kiểm tra nếu không có dữ liệu môn học, tạo lịch trống
-	const hasSubjects = data.calendar.data_subject && data.calendar.data_subject.length > 0;
+	const hasSubjects =
+		data.calendar.data_subject &&
+		Array.isArray(data.calendar.data_subject) &&
+		data.calendar.data_subject.length > 0;
 	const hasWeeks = data.calendar.weeks && data.calendar.weeks.length > 0;
 
 	return (
@@ -291,16 +347,28 @@ export default function CalendarPage() {
 									disabled={loading}
 								>
 									<SelectTrigger className="w-[200px]">
-										<SelectValue />
+										{loading ? (
+											<div className="flex items-center gap-2">
+												<LoadingSpinner size="sm" />
+												<span className="text-sm text-muted-foreground">Đang tải...</span>
+											</div>
+										) : (
+											<SelectValue />
+										)}
 									</SelectTrigger>
 									<SelectContent>
 										{data.semesters.semesters.map((semester: any) => (
 											<SelectItem key={semester.value} value={semester.value}>
-												{semester.th}_{semester.from}_{semester.to}
+												{formatSemesterName(`${semester.th}_${semester.from}_${semester.to}`)}
 											</SelectItem>
 										))}
 									</SelectContent>
 								</Select>
+							)}
+							{loading && (
+								<span className="text-xs text-muted-foreground">
+									Đang cập nhật dữ liệu học kỳ...
+								</span>
 							)}
 						</div>
 
@@ -399,66 +467,202 @@ export default function CalendarPage() {
 			{/* Calendar Content */}
 			{viewMode === 'calendar' &&
 				(currentWeek && currentWeek.length > 0 ? (
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
-						{currentWeek.map((day: any, dayIndex: number) => (
-							<Card key={dayIndex} className="min-h-[200px]">
-								<CardContent className="p-3">
-									<div className="text-center mb-3">
-										<p className="font-medium text-sm">{getDayName(new Date(day.time).getDay())}</p>
-										<p className="text-xs text-muted-foreground">{formatDate(day.time, 'DD/MM')}</p>
-									</div>
-									<div className="space-y-2">
-										{day.shift && day.shift.length > 0 ? (
-											day.shift
+					<div className="space-y-6">
+						{/* Desktop Layout - Horizontal Timeline */}
+						<div className="hidden lg:block">
+							<div className="space-y-4">
+								{currentWeek.map((day: any, dayIndex: number) => {
+									const daySubjects = day.shift
+										? day.shift
+												.map((subject: any, shiftIndex: number) => ({
+													...subject,
+													shiftNumber: shiftIndex + 1
+												}))
 												.filter((subject: any) => {
+													if (!subject.name) return false;
 													if (selectedSession === 'all') return true;
-													const session = getShiftSession(subject.shift);
+													const session = getShiftSession(subject.shiftNumber);
 													return session === selectedSession;
 												})
-												.map((subject: any, subjectIndex: number) => {
-													const shiftTime = getShiftTime(subject.shift);
-													const session = getShiftSession(subject.shift);
-													return (
-														<div
-															key={subjectIndex}
-															className="p-2 rounded-md border bg-card text-card-foreground text-xs"
-														>
-															<div className="flex items-center gap-1 mb-1">
-																<Badge
-																	variant={
-																		session === 'morning'
-																			? 'default'
-																			: session === 'afternoon'
-																				? 'secondary'
-																				: 'outline'
-																	}
-																	className="text-xs px-1 py-0"
-																>
-																	Ca {subject.shift}
-																</Badge>
-																<span className="text-xs text-muted-foreground">
-																	{shiftTime.start}
-																</span>
-															</div>
-															<p className="font-medium text-xs mb-1 line-clamp-2">
-																{subject.name}
+										: [];
+
+									if (daySubjects.length === 0) return null;
+
+									return (
+										<Card key={dayIndex} className="overflow-hidden">
+											<CardContent className="p-0">
+												{/* Day Header */}
+												<div className="bg-muted/50 px-4 py-3 border-b">
+													<div className="flex items-center justify-between">
+														<div>
+															<h3 className="font-semibold text-base">
+																{getDayName(new Date(day.time).getDay())}
+															</h3>
+															<p className="text-sm text-muted-foreground">
+																{formatDate(day.time, 'DD/MM/YYYY')}
 															</p>
-															<div className="flex items-center gap-1 text-xs text-muted-foreground">
-																<MapPin className="w-3 h-3" />
-																<span className="truncate">{subject.room}</span>
-															</div>
 														</div>
-													);
-												})
-										) : (
-											<p className="text-xs text-muted-foreground text-center py-4">
-												Không có lịch học
-											</p>
-										)}
-									</div>
-								</CardContent>
-							</Card>
-						))}
+														<Badge variant="outline" className="text-xs">
+															{daySubjects.length} môn học
+														</Badge>
+													</div>
+												</div>
+
+												{/* Subjects Timeline */}
+												<div className="p-4">
+													<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+														{daySubjects.map((subject: any, subjectIndex: number) => {
+															const shiftDisplay = formatShiftDisplay(
+																subject.shiftNumber,
+																subject.length || 1
+															);
+															const timeDisplay = formatTimeDisplay(
+																subject.shiftNumber,
+																subject.length || 1
+															);
+															const session = getShiftSession(subject.shiftNumber);
+
+															return (
+																<div
+																	key={subjectIndex}
+																	className="group relative p-4 rounded-lg border bg-card hover:shadow-md transition-all duration-200"
+																>
+																	{/* Time and Session Badge */}
+																	<div className="flex items-center justify-between mb-3">
+																		<Badge
+																			variant={
+																				session === 'morning'
+																					? 'default'
+																					: session === 'afternoon'
+																						? 'secondary'
+																						: 'outline'
+																			}
+																			className="text-xs font-medium"
+																		>
+																			{shiftDisplay}
+																		</Badge>
+																		<span className="text-xs text-muted-foreground font-mono">
+																			{timeDisplay}
+																		</span>
+																	</div>
+
+																	{/* Subject Name */}
+																	<h4 className="font-semibold text-sm mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+																		{subject.name}
+																	</h4>
+
+																	{/* Location */}
+																	{subject.address && (
+																		<div className="flex items-center gap-2 text-xs text-muted-foreground">
+																			<MapPin className="w-3 h-3 flex-shrink-0" />
+																			<span className="truncate">{subject.address}</span>
+																		</div>
+																	)}
+
+																	{/* Session Indicator */}
+																	<div
+																		className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${
+																			session === 'morning'
+																				? 'bg-blue-500'
+																				: session === 'afternoon'
+																					? 'bg-orange-500'
+																					: 'bg-purple-500'
+																		}`}
+																	/>
+																</div>
+															);
+														})}
+													</div>
+												</div>
+											</CardContent>
+										</Card>
+									);
+								})}
+							</div>
+						</div>
+
+						{/* Mobile/Tablet Layout - Compact Cards */}
+						<div className="lg:hidden">
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								{currentWeek.map((day: any, dayIndex: number) => (
+									<Card key={dayIndex} className="min-h-[200px]">
+										<CardContent className="p-4">
+											<div className="text-center mb-4">
+												<p className="font-semibold text-sm">
+													{getDayName(new Date(day.time).getDay())}
+												</p>
+												<p className="text-xs text-muted-foreground">
+													{formatDate(day.time, 'DD/MM')}
+												</p>
+											</div>
+											<div className="space-y-3">
+												{day.shift && day.shift.length > 0 ? (
+													day.shift
+														.map((subject: any, shiftIndex: number) => ({
+															...subject,
+															shiftNumber: shiftIndex + 1
+														}))
+														.filter((subject: any) => {
+															if (!subject.name) return false;
+															if (selectedSession === 'all') return true;
+															const session = getShiftSession(subject.shiftNumber);
+															return session === selectedSession;
+														})
+														.map((subject: any, subjectIndex: number) => {
+															const shiftDisplay = formatShiftDisplay(
+																subject.shiftNumber,
+																subject.length || 1
+															);
+															const timeDisplay = formatTimeDisplay(
+																subject.shiftNumber,
+																subject.length || 1
+															);
+															const session = getShiftSession(subject.shiftNumber);
+															return (
+																<div
+																	key={subjectIndex}
+																	className="p-3 rounded-lg border bg-card text-card-foreground"
+																>
+																	<div className="flex items-center gap-2 mb-2">
+																		<Badge
+																			variant={
+																				session === 'morning'
+																					? 'default'
+																					: session === 'afternoon'
+																						? 'secondary'
+																						: 'outline'
+																			}
+																			className="text-xs px-2 py-1"
+																		>
+																			{shiftDisplay}
+																		</Badge>
+																		<span className="text-xs text-muted-foreground font-mono">
+																			{timeDisplay}
+																		</span>
+																	</div>
+																	<p className="font-medium text-sm mb-2 line-clamp-2">
+																		{subject.name}
+																	</p>
+																	{subject.address && (
+																		<div className="flex items-center gap-1 text-xs text-muted-foreground">
+																			<MapPin className="w-3 h-3" />
+																			<span className="truncate">{subject.address}</span>
+																		</div>
+																	)}
+																</div>
+															);
+														})
+												) : (
+													<div className="text-center py-6">
+														<p className="text-xs text-muted-foreground">Không có lịch học</p>
+													</div>
+												)}
+											</div>
+										</CardContent>
+									</Card>
+								))}
+							</div>
+						</div>
 					</div>
 				) : (
 					<EmptyState
@@ -483,17 +687,17 @@ export default function CalendarPage() {
 							</TableHeader>
 							<TableBody>
 								{getFilteredSubjects().map((subject: any, index: number) => {
-									const shiftTime = getShiftTime(subject.shift);
+									const shiftDisplay = formatShiftDisplay(subject.shiftNumber, subject.length || 1);
+									const timeDisplay = formatTimeDisplay(subject.shiftNumber, subject.length || 1);
+									const dayOfWeek = new Date(subject.dayTime).getDay();
 									return (
 										<TableRow key={index}>
 											<TableCell>
 												<div className="flex flex-col">
 													<span className="font-medium">
-														{getDayName(subject.day)} - Ca {subject.shift}
+														{getDayName(dayOfWeek)} - {shiftDisplay}
 													</span>
-													<span className="text-sm text-muted-foreground">
-														{shiftTime.start} - {shiftTime.end}
-													</span>
+													<span className="text-sm text-muted-foreground">{timeDisplay}</span>
 												</div>
 											</TableCell>
 											<TableCell>
@@ -503,10 +707,14 @@ export default function CalendarPage() {
 												</div>
 											</TableCell>
 											<TableCell>
-												<div className="flex items-center gap-1">
-													<MapPin className="w-4 h-4" />
-													<span>{subject.room}</span>
-												</div>
+												{subject.address ? (
+													<div className="flex items-center gap-1">
+														<MapPin className="w-4 h-4" />
+														<span>{subject.address}</span>
+													</div>
+												) : (
+													<span className="text-muted-foreground">Chưa có thông tin</span>
+												)}
 											</TableCell>
 											<TableCell>{subject.instructor || 'N/A'}</TableCell>
 										</TableRow>

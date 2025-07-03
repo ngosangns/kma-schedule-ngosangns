@@ -144,3 +144,75 @@ export function getDayName(dayNumber: number): string {
 	const days = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
 	return days[dayNumber] || 'Không xác định';
 }
+
+// Format semester name from "1_2025_2026" to "Kỳ 1 - 2025 - 2026"
+export function formatSemesterName(semesterValue: string): string {
+	// Handle null, undefined, or non-string inputs
+	if (semesterValue === null || semesterValue === undefined) {
+		return 'Không xác định';
+	}
+
+	if (typeof semesterValue !== 'string') {
+		return semesterValue;
+	}
+
+	// Handle empty string
+	if (semesterValue === '') {
+		return '';
+	}
+
+	// Split by underscore
+	const parts = semesterValue.split('_');
+
+	if (parts.length === 3) {
+		const [semester, startYear, endYear] = parts;
+		return `Kỳ ${semester} - ${startYear} - ${endYear}`;
+	}
+
+	// Fallback for other formats
+	return semesterValue;
+}
+
+// Calculate shift range based on start shift and length
+export function getShiftRange(startShift: number, length: number): { start: number; end: number } {
+	if (!startShift || !length || startShift < 1 || length < 1) {
+		return { start: startShift || 1, end: startShift || 1 };
+	}
+
+	return {
+		start: startShift,
+		end: startShift + length - 1
+	};
+}
+
+// Get time range for multiple shifts
+export function getShiftTimeRange(
+	startShift: number,
+	length: number
+): { start: string; end: string } {
+	const { start, end } = getShiftRange(startShift, length);
+	const startTime = getShiftTime(start);
+	const endTime = getShiftTime(end);
+
+	return {
+		start: startTime.start,
+		end: endTime.end
+	};
+}
+
+// Format shift display text with range
+export function formatShiftDisplay(startShift: number, length: number): string {
+	const { start, end } = getShiftRange(startShift, length);
+
+	if (start === end) {
+		return `Tiết ${start}`;
+	}
+
+	return `Tiết ${start}-${end}`;
+}
+
+// Format time display text with range
+export function formatTimeDisplay(startShift: number, length: number): string {
+	const { start, end } = getShiftTimeRange(startShift, length);
+	return `${start} - ${end}`;
+}
