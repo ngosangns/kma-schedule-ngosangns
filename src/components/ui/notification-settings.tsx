@@ -9,7 +9,6 @@ import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useNotificationSettings } from '@/hooks/use-notification-settings';
-import { NotificationService } from '@/lib/ts/notifications';
 
 interface NotificationSettingsProps {
 	className?: string;
@@ -34,90 +33,17 @@ export function NotificationSettings({ className }: NotificationSettingsProps) {
 	};
 
 	const handleTestNotification = () => {
-		console.log('Test notification clicked', {
-			hasWindow: typeof window !== 'undefined',
-			hasNotificationAPI: typeof window !== 'undefined' && 'Notification' in window,
-			hasPermission,
-			enabled: settings.enabled,
-			notificationPermission: typeof window !== 'undefined' ? Notification.permission : 'unknown'
-		});
-
-		if (typeof window === 'undefined') {
-			console.error('Window is not available');
-			return;
-		}
-
-		if (!('Notification' in window)) {
-			console.error('Notification API is not supported');
-			return;
-		}
-
-		if (!hasPermission) {
-			console.error('No notification permission');
-			return;
-		}
-
-		if (!settings.enabled) {
-			console.error('Notifications are disabled');
-			return;
-		}
-
-		try {
+		if (typeof window !== 'undefined' && hasPermission && settings.enabled) {
 			// Show a test notification with data URL icon to avoid 404 errors
 			const testIcon =
 				'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNCIgZmlsbD0iIzMzNzNkYyIvPgo8cGF0aCBkPSJNMTYgOGMtNC40IDAtOCAzLjYtOCA4czMuNiA4IDggOCA4LTMuNiA4LTgtMy42LTgtOC04em0wIDEyYy0yLjIgMC00LTEuOC00LTRzMS44LTQgNC00IDQgMS44IDQgNC0xLjggNC00IDR6IiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K';
 
-			console.log('Creating notification...');
-			const notification = new Notification('🔔 Thông báo thử nghiệm', {
+			new Notification('🔔 Thông báo thử nghiệm', {
 				body: 'Hệ thống thông báo đang hoạt động bình thường!',
 				icon: testIcon,
 				requireInteraction: false
 			});
-
-			notification.onclick = () => {
-				console.log('Notification clicked');
-				notification.close();
-			};
-
-			notification.onshow = () => {
-				console.log('Notification shown');
-			};
-
-			notification.onerror = (error) => {
-				console.error('Notification error:', error);
-			};
-
-			console.log('Notification created successfully');
-		} catch (error) {
-			console.error('Error creating notification:', error);
 		}
-	};
-
-	const handleTestNotificationService = () => {
-		console.log('Testing notification via service...');
-		const notificationService = NotificationService.getInstance();
-		notificationService.showNotification({
-			title: '🔔 Thông báo thử nghiệm (Service)',
-			body: 'Hệ thống thông báo đang hoạt động bình thường qua service!'
-		});
-	};
-
-	const handleDebugInfo = () => {
-		console.log('=== NOTIFICATION DEBUG INFO ===');
-		console.log('Window available:', typeof window !== 'undefined');
-		console.log(
-			'Notification API available:',
-			typeof window !== 'undefined' && 'Notification' in window
-		);
-		console.log(
-			'Notification permission:',
-			typeof window !== 'undefined' ? Notification.permission : 'unknown'
-		);
-		console.log('Settings enabled:', settings.enabled);
-		console.log('Has permission (hook):', hasPermission);
-		console.log('Can request permission:', canRequestPermission);
-		console.log('Settings object:', settings);
-		console.log('================================');
 	};
 
 	return (
@@ -163,27 +89,14 @@ export function NotificationSettings({ className }: NotificationSettingsProps) {
 						<CheckCircle className="h-4 w-4" />
 						<AlertDescription className="flex items-center justify-between">
 							<span>Quyền thông báo đã được cấp</span>
-							<div className="flex gap-2">
-								<Button
-									size="sm"
-									variant="outline"
-									onClick={handleTestNotification}
-									disabled={!settings.enabled}
-								>
-									Test Direct
-								</Button>
-								<Button
-									size="sm"
-									variant="outline"
-									onClick={handleTestNotificationService}
-									disabled={!settings.enabled}
-								>
-									Test Service
-								</Button>
-								<Button size="sm" variant="secondary" onClick={handleDebugInfo}>
-									Debug
-								</Button>
-							</div>
+							<Button
+								size="sm"
+								variant="outline"
+								onClick={handleTestNotification}
+								disabled={!settings.enabled}
+							>
+								Thử nghiệm
+							</Button>
 						</AlertDescription>
 					</Alert>
 				)}

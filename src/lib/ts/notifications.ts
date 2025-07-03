@@ -67,11 +67,6 @@ export class NotificationService {
 			!this.settings.enabled ||
 			!this.settings.permissions.granted
 		) {
-			console.log('Notification blocked:', {
-				hasWindow: typeof window !== 'undefined',
-				enabled: this.settings.enabled,
-				granted: this.settings.permissions.granted
-			});
 			return;
 		}
 
