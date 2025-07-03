@@ -308,6 +308,15 @@ export default function CalendarPage() {
 		data.calendar.data_subject.length > 0;
 	const hasWeeks = data.calendar.weeks && data.calendar.weeks.length > 0;
 
+	// Kiểm tra xem có dữ liệu lịch học thực sự hay không
+	const hasRealScheduleData =
+		hasSubjects &&
+		hasWeeks &&
+		currentWeek &&
+		currentWeek.some(
+			(day: any) => day.shift && day.shift.some((subject: any) => subject && subject.name)
+		);
+
 	return (
 		<div className="space-y-6">
 			{/* Header */}
@@ -416,7 +425,7 @@ export default function CalendarPage() {
 			)}
 
 			{/* Week Navigation */}
-			{(hasWeeks || (currentWeek && currentWeek.length > 0)) && (
+			{hasRealScheduleData && (
 				<Card>
 					<CardContent className="p-4">
 						<div className="flex items-center justify-between">
@@ -466,7 +475,7 @@ export default function CalendarPage() {
 
 			{/* Calendar Content */}
 			{viewMode === 'calendar' &&
-				(currentWeek && currentWeek.length > 0 ? (
+				(hasRealScheduleData ? (
 					<div className="space-y-6">
 						{/* Desktop Layout - Horizontal Timeline */}
 						<div className="hidden lg:block">
@@ -668,7 +677,11 @@ export default function CalendarPage() {
 					<EmptyState
 						icon={CalendarIcon}
 						title="Không có dữ liệu lịch học"
-						description="Học kỳ này chưa có lịch học hoặc chưa được cập nhật."
+						description={
+							hasSubjects
+								? 'Học kỳ này không có lịch học trong tuần hiện tại.'
+								: 'Học kỳ này chưa có lịch học hoặc chưa được cập nhật.'
+						}
 					/>
 				))}
 

@@ -18,6 +18,7 @@ type AppAction =
 	| { type: 'AUTH_SUCCESS'; payload: { user: User; signInToken: string } }
 	| { type: 'AUTH_ERROR'; payload: string }
 	| { type: 'AUTH_LOGOUT' }
+	| { type: 'AUTH_INIT_COMPLETE' } // Đánh dấu việc khởi tạo auth đã hoàn thành
 	| { type: 'SET_CALENDAR'; payload: CalendarData }
 	| { type: 'SET_STUDENT'; payload: string }
 	| { type: 'SET_THEME'; payload: 'light' | 'dark' }
@@ -30,7 +31,7 @@ const initialState: AppState = {
 	auth: {
 		user: null,
 		isAuthenticated: false,
-		isLoading: false,
+		isLoading: true, // Start with loading true để hiển thị loading khi khởi tạo
 		error: null
 	},
 	calendar: null,
@@ -88,6 +89,15 @@ function appReducer(state: AppState, action: AppAction): AppState {
 				},
 				calendar: null,
 				student: null
+			};
+
+		case 'AUTH_INIT_COMPLETE':
+			return {
+				...state,
+				auth: {
+					...state.auth,
+					isLoading: false
+				}
 			};
 
 		case 'SET_CALENDAR':
@@ -163,6 +173,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 		const storedData = loadData();
 		if (storedData) {
 			dispatch({ type: 'LOAD_FROM_STORAGE', payload: storedData as any });
+		} else {
+			// Không có dữ liệu trong storage, đánh dấu init hoàn thành
+			dispatch({ type: 'AUTH_INIT_COMPLETE' });
 		}
 	}, []);
 

@@ -2,4 +2,4 @@
 
 Convert the raw HTML from the official website into readable schedule timetables for KMA students
 
-Deployed on Google Firebase: [https://kma-schedule-ngosangns.web.app](https://kma-schedule-ngosangns.web.app/)
+Deployed on Google Firebase: [kma-schedule-ngosangns.vercel.app](kma-schedule-ngosangns.vercel.app)

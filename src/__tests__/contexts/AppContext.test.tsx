@@ -1,5 +1,5 @@
 import React from 'react';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { AppProvider, useApp, useAuth, useCalendar, useUI } from '@/contexts/AppContext';
 import { loadData, saveData } from '@/lib/ts/storage';
 import { mockUser, mockCalendarData, mockStorageData } from '../mocks/data';
@@ -99,14 +99,18 @@ describe('AppContext', () => {
 	});
 
 	describe('useAuth hook', () => {
-		it('should provide auth state and methods', () => {
+		it('should provide auth state and methods', async () => {
 			const { result } = renderHook(() => useAuth(), {
 				wrapper: AppProvider
 			});
 
+			// After initialization (since loadData is mocked to return null, loading should be false)
+			await waitFor(() => {
+				expect(result.current.isLoading).toBe(false);
+			});
+
 			expect(result.current.user).toBe(null);
 			expect(result.current.isAuthenticated).toBe(false);
-			expect(result.current.isLoading).toBe(false);
 			expect(result.current.error).toBe(null);
 			expect(typeof result.current.login).toBe('function');
 			expect(typeof result.current.logout).toBe('function');
