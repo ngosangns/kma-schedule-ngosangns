@@ -3,7 +3,7 @@
 import React from 'react';
 import { Bell, BellOff, Clock, Calendar, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -47,147 +47,139 @@ export function NotificationSettings({ className }: NotificationSettingsProps) {
 	};
 
 	return (
-		<Card className={className}>
-			<CardHeader>
-				<CardTitle className="flex items-center gap-2">
-					<Bell className="h-5 w-5" />
-					Cài đặt thông báo
-				</CardTitle>
-				<CardDescription>Nhận thông báo về lịch học qua trình duyệt</CardDescription>
-			</CardHeader>
-			<CardContent className="space-y-6">
-				{/* Error Alert */}
-				{error && (
-					<Alert variant="destructive">
-						<AlertCircle className="h-4 w-4" />
-						<AlertDescription>{error}</AlertDescription>
-					</Alert>
-				)}
+		<div className={`space-y-6 ${className || ''}`}>
+			{/* Error Alert */}
+			{error && (
+				<Alert variant="destructive">
+					<AlertCircle className="h-4 w-4" />
+					<AlertDescription>{error}</AlertDescription>
+				</Alert>
+			)}
 
-				{/* Permission Status */}
-				{!hasPermission && (
-					<Alert>
-						<AlertCircle className="h-4 w-4" />
-						<AlertDescription className="flex items-center justify-between">
-							<span>
-								{canRequestPermission
-									? 'Cần cấp quyền thông báo để sử dụng tính năng này'
-									: 'Quyền thông báo bị từ chối. Vui lòng bật trong cài đặt trình duyệt.'}
-							</span>
-							{canRequestPermission && (
-								<Button size="sm" onClick={handleRequestPermission} disabled={isLoading}>
-									{isLoading ? <LoadingSpinner size="sm" /> : 'Cấp quyền'}
-								</Button>
-							)}
-						</AlertDescription>
-					</Alert>
-				)}
-
-				{/* Permission Granted Status */}
-				{hasPermission && (
-					<Alert>
-						<CheckCircle className="h-4 w-4" />
-						<AlertDescription className="flex items-center justify-between">
-							<span>Quyền thông báo đã được cấp</span>
-							<Button
-								size="sm"
-								variant="outline"
-								onClick={handleTestNotification}
-								disabled={!settings.enabled}
-							>
-								Thử nghiệm
+			{/* Permission Status */}
+			{!hasPermission && (
+				<Alert>
+					<AlertCircle className="h-4 w-4" />
+					<AlertDescription className="flex items-center justify-between">
+						<span>
+							{canRequestPermission
+								? 'Cần cấp quyền thông báo để sử dụng tính năng này'
+								: 'Quyền thông báo bị từ chối. Vui lòng bật trong cài đặt trình duyệt.'}
+						</span>
+						{canRequestPermission && (
+							<Button size="sm" onClick={handleRequestPermission} disabled={isLoading} tabIndex={0}>
+								{isLoading ? <LoadingSpinner size="sm" /> : 'Cấp quyền'}
 							</Button>
-						</AlertDescription>
-					</Alert>
-				)}
+						)}
+					</AlertDescription>
+				</Alert>
+			)}
 
-				{/* Main Toggle */}
-				<div className="flex items-center justify-between">
-					<div className="space-y-0.5">
-						<Label className="text-base font-medium">Bật thông báo</Label>
-						<div className="text-sm text-muted-foreground">Nhận thông báo về lịch học sắp tới</div>
-					</div>
-					<Switch
-						checked={settings.enabled}
-						onCheckedChange={toggleEnabled}
-						disabled={isLoading || (!hasPermission && !canRequestPermission)}
-						aria-label="Bật thông báo"
-					/>
+			{/* Permission Granted Status */}
+			{hasPermission && (
+				<Alert>
+					<CheckCircle className="h-4 w-4" />
+					<AlertDescription className="flex items-center justify-between">
+						<span>Quyền thông báo đã được cấp</span>
+						<Button
+							size="sm"
+							variant="outline"
+							onClick={handleTestNotification}
+							disabled={!settings.enabled}
+							tabIndex={0}
+						>
+							Thử nghiệm
+						</Button>
+					</AlertDescription>
+				</Alert>
+			)}
+
+			{/* Main Toggle */}
+			<div className="flex items-center justify-between">
+				<div className="space-y-0.5">
+					<Label className="text-base font-medium">Bật thông báo</Label>
+					<div className="text-sm text-muted-foreground">Nhận thông báo về lịch học sắp tới</div>
 				</div>
+				<Switch
+					checked={settings.enabled}
+					onCheckedChange={toggleEnabled}
+					disabled={isLoading || (!hasPermission && !canRequestPermission)}
+					aria-label="Bật thông báo"
+				/>
+			</div>
 
-				{/* Timing Options */}
-				{settings.enabled && hasPermission && (
-					<div className="space-y-4 pt-4 border-t">
-						<div className="space-y-0.5">
-							<Label className="text-base font-medium">Thời gian thông báo</Label>
-							<div className="text-sm text-muted-foreground">
-								Chọn khi nào bạn muốn nhận thông báo
-							</div>
-						</div>
-
-						{/* One Day Before */}
-						<div className="flex items-center justify-between">
-							<div className="flex items-center space-x-3">
-								<Calendar className="h-4 w-4 text-muted-foreground" />
-								<div className="space-y-0.5">
-									<Label className="text-sm font-medium">1 ngày trước</Label>
-									<div className="text-xs text-muted-foreground">Nhắc nhở trước 1 ngày</div>
-								</div>
-							</div>
-							<Switch
-								checked={settings.timing.oneDayBefore}
-								onCheckedChange={toggleOneDayBefore}
-								disabled={isLoading}
-								aria-label="1 ngày trước"
-							/>
-						</div>
-
-						{/* One Hour Before */}
-						<div className="flex items-center justify-between">
-							<div className="flex items-center space-x-3">
-								<Clock className="h-4 w-4 text-muted-foreground" />
-								<div className="space-y-0.5">
-									<Label className="text-sm font-medium">1 giờ trước</Label>
-									<div className="text-xs text-muted-foreground">Nhắc nhở trước 1 giờ</div>
-								</div>
-							</div>
-							<Switch
-								checked={settings.timing.oneHourBefore}
-								onCheckedChange={toggleOneHourBefore}
-								disabled={isLoading}
-								aria-label="1 giờ trước"
-							/>
-						</div>
-
-						{/* At Class Time */}
-						<div className="flex items-center justify-between">
-							<div className="flex items-center space-x-3">
-								<Bell className="h-4 w-4 text-muted-foreground" />
-								<div className="space-y-0.5">
-									<Label className="text-sm font-medium">Lúc diễn ra lớp học</Label>
-									<div className="text-xs text-muted-foreground">Thông báo khi lớp học bắt đầu</div>
-								</div>
-							</div>
-							<Switch
-								checked={settings.timing.atClassTime}
-								onCheckedChange={toggleAtClassTime}
-								disabled={isLoading}
-								aria-label="Lúc diễn ra lớp học"
-							/>
-						</div>
-					</div>
-				)}
-
-				{/* Disabled State Info */}
-				{!settings.enabled && (
-					<div className="flex items-center space-x-3 p-4 bg-muted/50 rounded-lg">
-						<BellOff className="h-5 w-5 text-muted-foreground" />
+			{/* Timing Options */}
+			{settings.enabled && hasPermission && (
+				<div className="space-y-4 pt-4 border-t">
+					<div className="space-y-0.5">
+						<Label className="text-base font-medium">Thời gian thông báo</Label>
 						<div className="text-sm text-muted-foreground">
-							Thông báo đã tắt. Bật thông báo để nhận nhắc nhở về lịch học.
+							Chọn khi nào bạn muốn nhận thông báo
 						</div>
 					</div>
-				)}
-			</CardContent>
-		</Card>
+
+					{/* One Day Before */}
+					<div className="flex items-center justify-between">
+						<div className="flex items-center space-x-3">
+							<Calendar className="h-4 w-4 text-muted-foreground" />
+							<div className="space-y-0.5">
+								<Label className="text-sm font-medium">1 ngày trước</Label>
+								<div className="text-xs text-muted-foreground">Nhắc nhở trước 1 ngày</div>
+							</div>
+						</div>
+						<Switch
+							checked={settings.timing.oneDayBefore}
+							onCheckedChange={toggleOneDayBefore}
+							disabled={isLoading}
+							aria-label="1 ngày trước"
+						/>
+					</div>
+
+					{/* One Hour Before */}
+					<div className="flex items-center justify-between">
+						<div className="flex items-center space-x-3">
+							<Clock className="h-4 w-4 text-muted-foreground" />
+							<div className="space-y-0.5">
+								<Label className="text-sm font-medium">1 giờ trước</Label>
+								<div className="text-xs text-muted-foreground">Nhắc nhở trước 1 giờ</div>
+							</div>
+						</div>
+						<Switch
+							checked={settings.timing.oneHourBefore}
+							onCheckedChange={toggleOneHourBefore}
+							disabled={isLoading}
+							aria-label="1 giờ trước"
+						/>
+					</div>
+
+					{/* At Class Time */}
+					<div className="flex items-center justify-between">
+						<div className="flex items-center space-x-3">
+							<Bell className="h-4 w-4 text-muted-foreground" />
+							<div className="space-y-0.5">
+								<Label className="text-sm font-medium">Lúc diễn ra lớp học</Label>
+								<div className="text-xs text-muted-foreground">Thông báo khi lớp học bắt đầu</div>
+							</div>
+						</div>
+						<Switch
+							checked={settings.timing.atClassTime}
+							onCheckedChange={toggleAtClassTime}
+							disabled={isLoading}
+							aria-label="Lúc diễn ra lớp học"
+						/>
+					</div>
+				</div>
+			)}
+
+			{/* Disabled State Info */}
+			{!settings.enabled && (
+				<div className="flex items-center space-x-3 p-4 bg-muted/50 rounded-lg">
+					<BellOff className="h-5 w-5 text-muted-foreground" />
+					<div className="text-sm text-muted-foreground">
+						Thông báo đã tắt. Bật thông báo để nhận nhắc nhở về lịch học.
+					</div>
+				</div>
+			)}
+		</div>
 	);
 }

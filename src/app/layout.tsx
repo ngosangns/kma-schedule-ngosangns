@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AppProvider } from '@/contexts/AppContext';
 import AppLayout from '@/components/layout/AppLayout';
@@ -6,17 +6,6 @@ import AppLayout from '@/components/layout/AppLayout';
 export const metadata: Metadata = {
 	title: 'KMA Schedule',
 	description: 'KMA Schedule - View your class schedule',
-	viewport: {
-		width: 'device-width',
-		initialScale: 1,
-		maximumScale: 1,
-		userScalable: false,
-		viewportFit: 'cover'
-	},
-	themeColor: [
-		{ media: '(prefers-color-scheme: light)', color: 'white' },
-		{ media: '(prefers-color-scheme: dark)', color: '#0f172a' }
-	],
 	appleWebApp: {
 		capable: true,
 		statusBarStyle: 'default',
@@ -24,15 +13,17 @@ export const metadata: Metadata = {
 	}
 };
 
+export const viewport: Viewport = {
+	width: 'device-width',
+	initialScale: 1,
+	maximumScale: 1,
+	userScalable: false,
+	viewportFit: 'cover'
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en" className="dark">
-			<head>
-				<meta
-					name="viewport"
-					content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
-				/>
-			</head>
 			<body>
 				<AppProvider>
 					<AppLayout>{children}</AppLayout>

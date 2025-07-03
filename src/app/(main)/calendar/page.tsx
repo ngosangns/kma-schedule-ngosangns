@@ -19,11 +19,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger
 } from '@/components/ui/dialog';
 import { NotificationSettings } from '@/components/ui/notification-settings';
+import { BottomSheet, BottomSheetContent } from '@/components/ui/bottom-sheet';
 import {
 	Download,
 	LogOut,
@@ -76,6 +78,29 @@ export default function CalendarPage() {
 	const [currentWeek, setCurrentWeek] = useState<any[]>([]);
 	const [viewMode, setViewMode] = useState<ViewMode>('calendar');
 	const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+	const [selectedDayData, setSelectedDayData] = useState<any>(null);
+	const [showDayDetails, setShowDayDetails] = useState(false);
+	const [isMobile, setIsMobile] = useState(false);
+
+	// Check if mobile on mount and resize
+	useEffect(() => {
+		const checkMobile = () => {
+			setIsMobile(window.innerWidth < 667);
+		};
+
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+
+		return () => window.removeEventListener('resize', checkMobile);
+	}, []);
+
+	// Handle day cell click for mobile
+	const handleDayClick = (day: any) => {
+		if (isMobile && day.subjects.length > 0) {
+			setSelectedDayData(day);
+			setShowDayDetails(true);
+		}
+	};
 
 	// Tạo function để generate tuần trống
 	const generateEmptyWeeks = useCallback((startWeekOffset = 0, numWeeks = 4) => {
@@ -675,9 +700,16 @@ export default function CalendarPage() {
 									Thông báo
 								</Button>
 							</DialogTrigger>
-							<DialogContent className="max-w-md mx-4">
+							<DialogContent
+								className="max-w-md mx-4"
+								onOpenAutoFocus={(e) => e.preventDefault()}
+								onCloseAutoFocus={(e) => e.preventDefault()}
+							>
 								<DialogHeader>
 									<DialogTitle>Cài đặt thông báo</DialogTitle>
+									<DialogDescription>
+										Cấu hình thông báo nhắc nhở cho các lớp học của bạn
+									</DialogDescription>
 								</DialogHeader>
 								<NotificationSettings />
 							</DialogContent>
@@ -721,9 +753,16 @@ export default function CalendarPage() {
 								Thông báo
 							</Button>
 						</DialogTrigger>
-						<DialogContent className="max-w-md">
+						<DialogContent
+							className="max-w-md"
+							onOpenAutoFocus={(e) => e.preventDefault()}
+							onCloseAutoFocus={(e) => e.preventDefault()}
+						>
 							<DialogHeader>
 								<DialogTitle>Cài đặt thông báo</DialogTitle>
+								<DialogDescription>
+									Cấu hình thông báo nhắc nhở cho các lớp học của bạn
+								</DialogDescription>
 							</DialogHeader>
 							<NotificationSettings />
 						</DialogContent>
@@ -1249,7 +1288,7 @@ export default function CalendarPage() {
 			{/* Month View */}
 			{viewMode === 'month' && (
 				<Card>
-					<CardContent className="p-4">
+					<CardContent className="p-3 sm:p-4">
 						<div className="space-y-4">
 							{/* Month Header */}
 							<div className="text-center">
@@ -1259,12 +1298,12 @@ export default function CalendarPage() {
 							</div>
 
 							{/* Calendar Grid */}
-							<div className="grid grid-cols-7 gap-2">
+							<div className="grid grid-cols-7 gap-1 sm:gap-2">
 								{/* Day Headers */}
 								{['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'].map((day) => (
 									<div
 										key={day}
-										className="p-3 text-center text-sm font-semibold text-muted-foreground bg-muted/50 rounded-md"
+										className="p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold text-muted-foreground bg-muted/50 rounded-md"
 									>
 										{day}
 									</div>
@@ -1275,18 +1314,23 @@ export default function CalendarPage() {
 									week.map((day: any, dayIndex: number) => (
 										<div
 											key={`${weekIndex}-${dayIndex}`}
-											className={`min-h-[100px] p-2 border rounded-lg transition-all hover:shadow-md ${
+											onClick={() => handleDayClick(day)}
+											className={`min-h-[60px] sm:min-h-[100px] p-1 sm:p-2 border rounded-lg transition-all hover:shadow-md cursor-pointer touch-manipulation ${
 												day.isCurrentMonth
 													? 'bg-background border-border'
 													: 'bg-muted/20 border-muted text-muted-foreground'
-											} ${day.isToday ? 'ring-2 ring-primary bg-primary/5' : ''}`}
+											} ${day.isToday ? 'ring-2 ring-primary bg-primary/5' : ''} ${
+												day.subjects.length > 0 ? 'hover:bg-muted/10' : ''
+											}`}
 										>
 											<div
-												className={`text-sm font-medium mb-2 ${day.isToday ? 'text-primary' : ''}`}
+												className={`text-xs sm:text-sm font-medium mb-1 sm:mb-2 ${day.isToday ? 'text-primary' : ''}`}
 											>
 												{day.date.getDate()}
 											</div>
-											<div className="space-y-1">
+
+											{/* Desktop/Tablet View - Show subject details */}
+											<div className="hidden min-[667px]:block space-y-1">
 												{day.subjects.slice(0, 3).map((subject: any, index: number) => (
 													<Popover key={index}>
 														<PopoverTrigger asChild>
@@ -1365,6 +1409,26 @@ export default function CalendarPage() {
 													</div>
 												)}
 											</div>
+
+											{/* Mobile View - Show dots for subjects */}
+											<div className="min-[667px]:hidden">
+												{day.subjects.length > 0 && (
+													<div className="flex flex-wrap gap-1 mt-1">
+														{day.subjects.slice(0, 6).map((_: any, index: number) => (
+															<div
+																key={index}
+																className="w-2 h-2 rounded-full bg-primary"
+																title={`${day.subjects.length} môn học`}
+															/>
+														))}
+														{day.subjects.length > 6 && (
+															<div className="text-xs text-muted-foreground font-medium">
+																+{day.subjects.length - 6}
+															</div>
+														)}
+													</div>
+												)}
+											</div>
 										</div>
 									))
 								)}
@@ -1373,6 +1437,82 @@ export default function CalendarPage() {
 					</CardContent>
 				</Card>
 			)}
+
+			{/* Mobile Day Details Bottom Sheet */}
+			<BottomSheet
+				isOpen={showDayDetails}
+				onClose={() => setShowDayDetails(false)}
+				title={
+					selectedDayData
+						? `${selectedDayData.date.toLocaleDateString('vi-VN', {
+								weekday: 'long',
+								day: 'numeric',
+								month: 'long'
+							})}`
+						: ''
+				}
+			>
+				<BottomSheetContent>
+					{selectedDayData && selectedDayData.subjects.length > 0 && (
+						<div className="space-y-4">
+							{selectedDayData.subjects.map((subject: any, index: number) => {
+								const shiftDisplay = formatShiftDisplay(subject.shiftNumber, subject.length || 1);
+								const timeDisplay = formatTimeDisplay(subject.shiftNumber, subject.length || 1);
+
+								return (
+									<div
+										key={index}
+										className="p-4 rounded-lg border bg-card hover:bg-muted/20 transition-colors"
+									>
+										{/* Subject Header */}
+										<div className="flex items-center justify-between mb-3">
+											<div className="flex items-center gap-2">
+												<BookOpen className="w-5 h-5 text-blue-600" />
+												<h3 className="font-semibold text-lg">{subject.name}</h3>
+											</div>
+											<Badge variant="default" className="text-xs">
+												{shiftDisplay}
+											</Badge>
+										</div>
+
+										{/* Subject Details */}
+										<div className="space-y-2 text-sm">
+											<div className="flex items-center gap-2">
+												<CalendarIcon className="w-4 h-4 text-primary" />
+												<span className="font-medium">Thời gian:</span>
+												<span className="font-mono">{timeDisplay}</span>
+											</div>
+
+											{subject.address && (
+												<div className="flex items-center gap-2">
+													<MapPin className="w-4 h-4 text-orange-600" />
+													<span className="font-medium">Phòng:</span>
+													<span>{subject.address}</span>
+												</div>
+											)}
+
+											{subject.instructor && (
+												<div className="flex items-center gap-2">
+													<User className="w-4 h-4 text-green-600" />
+													<span className="font-medium">Giảng viên:</span>
+													<span>{subject.instructor}</span>
+												</div>
+											)}
+
+											{subject.note && (
+												<div className="mt-3 p-3 bg-muted/50 rounded">
+													<span className="font-medium">Ghi chú:</span>
+													<p className="text-muted-foreground mt-1">{subject.note}</p>
+												</div>
+											)}
+										</div>
+									</div>
+								);
+							})}
+						</div>
+					)}
+				</BottomSheetContent>
+			</BottomSheet>
 		</div>
 	);
 }
