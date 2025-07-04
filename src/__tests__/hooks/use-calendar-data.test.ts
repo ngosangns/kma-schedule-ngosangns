@@ -10,8 +10,7 @@ import {
 	processMainForm,
 	processSemesters,
 	processStudent,
-	filterTrashInHtml,
-	exportToGoogleCalendar
+	filterTrashInHtml
 } from '@/lib/ts/calendar';
 import { login as loginUser, logout as logoutUser } from '@/lib/ts/user';
 import { mockCalendarData } from '../mocks/data';
@@ -69,7 +68,6 @@ describe('useCalendarData', () => {
 		});
 		(saveData as jest.Mock).mockImplementation(() => {});
 		(logoutUser as jest.Mock).mockImplementation(() => {});
-		(exportToGoogleCalendar as jest.Mock).mockImplementation(() => {});
 	});
 
 	it('should initialize with isProcessing false', () => {
@@ -84,7 +82,6 @@ describe('useCalendarData', () => {
 		expect(typeof result.current.loginWithCredentials).toBe('function');
 		expect(typeof result.current.processManualData).toBe('function');
 		expect(typeof result.current.changeSemester).toBe('function');
-		expect(typeof result.current.exportCalendar).toBe('function');
 		expect(typeof result.current.logout).toBe('function');
 	});
 
@@ -248,34 +245,6 @@ describe('useCalendarData', () => {
 			expect(mockShowError).toHaveBeenCalledWith('Cập nhật học kỳ thất bại', 'Fetch failed');
 			expect(changeResult.success).toBe(false);
 			expect(result.current.isProcessing).toBe(false);
-		});
-	});
-
-	describe('exportCalendar', () => {
-		it('should export calendar successfully', () => {
-			const { result } = renderHook(() => useCalendarData());
-
-			const exportResult = result.current.exportCalendar('Test Student', mockCalendarData);
-
-			expect(exportToGoogleCalendar).toHaveBeenCalledWith('Test Student', mockCalendarData);
-			expect(mockShowSuccess).toHaveBeenCalledWith('Đã xuất lịch thành công!');
-			expect(exportResult.success).toBe(true);
-		});
-
-		it('should handle export failure', () => {
-			(exportToGoogleCalendar as jest.Mock).mockImplementation(() => {
-				throw new Error('Export failed');
-			});
-
-			const { result } = renderHook(() => useCalendarData());
-
-			const exportResult = result.current.exportCalendar('Test Student', mockCalendarData);
-
-			expect(mockShowError).toHaveBeenCalledWith(
-				'Xuất lịch thất bại',
-				'Có lỗi xảy ra khi xuất lịch!'
-			);
-			expect(exportResult.success).toBe(false);
 		});
 	});
 

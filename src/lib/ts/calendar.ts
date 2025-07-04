@@ -1,6 +1,5 @@
 // @ts-nocheck
 import { createInlineWorker } from './worker';
-import moment from 'moment';
 import { MainFormData, ProcessedCalendarData, SemesterData } from '@/types';
 
 export async function fetchCalendarWithPost(
@@ -415,69 +414,4 @@ export function restructureTKB(data: string[][] | false): ProcessedCalendarData 
 		data_subject: data_subject,
 		weeks: days_outline
 	};
-}
-
-export function exportToGoogleCalendar(
-	student: string | null,
-	calendar: ProcessedCalendarData
-): void {
-	if (!calendar || !calendar.data_subject || !Array.isArray(calendar.data_subject)) {
-		console.error('Invalid calendar data for export');
-		return;
-	}
-	const time_sift_table = [
-		{},
-		{ start: '000000', end: '004500' },
-		{ start: '005000', end: '013500' },
-		{ start: '014000', end: '022500' },
-		{ start: '023500', end: '032000' },
-		{ start: '032500', end: '041000' },
-		{ start: '041500', end: '050000' },
-		{ start: '053000', end: '061500' },
-		{ start: '062000', end: '070500' },
-		{ start: '071000', end: '075500' },
-		{ start: '080500', end: '085000' },
-		{ start: '085500', end: '094000' },
-		{ start: '094500', end: '103000' },
-		{ start: '110000', end: '114500' },
-		{ start: '114500', end: '123000' },
-		{ start: '124500', end: '133000' },
-		{ start: '133000', end: '141500' }
-	];
-	let result = `BEGIN:VCALENDAR\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\n\n`;
-	calendar.data_subject.forEach((week: any) => {
-		for (const day of week) {
-			const timeIter = new Date(day.time);
-			if (day.shift && Array.isArray(day.shift)) {
-				day.shift.forEach((shift: any, shift_index: number) => {
-					if (shift.content) {
-						const startIndex = shift_index + 1;
-						const endIndex = shift_index + (parseInt(shift.length) || 1);
-
-						// Ensure indices are within bounds
-						if (startIndex < time_sift_table.length && endIndex < time_sift_table.length) {
-							const startTime = time_sift_table[startIndex]?.start;
-							const endTime = time_sift_table[endIndex]?.end;
-
-							if (startTime && endTime) {
-								result += `BEGIN:VEVENT\nDTSTART:${moment(timeIter).format('YYYYMMDD')}T${startTime}Z\n`;
-								result += `DTEND:${moment(timeIter).format('YYYYMMDD')}T${endTime}Z\n`;
-								if (shift.address) result += `LOCATION:${shift.address}\n`;
-								result += `SUMMARY:${shift.name}\n`;
-								result += `END:VEVENT\n\n`;
-							}
-						}
-					}
-				});
-			}
-		}
-	});
-	result += `END:VCALENDAR`;
-	const link = document.createElement('a');
-	link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(result));
-	link.setAttribute('download', `${student ? student.split(' - ')[0] : 'tkb_export'}.ics`);
-	link.style.display = 'none';
-	document.body.appendChild(link);
-	link.click();
-	document.body.removeChild(link);
 }
