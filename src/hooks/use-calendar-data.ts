@@ -9,11 +9,12 @@ import {
 	processMainForm,
 	processSemesters,
 	processStudent,
-	filterTrashInHtml
+	filterTrashInHtml,
+	exportToGoogleCalendar
 } from '@/lib/ts/calendar';
 import { login as loginUser, logout as logoutUser } from '@/lib/ts/user';
 import { getErrorMessage } from '@/lib/utils';
-import { UseCalendarDataReturn, SemesterData, MainFormData } from '@/types';
+import { UseCalendarDataReturn, ProcessedCalendarData, SemesterData, MainFormData } from '@/types';
 
 export function useCalendarData(): UseCalendarDataReturn {
 	const { login: authLogin, logout: authLogout, setLoading, setError } = useAuth();
@@ -177,6 +178,22 @@ export function useCalendarData(): UseCalendarDataReturn {
 		[setCalendar, setStudent, showSuccess, showError]
 	);
 
+	const exportCalendar = useCallback(
+		(student: string, calendar: ProcessedCalendarData) => {
+			try {
+				exportToGoogleCalendar(student, calendar);
+				showSuccess('Đã xuất lịch thành công!');
+				return { success: true };
+			} catch (error) {
+				console.error('Export calendar error:', error);
+				const errorMessage = 'Có lỗi xảy ra khi xuất lịch!';
+				showError('Xuất lịch thất bại', errorMessage);
+				return { success: false, error: errorMessage };
+			}
+		},
+		[showSuccess, showError]
+	);
+
 	const logout = useCallback(() => {
 		logoutUser();
 		authLogout();
@@ -188,6 +205,7 @@ export function useCalendarData(): UseCalendarDataReturn {
 		loginWithCredentials,
 		processManualData,
 		changeSemester,
+		exportCalendar,
 		logout
 	};
 }

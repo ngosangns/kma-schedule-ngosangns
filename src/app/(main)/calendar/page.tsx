@@ -27,6 +27,7 @@ import {
 import { NotificationSettings } from '@/components/ui/notification-settings';
 import { BottomSheet, BottomSheetContent } from '@/components/ui/bottom-sheet';
 import {
+	Download,
 	LogOut,
 	ChevronLeft,
 	ChevronRight,
@@ -51,7 +52,8 @@ import {
 	processMainForm,
 	processSemesters,
 	processStudent,
-	filterTrashInHtml
+	filterTrashInHtml,
+	exportToGoogleCalendar
 } from '@/lib/ts/calendar';
 import { logout } from '@/lib/ts/user';
 import {
@@ -67,7 +69,7 @@ type ViewMode = 'calendar' | 'list' | 'month';
 export default function CalendarPage() {
 	const router = useRouter();
 	const { user, logout: authLogout } = useAuth();
-	const { student, setCalendar, setStudent } = useCalendar();
+	const { calendar, student, setCalendar, setStudent } = useCalendar();
 	const { showSuccess, showError } = useNotifications();
 
 	const [loading, setLoading] = useState(false);
@@ -371,6 +373,13 @@ export default function CalendarPage() {
 		logout();
 		authLogout();
 		router.push('/login');
+	};
+
+	const handleExportCalendar = () => {
+		if (student && calendar) {
+			exportToGoogleCalendar(student, calendar);
+			showSuccess('Đã xuất lịch thành công!');
+		}
 	};
 
 	const getFilteredSubjects = () => {
@@ -717,6 +726,17 @@ export default function CalendarPage() {
 						</Button>
 					</div>
 					<div className="flex gap-2">
+						<Button
+							onClick={handleExportCalendar}
+							variant="outline"
+							size="sm"
+							className="flex-1"
+							disabled={!student || !calendar || !calendar.data_subject?.length}
+						>
+							<Download className="w-4 h-4 mr-2" />
+							<span className="hidden xs:inline">Xuất Google Calendar</span>
+							<span className="xs:hidden">Xuất lịch</span>
+						</Button>
 						<Button onClick={handleLogout} variant="outline" size="sm" className="flex-1">
 							<LogOut className="w-4 h-4 mr-2" />
 							Đăng xuất
@@ -756,7 +776,15 @@ export default function CalendarPage() {
 						<RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
 						Đồng bộ
 					</Button>
-
+					<Button
+						onClick={handleExportCalendar}
+						variant="outline"
+						size="sm"
+						disabled={!student || !calendar || !calendar.data_subject?.length}
+					>
+						<Download className="w-4 h-4 mr-2" />
+						Xuất Google Calendar
+					</Button>
 					<Button onClick={handleLogout} variant="outline" size="sm">
 						<LogOut className="w-4 h-4 mr-2" />
 						Đăng xuất

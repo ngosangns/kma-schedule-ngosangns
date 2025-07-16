@@ -170,7 +170,29 @@ skipIfNoCredentials('useCalendarData Hook Integration Tests', () => {
       });
     });
 
+    test('should export calendar successfully', async () => {
+      const { result } = renderHook(() => useCalendarData(), { wrapper });
 
+      const studentData = localStorage.getItem('student');
+      const calendarData = localStorage.getItem('calendar');
+
+      if (!studentData || !calendarData) {
+        throw new Error('No calendar data available for export');
+      }
+
+      const student = studentData;
+      const calendar = JSON.parse(calendarData);
+
+      let exportResult: any;
+      await act(async () => {
+        exportResult = result.current.exportCalendar(student, calendar);
+      });
+
+      expect(exportResult).toBeDefined();
+      expect(exportResult.success).toBe(true);
+
+      console.log('Calendar export completed successfully');
+    });
   });
 
   describe('Logout', () => {

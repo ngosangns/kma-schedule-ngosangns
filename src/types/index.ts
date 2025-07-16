@@ -260,7 +260,13 @@ export interface UseCalendarDataReturn {
 		} | null;
 		error?: string;
 	}>;
-
+	exportCalendar: (
+		student: string,
+		calendar: ProcessedCalendarData
+	) => {
+		success: boolean;
+		error?: string;
+	};
 	logout: () => void;
 }
 
@@ -319,4 +325,10 @@ export interface TimeShiftTable {
 		start: string;
 		end: string;
 	};
+}
+
+// Calendar Export Types
+export interface CalendarExportData {
+	student: string | null;
+	calendar: ProcessedCalendarData;
 }
