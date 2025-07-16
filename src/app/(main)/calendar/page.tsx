@@ -78,6 +78,8 @@ export default function CalendarPage() {
 	const [currentWeek, setCurrentWeek] = useState<any[]>([]);
 	const [viewMode, setViewMode] = useState<ViewMode>('calendar');
 	const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+	const [showSyncErrorDialog, setShowSyncErrorDialog] = useState(false);
+	const [syncErrorMessage, setSyncErrorMessage] = useState('');
 	const [selectedDayData, setSelectedDayData] = useState<any>(null);
 	const [showDayDetails, setShowDayDetails] = useState(false);
 	const [isMobile, setIsMobile] = useState(false);
@@ -363,7 +365,8 @@ export default function CalendarPage() {
 			console.error('Sync error:', error);
 			const errorMessage =
 				error instanceof Error ? error.message : 'Có lỗi xảy ra khi đồng bộ dữ liệu!';
-			showError('Đồng bộ thất bại', errorMessage);
+			setSyncErrorMessage(errorMessage);
+			setShowSyncErrorDialog(true);
 		} finally {
 			setLoading(false);
 		}
@@ -1437,6 +1440,46 @@ export default function CalendarPage() {
 					</CardContent>
 				</Card>
 			)}
+
+			{/* Sync Error Dialog */}
+			<Dialog open={showSyncErrorDialog} onOpenChange={setShowSyncErrorDialog}>
+				<DialogContent className="max-w-md mx-4">
+					<DialogHeader>
+						<DialogTitle>Lỗi đồng bộ dữ liệu</DialogTitle>
+						<DialogDescription>
+							Có lỗi xảy ra khi đồng bộ dữ liệu. Bạn có muốn thử lại hoặc đăng xuất không?
+						</DialogDescription>
+					</DialogHeader>
+					<div className="space-y-4">
+						<div className="p-3 bg-muted/50 rounded text-sm text-muted-foreground">
+							{syncErrorMessage}
+						</div>
+						<div className="flex flex-col sm:flex-row gap-2">
+							<Button
+								onClick={() => {
+									setShowSyncErrorDialog(false);
+									handleSync();
+								}}
+								className="flex-1"
+							>
+								<RefreshCw className="w-4 h-4 mr-2" />
+								Thử lại
+							</Button>
+							<Button
+								onClick={() => {
+									setShowSyncErrorDialog(false);
+									handleLogout();
+								}}
+								variant="outline"
+								className="flex-1"
+							>
+								<LogOut className="w-4 h-4 mr-2" />
+								Đăng xuất
+							</Button>
+						</div>
+					</div>
+				</DialogContent>
+			</Dialog>
 
 			{/* Mobile Day Details Bottom Sheet */}
 			<BottomSheet

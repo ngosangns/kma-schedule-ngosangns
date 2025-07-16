@@ -421,7 +421,13 @@ export function exportToGoogleCalendar(
 	student: string | null,
 	calendar: ProcessedCalendarData
 ): void {
-	if (!calendar || !calendar.data_subject || !Array.isArray(calendar.data_subject)) {
+	if (
+		!calendar ||
+		!calendar.data_subject ||
+		!Array.isArray(calendar.data_subject) ||
+		!calendar.weeks ||
+		!Array.isArray(calendar.weeks)
+	) {
 		console.error('Invalid calendar data for export');
 		return;
 	}
@@ -445,7 +451,7 @@ export function exportToGoogleCalendar(
 		{ start: '133000', end: '141500' }
 	];
 	let result = `BEGIN:VCALENDAR\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\n\n`;
-	calendar.data_subject.forEach((week: any) => {
+	calendar.weeks.forEach((week: any) => {
 		for (const day of week) {
 			const timeIter = new Date(day.time);
 			if (day.shift && Array.isArray(day.shift)) {
