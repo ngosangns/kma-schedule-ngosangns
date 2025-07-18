@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -68,7 +67,6 @@ import {
 type ViewMode = 'calendar' | 'list' | 'month';
 
 export default function CalendarPage() {
-	const router = useRouter();
 	const { user, logout: authLogout, isAuthenticated, isLoading } = useAuth();
 	const { calendar, student, setCalendar, setStudent } = useCalendar();
 	const { showSuccess, showError } = useNotifications();
@@ -376,7 +374,8 @@ export default function CalendarPage() {
 	const handleLogout = () => {
 		logout();
 		authLogout();
-		router.push('/login');
+		// No need to redirect - the component will re-render and show LoginForm
+		// when isAuthenticated becomes false
 	};
 
 	const handleExportCalendar = () => {

@@ -148,10 +148,10 @@ yarn test:watch            # Run tests in watch mode
 src/
 ├── app/                    # Next.js App Router pages
 │   ├── (main)/            # Authenticated pages group
-│   │   ├── calendar/      # Main calendar page
+│   │   ├── calendar/      # Main calendar page with integrated login
+│   │   ├── course-planning/ # Course planning page
 │   │   ├── about/         # About page
 │   │   └── changelogs/    # Changelog page
-│   ├── login/             # Authentication page
 │   ├── layout.tsx         # Root layout
 │   └── page.tsx           # Home page
 ├── components/            # React components

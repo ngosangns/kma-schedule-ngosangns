@@ -45,12 +45,11 @@ kma-schedule-ngosangns/
 src/app/
 ├── (main)/                       # Route group for authenticated pages
 │   ├── about/                    # About page
-│   ├── calendar/                 # Main calendar page
-│   │   └── page.tsx             # Calendar view component
+│   ├── calendar/                 # Main calendar page with integrated login
+│   │   └── page.tsx             # Calendar view component with LoginForm
 │   ├── changelogs/              # Changelog page
+│   ├── course-planning/         # Course planning page
 │   └── layout.tsx               # Layout for authenticated pages
-├── login/                       # Authentication pages
-│   └── page.tsx                 # Login page component
 ├── globals.css                  # Global CSS styles
 ├── layout.tsx                   # Root layout component
 └── page.tsx                     # Home page (redirects to calendar)
@@ -58,8 +57,8 @@ src/app/
 
 #### Key Pages
 
-- **`/calendar`**: Main application page with schedule display
-- **`/login`**: User authentication page
+- **`/calendar`**: Main application page with schedule display and integrated login
+- **`/course-planning`**: Course planning and Excel processing page
 - **`/about`**: Application information
 - **`/changelogs`**: Version history and updates
 

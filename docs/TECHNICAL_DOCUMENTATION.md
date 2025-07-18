@@ -83,7 +83,8 @@ KMA Schedule is a Next.js-based web application that converts raw HTML from the 
 #### Key Components
 
 - **`src/lib/ts/user.ts`**: Core authentication logic
-- **`src/app/login/page.tsx`**: Login UI component
+- **`src/components/auth/LoginForm.tsx`**: Login UI component
+- **`src/app/(main)/calendar/page.tsx`**: Main page with integrated authentication
 - **`src/contexts/AppContext.tsx`**: Authentication state management
 
 #### Security Features

@@ -217,10 +217,10 @@ describe('Sync Error Dialog', () => {
 		const logoutButton = screen.getByRole('button', { name: /đăng xuất/i });
 		await user.click(logoutButton);
 
-		// Should call logout functions and redirect
+		// Should call logout functions but no redirect (component will re-render)
 		expect(mockLogout).toHaveBeenCalled();
 		expect(mockAuthLogout).toHaveBeenCalled();
-		expect(mockPush).toHaveBeenCalledWith('/login');
+		// No redirect expected - the component will re-render and show LoginForm
 	});
 
 	test('should close dialog when clicking outside or close button', async () => {
