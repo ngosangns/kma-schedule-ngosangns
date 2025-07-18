@@ -127,8 +127,8 @@ export function ScheduleCalendar() {
 		return calendarData.data[dayIndex] || [];
 	};
 
-	const getSessionsByShift = (sessions: any[][], shiftSessions: number[]) => {
-		const shiftItems: any[] = [];
+	const getSessionsByShift = (sessions: CalendarTableItem[][], shiftSessions: number[]) => {
+		const shiftItems: CalendarTableItem[] = [];
 
 		sessions.forEach((sessionRow) => {
 			sessionRow.forEach((session) => {

@@ -9,7 +9,7 @@ export enum Field {
 	StartSession = 'startSession',
 	EndSession = 'endSession',
 	StartDate = 'startDate',
-	EndDate = 'endDate',
+	EndDate = 'endDate'
 }
 
 export type SheetData = Record<
@@ -55,7 +55,7 @@ export interface ClassData {
 
 export type Schedules = Schedule[];
 
-interface Schedule {
+export interface Schedule {
 	[Field.StartDate]: number;
 	[Field.EndDate]: number;
 	[Field.DayOfWeekStandard]: number;
@@ -134,7 +134,7 @@ export const SESSION_CONSTANTS = {
 	START_EVENING_SESSION: 13,
 	END_EVENING_SESSION: 16,
 	MIN_SESSION: 1,
-	MAX_SESSION: 16,
+	MAX_SESSION: 16
 } as const;
 
 // Session shift type

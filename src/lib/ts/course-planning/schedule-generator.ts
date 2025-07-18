@@ -7,7 +7,6 @@ import {
 	CalendarTableData,
 	CalendarTableItem,
 	MajorSelectedSubjects,
-	ScheduleWorkerMessage,
 	ScheduleWorkerResponse
 } from '@/types/course-planning';
 
@@ -23,9 +22,15 @@ export const getTotalDaysBetweenDates = (startDate: Date, endDate: Date) =>
 
 // Session shift helper
 export function getSessionShift(session: number): 'morning' | 'afternoon' | 'evening' {
-	if (session >= SESSION_CONSTANTS.START_MORNING_SESSION && session <= SESSION_CONSTANTS.END_MORNING_SESSION)
+	if (
+		session >= SESSION_CONSTANTS.START_MORNING_SESSION &&
+		session <= SESSION_CONSTANTS.END_MORNING_SESSION
+	)
 		return 'morning';
-	if (session >= SESSION_CONSTANTS.START_AFTERNOON_SESSION && session <= SESSION_CONSTANTS.END_AFTERNOON_SESSION)
+	if (
+		session >= SESSION_CONSTANTS.START_AFTERNOON_SESSION &&
+		session <= SESSION_CONSTANTS.END_AFTERNOON_SESSION
+	)
 		return 'afternoon';
 	return 'evening';
 }
@@ -39,18 +44,23 @@ export function generateCalendarTableData(
 	const maxDate = numToDate(calendar.maxDate);
 	const totalDays = getTotalDaysBetweenDates(minDate, maxDate);
 
-	const calendarTableData: CalendarTableItem[][][] = new Array(totalDays + 1)
-		.fill(null)
-		.map(() => []);
+	const calendarTableData: CalendarTableItem[][][] = Array.from(
+		{ length: totalDays + 1 },
+		() => []
+	);
 
 	let totalConflictedSessions = 0;
 
 	for (const majorKey of Object.keys(selectedClasses)) {
-		for (const subjectName of Object.keys(selectedClasses[majorKey])) {
-			const selectedSubjectData = selectedClasses[majorKey][subjectName];
-			if (!selectedSubjectData.show || !selectedSubjectData.class) continue;
+		const majorData = selectedClasses[majorKey];
+		if (!majorData) continue;
 
-			const classData = calendar.majors[majorKey][subjectName][selectedSubjectData.class];
+		for (const subjectName of Object.keys(majorData)) {
+			const selectedSubjectData = majorData[subjectName];
+			if (!selectedSubjectData?.show || !selectedSubjectData.class) continue;
+
+			const classData = calendar.majors[majorKey]?.[subjectName]?.[selectedSubjectData.class];
+			if (!classData) continue;
 
 			for (const schedule of classData.schedules) {
 				let isMeetRightDayOfWeek = false;
@@ -63,12 +73,11 @@ export function generateCalendarTableData(
 					date <= endDate;
 					date.setDate(date.getDate() + (isMeetRightDayOfWeek ? 7 : 1))
 				) {
-					if (date.getDay() === schedule[Field.DayOfWeekStandard])
-						isMeetRightDayOfWeek = true;
+					if (date.getDay() === schedule[Field.DayOfWeekStandard]) isMeetRightDayOfWeek = true;
 					else continue;
 
-					const dateTableData =
-						calendarTableData[getTotalDaysBetweenDates(minDate, date)];
+					const dateTableData = calendarTableData[getTotalDaysBetweenDates(minDate, date)];
+					if (!dateTableData) continue;
 
 					let isAdded = false;
 
@@ -95,7 +104,7 @@ export function generateCalendarTableData(
 							startSession: schedule[Field.StartSession],
 							endSession: schedule[Field.EndSession],
 							subjectName,
-							classCode: selectedSubjectData.class,
+							classCode: selectedSubjectData.class
 						});
 						isAdded = true;
 						break;
@@ -107,8 +116,8 @@ export function generateCalendarTableData(
 								startSession: schedule[Field.StartSession],
 								endSession: schedule[Field.EndSession],
 								subjectName,
-								classCode: selectedSubjectData.class,
-							},
+								classCode: selectedSubjectData.class
+							}
 						]);
 					}
 				}
@@ -118,7 +127,7 @@ export function generateCalendarTableData(
 
 	return {
 		data: calendarTableData,
-		totalConflictedSessions,
+		totalConflictedSessions
 	};
 }
 
@@ -136,15 +145,29 @@ export function generateCombinationOfSubjects(params: {
 	const totalSessionsInShift: number[][] = []; // Total sessions in auto shift [numClasses][numSubjects]
 
 	const autoData = [
-		['refer-non-overlap-morning', SESSION_CONSTANTS.START_MORNING_SESSION, SESSION_CONSTANTS.END_MORNING_SESSION],
-		['refer-non-overlap-afternoon', SESSION_CONSTANTS.START_AFTERNOON_SESSION, SESSION_CONSTANTS.END_AFTERNOON_SESSION],
-		['refer-non-overlap-evening', SESSION_CONSTANTS.START_EVENING_SESSION, SESSION_CONSTANTS.END_EVENING_SESSION],
+		[
+			'refer-non-overlap-morning',
+			SESSION_CONSTANTS.START_MORNING_SESSION,
+			SESSION_CONSTANTS.END_MORNING_SESSION
+		],
+		[
+			'refer-non-overlap-afternoon',
+			SESSION_CONSTANTS.START_AFTERNOON_SESSION,
+			SESSION_CONSTANTS.END_AFTERNOON_SESSION
+		],
+		[
+			'refer-non-overlap-evening',
+			SESSION_CONSTANTS.START_EVENING_SESSION,
+			SESSION_CONSTANTS.END_EVENING_SESSION
+		]
 	].find((item) => item[0] === auto) as [string, number, number];
 
 	const aDayInMilliseconds = 24 * 60 * 60 * 1000;
 
 	selectedSubjects.forEach(([majorKey, subjectKey]) => {
-		const subjectData = calendar.majors[majorKey][subjectKey];
+		const subjectData = calendar.majors[majorKey]?.[subjectKey];
+		if (!subjectData) return;
+
 		const subjectClasses: [string, string, string][] = [];
 		const subjectTimeGrid: [number, number, number, number][][] = [];
 		const subjectTotalSessionsInShift: number[] = [];
@@ -159,7 +182,10 @@ export function generateCombinationOfSubjects(params: {
 					numToDate(schedule[Field.EndDate]).getTime() + aDayInMilliseconds - 1,
 					schedule[Field.DayOfWeekStandard],
 					((1 << (schedule[Field.EndSession] - schedule[Field.StartSession] + 1)) - 1) <<
-						(SESSION_CONSTANTS.MAX_SESSION - SESSION_CONSTANTS.MIN_SESSION + 1 - schedule[Field.EndSession]),
+						(SESSION_CONSTANTS.MAX_SESSION -
+							SESSION_CONSTANTS.MIN_SESSION +
+							1 -
+							schedule[Field.EndSession])
 				];
 
 				// Calculate weeks between start and end date
@@ -212,26 +238,25 @@ export function generateCombinationOfSubjects(params: {
 		if (c1.length === 0 || c2.length === 0) return 0;
 
 		// Check if time ranges don't overlap
-		if (c1[c1.length - 1][1] < c2[0][0] || c2[c2.length - 1][1] < c1[0][0])
-			return 0;
+		const c1Last = c1[c1.length - 1];
+		const c2First = c2[0];
+		const c2Last = c2[c2.length - 1];
+		const c1First = c1[0];
+
+		if (!c1Last || !c2First || !c2Last || !c1First) return 0;
+		if (c1Last[1] < c2First[0] || c2Last[1] < c1First[0]) return 0;
 
 		let overlap = 0;
 
 		// Check if time ranges overlap and same day of week
 		for (const [startDate1, endDate1, dayOfWeek1, timeGrid1] of c1) {
 			for (const [startDate2, endDate2, dayOfWeek2, timeGrid2] of c2) {
-				if (
-					startDate1 <= endDate2 &&
-					endDate1 >= startDate2 &&
-					dayOfWeek1 === dayOfWeek2
-				) {
+				if (startDate1 <= endDate2 && endDate1 >= startDate2 && dayOfWeek1 === dayOfWeek2) {
 					// Calculate overlap using bitmask
 					const _overlap = timeGrid1 & timeGrid2;
 					// Calculate total weeks of overlap
 					const totalWeeks =
-						(Math.min(endDate1, endDate2) -
-							Math.max(startDate1, startDate2) +
-							aDayInMilliseconds) /
+						(Math.min(endDate1, endDate2) - Math.max(startDate1, startDate2) + aDayInMilliseconds) /
 						(aDayInMilliseconds * 7);
 					// If overlap exists, count bits and add to total
 					if (_overlap > 0) overlap += countBit1(_overlap) * totalWeeks;
@@ -251,16 +276,23 @@ export function generateCombinationOfSubjects(params: {
 		}
 
 		const classesData = classes[index];
+		if (!classesData) return;
+
 		for (let i = 0; i < classesData.length; i++) {
 			let newOverlap = overlap;
-			const currentClassTimeGrid = timeGrid[index][i];
+			const currentClassTimeGrid = timeGrid[index]?.[i];
+			if (!currentClassTimeGrid) continue;
 
 			// Calculate overlapping sessions when adding this class
 			for (let j = 0; j < index; j++) {
-				newOverlap += calculateOverlapBetween2Classes(
-					timeGrid[j][current[j]],
-					currentClassTimeGrid
-				);
+				const currentJ = current[j];
+				const timeGridJ = timeGrid[j];
+				if (currentJ === undefined || !timeGridJ) continue;
+
+				const timeGridJCurrent = timeGridJ[currentJ];
+				if (!timeGridJCurrent) continue;
+
+				newOverlap += calculateOverlapBetween2Classes(timeGridJCurrent, currentClassTimeGrid);
 
 				// Skip if overlap exceeds threshold
 				if (newOverlap > threshold) break;
@@ -275,39 +307,66 @@ export function generateCombinationOfSubjects(params: {
 	}
 
 	const start = performance.now();
-	generateCombination(new Array(selectedSubjects.length).fill(0), 0, 0);
+	generateCombination(
+		Array.from({ length: selectedSubjects.length }, () => 0),
+		0,
+		0
+	);
 
 	console.log('Generate combinations time:', performance.now() - start);
 	console.log('Total combinations:', combinations.length);
 
 	// Sort combinations by overlap and preference
 	const combinationsWithOverlapSorted = combinations.sort((a, b) => {
-		const diff = a[0] - b[0];
+		const aFirst = a[0];
+		const bFirst = b[0];
+		if (aFirst === undefined || bFirst === undefined) return 0;
+
+		const diff = aFirst - bFirst;
 		if (diff !== 0 || !autoData) return diff;
 
 		return (
-			b.slice(1).reduce((acc, cur, i) => acc + totalSessionsInShift[i][cur], 0) -
-			a.slice(1).reduce((acc, cur, i) => acc + totalSessionsInShift[i][cur], 0)
+			b.slice(1).reduce((acc, cur, i) => {
+				const sessionData = totalSessionsInShift[i];
+				return acc + (sessionData?.[cur] || 0);
+			}, 0) -
+			a.slice(1).reduce((acc, cur, i) => {
+				const sessionData = totalSessionsInShift[i];
+				return acc + (sessionData?.[cur] || 0);
+			}, 0)
 		);
 	});
 
 	if (combinationsWithOverlapSorted.length) {
 		// Find optimal combination based on autoTh
 		const bestCombinationIndex = autoTh % combinationsWithOverlapSorted.length;
-		const bestCombination = combinationsWithOverlapSorted[bestCombinationIndex].slice(1);
+		const bestCombinationData = combinationsWithOverlapSorted[bestCombinationIndex];
+		if (!bestCombinationData) {
+			return { data: { selectedClasses: [], totalConflictedSessions: 0 } };
+		}
+
+		const bestCombination = bestCombinationData.slice(1);
+		const totalConflictedSessions = bestCombinationData[0] || 0;
 
 		return {
 			data: {
-				selectedClasses: bestCombination.map((classIndex, i) => classes[i][classIndex]),
-				totalConflictedSessions: combinationsWithOverlapSorted[bestCombinationIndex][0],
-			},
+				selectedClasses: bestCombination
+					.map((classIndex, i) => {
+						const classData = classes[i];
+						if (!classData || classIndex === undefined) return null;
+						const selectedClass = classData[classIndex];
+						return selectedClass || null;
+					})
+					.filter((item): item is [string, string, string] => item !== null),
+				totalConflictedSessions
+			}
 		};
 	}
 
 	return {
 		data: {
 			selectedClasses: [],
-			totalConflictedSessions: 0,
-		},
+			totalConflictedSessions: 0
+		}
 	};
 }

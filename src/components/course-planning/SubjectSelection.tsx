@@ -32,7 +32,10 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useCoursePlanning } from '@/contexts/CoursePlanningContext';
-import { Field, AutoMode } from '@/types/course-planning';
+import { Field, AutoMode, ClassData } from '@/types/course-planning';
+
+// Type for subject data (Record of class code to ClassData)
+type SubjectData = Record<string, ClassData>;
 
 // AUTO_MODES configuration
 const AUTO_MODES: { value: AutoMode; label: string; description: string; icon: React.ReactNode }[] =
@@ -67,7 +70,7 @@ const AUTO_MODES: { value: AutoMode; label: string; description: string; icon: R
 interface SubjectCardProps {
 	majorKey: string;
 	subjectName: string;
-	subjectData: any;
+	subjectData: SubjectData;
 	isSelected: boolean;
 	selectedClass: string | null;
 	onToggleSubject: (checked: boolean) => void;
@@ -88,7 +91,7 @@ function SubjectCard({
 	isActive
 }: SubjectCardProps) {
 	const totalClasses = Object.keys(subjectData).length;
-	const firstClass = Object.values(subjectData)[0] as any;
+	const firstClass = Object.values(subjectData)[0];
 	const teacher = firstClass?.[Field.Teacher] || 'N/A';
 
 	const handleCardClick = () => {
@@ -146,7 +149,7 @@ interface MajorSectionProps {
 	subjects: Array<{
 		majorKey: string;
 		subjectName: string;
-		subjectData: any;
+		subjectData: SubjectData;
 		isSelected: boolean;
 		selectedClass: string | null;
 		totalClasses: number;
@@ -412,7 +415,7 @@ interface SubjectSummaryProps {
 		subjectName: string;
 		selectedClass: string | null;
 		totalClasses: number;
-		subjectData: any;
+		subjectData: SubjectData;
 	}>;
 	onClassSelect: (majorKey: string, subjectName: string, classCode: string) => void;
 }
@@ -461,7 +464,7 @@ function SubjectSummary({ selectedSubjects, onClassSelect }: SubjectSummaryProps
 										<SelectContent>
 											{availableClasses.map((classCode) => {
 												const classData = subjectData[classCode];
-												const teacher = classData[Field.Teacher] || 'N/A';
+												const teacher = classData?.[Field.Teacher] || 'N/A';
 
 												return (
 													<SelectItem key={classCode} value={classCode}>

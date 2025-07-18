@@ -174,7 +174,7 @@ export function ScheduleControls() {
 						<Alert variant="destructive">
 							<AlertTriangle className="h-4 w-4" />
 							<AlertDescription>
-								Vui lòng quay lại tab "Chọn môn" để chọn ít nhất một môn học.
+								Vui lòng quay lại tab &quot;Chọn môn&quot; để chọn ít nhất một môn học.
 							</AlertDescription>
 						</Alert>
 					)}

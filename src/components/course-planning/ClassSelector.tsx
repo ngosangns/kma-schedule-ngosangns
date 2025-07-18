@@ -1,9 +1,15 @@
 'use client';
 
 import React from 'react';
-import { Clock, Users, MapPin } from 'lucide-react';
+import { Clock, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useCoursePlanning } from '@/contexts/CoursePlanningContext';
 import { Field } from '@/types/course-planning';
@@ -48,9 +54,10 @@ export function ClassSelector({ majorKey, subjectName, onClassSelect }: ClassSel
 						<SelectContent>
 							{availableClasses.map((classCode) => {
 								const classData = subjectData[classCode];
+								if (!classData) return null;
 								const scheduleCount = classData.schedules.length;
 								const teacher = classData[Field.Teacher] || 'N/A';
-								
+
 								return (
 									<SelectItem key={classCode} value={classCode}>
 										<div className="flex items-center justify-between w-full">
@@ -71,19 +78,19 @@ export function ClassSelector({ majorKey, subjectName, onClassSelect }: ClassSel
 				</div>
 
 				{/* Selected Class Details */}
-				{selectedClass && (
+				{selectedClass && subjectData[selectedClass] && (
 					<div className="space-y-3 p-4 bg-muted/50 rounded-lg">
 						<h4 className="font-medium">Thông tin lớp {selectedClass}</h4>
-						
+
 						<div className="space-y-2 text-sm">
 							<div className="flex items-center gap-2">
 								<Users className="h-4 w-4 text-muted-foreground" />
-								<span>Giảng viên: {subjectData[selectedClass][Field.Teacher]}</span>
+								<span>Giảng viên: {subjectData[selectedClass]![Field.Teacher]}</span>
 							</div>
-							
+
 							<div className="flex items-center gap-2">
 								<Clock className="h-4 w-4 text-muted-foreground" />
-								<span>Số buổi học: {subjectData[selectedClass].schedules.length}</span>
+								<span>Số buổi học: {subjectData[selectedClass]!.schedules.length}</span>
 							</div>
 						</div>
 
@@ -91,23 +98,23 @@ export function ClassSelector({ majorKey, subjectName, onClassSelect }: ClassSel
 						<div className="space-y-2">
 							<h5 className="font-medium text-sm">Lịch học:</h5>
 							<div className="space-y-1">
-								{subjectData[selectedClass].schedules.slice(0, 3).map((schedule: any, index: number) => (
-									<div key={index} className="text-xs text-muted-foreground flex items-center gap-2">
-										<Badge variant="outline" className="text-xs">
-											{schedule[Field.DayOfWeek]}
-										</Badge>
-										<span>Tiết {schedule[Field.Session]}</span>
-										{schedule[Field.Room] && (
-											<span className="flex items-center gap-1">
-												<MapPin className="h-3 w-3" />
-												{schedule[Field.Room]}
-											</span>
-										)}
-									</div>
-								))}
-								{subjectData[selectedClass].schedules.length > 3 && (
+								{subjectData[selectedClass]!.schedules.slice(0, 3).map(
+									(schedule, index: number) => (
+										<div
+											key={index}
+											className="text-xs text-muted-foreground flex items-center gap-2"
+										>
+											<Badge variant="outline" className="text-xs">
+												Tiết {schedule[Field.StartSession]}
+												{schedule[Field.StartSession] !== schedule[Field.EndSession] &&
+													`-${schedule[Field.EndSession]}`}
+											</Badge>
+										</div>
+									)
+								)}
+								{subjectData[selectedClass]!.schedules.length > 3 && (
 									<div className="text-xs text-muted-foreground">
-										... và {subjectData[selectedClass].schedules.length - 3} buổi khác
+										... và {subjectData[selectedClass]!.schedules.length - 3} buổi khác
 									</div>
 								)}
 							</div>

@@ -1,0 +1,12 @@
+{
+	"buildCommand": "yarn build",
+	"devCommand": "yarn dev",
+	"installCommand": "yarn install",
+	"framework": "nextjs",
+	"outputDirectory": ".next",
+	"github": {
+		"enabled": true,
+		"silent": true
+	},
+	"regions": ["sin1"]
+}
