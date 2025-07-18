@@ -1,9 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BookOpen, Upload, Calendar, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { BookOpen, Upload, Calendar } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileUpload } from '@/components/course-planning/FileUpload';
@@ -27,34 +25,18 @@ export default function CoursePlanningPage() {
 	);
 
 	return (
-		<div className="min-h-screen bg-background">
-			{/* Header */}
-			<div className="border-b bg-card">
-				<div className="container mx-auto px-4 py-4">
-					<div className="flex items-center justify-between">
-						<div className="flex items-center gap-4">
-							<Link href="/calendar">
-								<Button variant="ghost" size="sm">
-									<ArrowLeft className="h-4 w-4 mr-2" />
-									Quay lại
-								</Button>
-							</Link>
-							<div>
-								<h1 className="text-2xl font-bold flex items-center gap-2">
-									<BookOpen className="h-6 w-6" />
-									Lập lịch tín chỉ
-								</h1>
-								<p className="text-muted-foreground">
-									Tạo lịch học tối ưu từ file Excel môn học tín chỉ
-								</p>
-							</div>
-						</div>
-					</div>
-				</div>
+		<div className="space-y-6">
+			{/* Page Header */}
+			<div className="text-center space-y-2">
+				<h1 className="text-3xl font-bold flex items-center justify-center gap-2">
+					<BookOpen className="h-8 w-8" />
+					Lập lịch tín chỉ
+				</h1>
+				<p className="text-muted-foreground">Tạo lịch học tối ưu từ file Excel môn học tín chỉ</p>
 			</div>
 
 			{/* Main Content */}
-			<div className="container mx-auto px-4 py-6">
+			<div className="space-y-6">
 				<Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
 					{/* Tab Navigation */}
 					<TabsList className="grid w-full grid-cols-3">

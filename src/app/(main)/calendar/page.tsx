@@ -45,6 +45,7 @@ import { useAuth, useCalendar } from '@/contexts/AppContext';
 import { useNotifications } from '@/hooks/use-notifications';
 import { notificationService } from '@/lib/ts/notifications';
 import { loadData, saveData } from '@/lib/ts/storage';
+import LoginForm from '@/components/auth/LoginForm';
 import {
 	fetchCalendarWithGet,
 	fetchCalendarWithPost,
@@ -68,7 +69,7 @@ type ViewMode = 'calendar' | 'list' | 'month';
 
 export default function CalendarPage() {
 	const router = useRouter();
-	const { user, logout: authLogout } = useAuth();
+	const { user, logout: authLogout, isAuthenticated, isLoading } = useAuth();
 	const { calendar, student, setCalendar, setStudent } = useCalendar();
 	const { showSuccess, showError } = useNotifications();
 
@@ -661,6 +662,22 @@ export default function CalendarPage() {
 
 		return monthData;
 	};
+
+	// Check authentication first
+	if (isLoading) {
+		return <PageLoader text="Đang kiểm tra đăng nhập..." />;
+	}
+
+	if (!isAuthenticated) {
+		return (
+			<LoginForm
+				onLoginSuccess={() => {
+					// Login success will be handled by the auth context
+					// No need to do anything here as the component will re-render
+				}}
+			/>
+		);
+	}
 
 	if (!data.calendar) {
 		return <PageLoader text="Đang tải thời khóa biểu..." />;

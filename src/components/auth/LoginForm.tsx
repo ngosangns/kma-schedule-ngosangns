@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -37,12 +36,14 @@ const responseSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 type ResponseFormData = z.infer<typeof responseSchema>;
 
-export default function LoginPage() {
-	const router = useRouter();
+interface LoginFormProps {
+	onLoginSuccess?: () => void;
+}
+
+export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
 	const { loginWithCredentials, processManualData } = useCalendarData();
 	const { toast } = useToast();
 	const [showManualInput, setShowManualInput] = useState(false);
-	const [isRedirecting, setIsRedirecting] = useState(false);
 
 	// Login form
 	const loginForm = useForm<LoginFormData>({
@@ -62,45 +63,26 @@ export default function LoginPage() {
 	});
 
 	const handleLogin = async (data: LoginFormData) => {
-		const result = await loginWithCredentials(data.username, data.password, false); // Don't set global loading
+		const result = await loginWithCredentials(data.username, data.password, false);
 		if (result.success) {
-			setIsRedirecting(true);
 			toast({
 				title: 'Đăng nhập thành công!',
 				description: 'Chào mừng bạn quay trở lại'
 			});
-			// Small delay to show the toast before redirecting
-			setTimeout(() => {
-				router.push('/calendar');
-			}, 1000);
+			onLoginSuccess?.();
 		}
 	};
 
 	const handleManualResponse = async (data: ResponseFormData) => {
 		const result = await processManualData(data.userResponse);
 		if (result.success) {
-			setIsRedirecting(true);
 			toast({
 				title: 'Xử lý dữ liệu thành công!',
 				description: 'Dữ liệu đã được xử lý thành công'
 			});
-			// Small delay to show the toast before redirecting
-			setTimeout(() => {
-				router.push('/calendar');
-			}, 1000);
+			onLoginSuccess?.();
 		}
 	};
-
-	if (isRedirecting) {
-		return (
-			<div className="min-h-screen flex items-center justify-center bg-background">
-				<div className="flex flex-col items-center space-y-4">
-					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-					<p className="text-sm text-muted-foreground">Đang chuyển hướng...</p>
-				</div>
-			</div>
-		);
-	}
 
 	return (
 		<div className="min-h-screen flex items-center justify-center p-3 sm:p-4 bg-gradient-to-br from-background to-muted/20">

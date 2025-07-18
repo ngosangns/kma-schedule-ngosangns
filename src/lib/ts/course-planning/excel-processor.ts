@@ -21,8 +21,8 @@ export const DEFAULT_SHEET_DATA: SheetData = {
 			[Field.Session]: 'H',
 			[Field.StartDate]: 'J',
 			[Field.EndDate]: 'K',
-			[Field.Teacher]: 'L',
-		},
+			[Field.Teacher]: 'L'
+		}
 	},
 	AT17CT5DT4: {
 		startRow: 5,
@@ -33,8 +33,8 @@ export const DEFAULT_SHEET_DATA: SheetData = {
 			[Field.Session]: 'H',
 			[Field.StartDate]: 'J',
 			[Field.EndDate]: 'K',
-			[Field.Teacher]: 'L',
-		},
+			[Field.Teacher]: 'L'
+		}
 	},
 	AT18CT6DT5: {
 		startRow: 5,
@@ -45,8 +45,8 @@ export const DEFAULT_SHEET_DATA: SheetData = {
 			[Field.Session]: 'H',
 			[Field.StartDate]: 'J',
 			[Field.EndDate]: 'K',
-			[Field.Teacher]: 'L',
-		},
+			[Field.Teacher]: 'L'
+		}
 	},
 	AT19CT7DT6: {
 		startRow: 5,
@@ -57,8 +57,8 @@ export const DEFAULT_SHEET_DATA: SheetData = {
 			[Field.Session]: 'H',
 			[Field.StartDate]: 'J',
 			[Field.EndDate]: 'K',
-			[Field.Teacher]: 'L',
-		},
+			[Field.Teacher]: 'L'
+		}
 	},
 	AT20CT8DT7: {
 		startRow: 5,
@@ -69,9 +69,9 @@ export const DEFAULT_SHEET_DATA: SheetData = {
 			[Field.Session]: 'H',
 			[Field.StartDate]: 'J',
 			[Field.EndDate]: 'K',
-			[Field.Teacher]: 'L',
-		},
-	},
+			[Field.Teacher]: 'L'
+		}
+	}
 };
 
 // Read sheet and handle merged cells
@@ -112,12 +112,10 @@ function readExcelColumnToJson(
 ): string[] {
 	// Select specific range
 	const rangeData = utils.sheet_to_json<CellData>(workSheet, {
-		range: `${column}${startRow}:${column}${endRow}`,
+		range: `${column}${startRow}:${column}${endRow}`
 	});
 
-	return rangeData
-		.map((row: CellData) => Object.values(row) as string[])
-		.flat();
+	return rangeData.map((row: CellData) => Object.values(row) as string[]).flat();
 }
 
 // Main processing function
@@ -132,7 +130,13 @@ export async function processExcelFile(
 		// Loop through sheets in SHEET_DATA
 		for (const sheetName of Object.keys(sheetData)) {
 			const currentSheetData = sheetData[sheetName];
-			
+
+			// Skip if sheet data is not defined
+			if (!currentSheetData) {
+				console.warn(`Warning: Sheet data for "${sheetName}" is not defined`);
+				continue;
+			}
+
 			try {
 				const workSheet = readSheetAndUnmerge(fileBuffer, sheetName);
 
@@ -144,8 +148,8 @@ export async function processExcelFile(
 						[Field.Session]: [] as string[],
 						[Field.StartDate]: [] as string[],
 						[Field.EndDate]: [] as string[],
-						[Field.Teacher]: [] as string[],
-					},
+						[Field.Teacher]: [] as string[]
+					}
 				};
 
 				const jsonSheetData = jsonData[sheetName];
@@ -164,7 +168,7 @@ export async function processExcelFile(
 					Field.Session,
 					Field.StartDate,
 					Field.EndDate,
-					Field.Teacher,
+					Field.Teacher
 				];
 
 				// Read data from columns and save to JSON
@@ -188,7 +192,7 @@ export async function processExcelFile(
 			title,
 			minDate: Infinity,
 			maxDate: 0,
-			majors: {},
+			majors: {}
 		};
 
 		// Process the extracted data
@@ -211,7 +215,10 @@ export async function processExcelFile(
 function processJsonData(jsonData: JSONData, jsonResultData: JSONResultData): JSONResultData {
 	// Loop through sheets in jsonData
 	for (const sheetName of Object.keys(jsonData)) {
-		const { fieldData } = jsonData[sheetName];
+		const sheetData = jsonData[sheetName];
+		if (!sheetData) continue;
+
+		const { fieldData } = sheetData;
 
 		// Loop through classes in fieldData
 		for (let i = 0; i < fieldData[Field.Class].length; i++) {
@@ -238,32 +245,41 @@ function processJsonData(jsonData: JSONData, jsonResultData: JSONResultData): JS
 				: '';
 
 			// Get major keys
-			const majorKeys: string[] = classCode.includes('-')
-				? (() => {
-						const matches = classCode.split('-')[0].matchAll(/[A-Z]+[0-9]+/g);
-						return Array.from(matches, (match) => match[0]);
-					})()
-				: [];
+			const majorKeys: string[] =
+				classCode && classCode.includes('-')
+					? (() => {
+							const codePart = classCode.split('-')[0];
+							if (!codePart) return [];
+							const matches = codePart.matchAll(/[A-Z]+[0-9]+/g);
+							return Array.from(matches, (match: RegExpMatchArray) => match[0]);
+						})()
+					: [];
 
 			if (majorKeys.length === 0) continue;
 
+			const firstMajorKey = majorKeys[0];
+			if (!firstMajorKey) continue;
+
 			// Check if class data already exists
 			const isClassDataExist =
-				jsonResultData.majors?.[majorKeys[0]]?.[subjectName]?.[classCode];
+				classCode && jsonResultData.majors?.[firstMajorKey]?.[subjectName]?.[classCode];
 
 			// Get current class data or create new if not exists
-			const classData = isClassDataExist
-				? jsonResultData.majors[majorKeys[0]][subjectName][classCode]
-				: ({
-						schedules: [],
-						[Field.Teacher]: fieldData[Field.Teacher][i] ?? '',
-					} as ClassData);
+			const classData =
+				isClassDataExist &&
+				classCode &&
+				jsonResultData.majors[firstMajorKey]?.[subjectName]?.[classCode]
+					? jsonResultData.majors[firstMajorKey][subjectName][classCode]
+					: ({
+							schedules: [],
+							[Field.Teacher]: fieldData[Field.Teacher][i] ?? ''
+						} as ClassData);
 
 			// Get current class data to add information
 			let schedules = classData.schedules;
 
 			// If current class is practice class, assign schedules to practice class array
-			if (practiceClassCode.length) {
+			if (practiceClassCode && practiceClassCode.length) {
 				if (!classData.practiceSchedules) classData.practiceSchedules = {};
 				if (!classData.practiceSchedules[practiceClassCode])
 					classData.practiceSchedules[practiceClassCode] = [];
@@ -274,21 +290,15 @@ function processJsonData(jsonData: JSONData, jsonResultData: JSONResultData): JS
 			// Get start and end dates
 			const startDateStr = fieldData[Field.StartDate][i];
 			const endDateStr = fieldData[Field.EndDate][i];
-			
+
 			if (!startDateStr || !endDateStr) continue;
 
-			const currentStartDate = Number(
-				startDateStr.split('/').reverse().join('')
-			);
-			const currentEndDate = Number(
-				endDateStr.split('/').reverse().join('')
-			);
+			const currentStartDate = Number(startDateStr.split('/').reverse().join(''));
+			const currentEndDate = Number(endDateStr.split('/').reverse().join(''));
 
 			// Update min and max dates
-			if (currentStartDate < jsonResultData.minDate)
-				jsonResultData.minDate = currentStartDate;
-			if (currentEndDate > jsonResultData.maxDate)
-				jsonResultData.maxDate = currentEndDate;
+			if (currentStartDate < jsonResultData.minDate) jsonResultData.minDate = currentStartDate;
+			if (currentEndDate > jsonResultData.maxDate) jsonResultData.maxDate = currentEndDate;
 
 			const sessionStr = fieldData[Field.Session][i];
 			if (!sessionStr) continue;
@@ -297,11 +307,13 @@ function processJsonData(jsonData: JSONData, jsonResultData: JSONResultData): JS
 			const startSession = session[0]; // start session
 			const endSession = session[1]; // end session
 
+			if (startSession === undefined || endSession === undefined) continue;
+
 			// Day of week
 			const dayOfWeekStr = fieldData[Field.DayOfWeek][i];
-			const dayOfWeek = parseInt(
-				dayOfWeekStr === 'CN' ? '8' : dayOfWeekStr
-			);
+			if (!dayOfWeekStr) continue;
+
+			const dayOfWeek = parseInt(dayOfWeekStr === 'CN' ? '8' : dayOfWeekStr);
 			const dayOfWeekStandard = dayOfWeek - 1 === 7 ? 0 : dayOfWeek - 1; // convert from 2-8 to 0-6 (0: Sunday)
 
 			schedules.push({
@@ -309,18 +321,19 @@ function processJsonData(jsonData: JSONData, jsonResultData: JSONResultData): JS
 				[Field.EndDate]: currentEndDate,
 				[Field.DayOfWeekStandard]: dayOfWeekStandard,
 				[Field.StartSession]: startSession,
-				[Field.EndSession]: endSession,
+				[Field.EndSession]: endSession
 			});
 
 			// Update data back to main storage
-			for (const majorKey of majorKeys) {
-				if (!jsonResultData.majors[majorKey])
-					jsonResultData.majors[majorKey] = {};
+			if (classCode) {
+				for (const majorKey of majorKeys) {
+					if (!jsonResultData.majors[majorKey]) jsonResultData.majors[majorKey] = {};
 
-				if (!jsonResultData.majors[majorKey][subjectName])
-					jsonResultData.majors[majorKey][subjectName] = {};
+					if (!jsonResultData.majors[majorKey][subjectName])
+						jsonResultData.majors[majorKey][subjectName] = {};
 
-				jsonResultData.majors[majorKey][subjectName][classCode] = classData;
+					jsonResultData.majors[majorKey][subjectName][classCode] = classData;
+				}
 			}
 		}
 	}
@@ -342,19 +355,20 @@ function mergePracticeSchedules(jsonResultData: JSONResultData): void {
 			for (const classKey in subjectData) {
 				const classData = subjectData[classKey];
 
+				// Skip if classData is undefined
+				if (!classData) continue;
+
 				// If class has practice schedules, merge theory + practice into new class
-				if (
-					classData.practiceSchedules &&
-					Object.keys(classData.practiceSchedules).length
-				) {
-					for (const practiceClassKey in classData.practiceSchedules)
-						subjectData[`${classKey}.${practiceClassKey}`] = {
-							schedules: [
-								...classData.schedules,
-								...classData.practiceSchedules[practiceClassKey],
-							],
-							[Field.Teacher]: classData[Field.Teacher],
-						} as ClassData;
+				if (classData.practiceSchedules && Object.keys(classData.practiceSchedules).length) {
+					for (const practiceClassKey in classData.practiceSchedules) {
+						const practiceSchedule = classData.practiceSchedules[practiceClassKey];
+						if (practiceSchedule) {
+							subjectData[`${classKey}.${practiceClassKey}`] = {
+								schedules: [...classData.schedules, ...practiceSchedule],
+								[Field.Teacher]: classData[Field.Teacher]
+							} as ClassData;
+						}
+					}
 
 					// Remove theory class
 					delete subjectData[classKey];

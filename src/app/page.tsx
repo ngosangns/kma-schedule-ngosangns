@@ -2,22 +2,15 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AppContext';
 import { PageLoader } from '@/components/ui/loading-spinner';
 
 export default function HomePage() {
 	const router = useRouter();
-	const { isAuthenticated, isLoading } = useAuth();
 
 	useEffect(() => {
-		if (!isLoading) {
-			if (isAuthenticated) {
-				router.push('/calendar');
-			} else {
-				router.push('/login');
-			}
-		}
-	}, [isAuthenticated, isLoading, router]);
+		// Always redirect to calendar - it will handle authentication
+		router.push('/calendar');
+	}, [router]);
 
-	return <PageLoader text="Đang kiểm tra đăng nhập..." />;
+	return <PageLoader text="Đang chuyển hướng..." />;
 }
