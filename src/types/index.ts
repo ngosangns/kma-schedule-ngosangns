@@ -332,3 +332,6 @@ export interface CalendarExportData {
 	student: string | null;
 	calendar: ProcessedCalendarData;
 }
+
+// Course Planning Types - Re-export from course-planning module
+export * from './course-planning';

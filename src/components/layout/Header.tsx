@@ -4,10 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ExternalLink, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useUI } from '@/contexts/AppContext';
 import { cn } from '@/lib/utils';
 
 const navigation = [
+	{ name: 'Lịch học', href: '/calendar' },
+	{ name: 'Lập lịch tín chỉ', href: '/course-planning' },
 	{ name: 'Changelogs', href: '/changelogs' },
 	{ name: 'About', href: '/about' }
 ];
@@ -43,46 +46,53 @@ export default function Header() {
 					</div>
 
 					{/* Desktop Navigation */}
-					<nav className="hidden md:flex items-center space-x-6">
-						{navigation.map((item) => (
-							<Link
-								key={item.name}
-								href={item.href}
-								className={cn(
-									'text-sm font-medium transition-colors hover:text-primary',
-									pathname === item.href ? 'text-primary' : 'text-muted-foreground'
-								)}
-							>
-								{item.name}
-							</Link>
-						))}
+					<div className="hidden md:flex items-center space-x-6">
+						<nav className="flex items-center space-x-6">
+							{navigation.map((item) => (
+								<Link
+									key={item.name}
+									href={item.href}
+									className={cn(
+										'text-sm font-medium transition-colors hover:text-primary',
+										pathname === item.href ? 'text-primary' : 'text-muted-foreground'
+									)}
+								>
+									{item.name}
+								</Link>
+							))}
 
-						<div className="h-4 w-px bg-border" />
+							<div className="h-4 w-px bg-border" />
 
-						{externalLinks.map((item) => (
-							<a
-								key={item.name}
-								href={item.href}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
-							>
-								{item.name}
-								<ExternalLink className="h-3 w-3" />
-							</a>
-						))}
-					</nav>
+							{externalLinks.map((item) => (
+								<a
+									key={item.name}
+									href={item.href}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
+								>
+									{item.name}
+									<ExternalLink className="h-3 w-3" />
+								</a>
+							))}
+						</nav>
 
-					{/* Mobile menu button */}
-					<Button
-						variant="ghost"
-						size="sm"
-						className="md:hidden h-10 w-10 p-0"
-						onClick={toggleSidebar}
-						aria-label={sidebarOpen ? 'Đóng menu' : 'Mở menu'}
-					>
-						{sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-					</Button>
+						<ThemeToggle />
+					</div>
+
+					{/* Mobile controls */}
+					<div className="md:hidden flex items-center space-x-2">
+						<ThemeToggle />
+						<Button
+							variant="ghost"
+							size="sm"
+							className="h-10 w-10 p-0"
+							onClick={toggleSidebar}
+							aria-label={sidebarOpen ? 'Đóng menu' : 'Mở menu'}
+						>
+							{sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+						</Button>
+					</div>
 				</div>
 
 				{/* Mobile Navigation */}
