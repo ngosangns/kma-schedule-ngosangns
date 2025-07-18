@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import {
 	CoursePlanningState,
 	JSONResultData,
@@ -12,6 +12,11 @@ import {
 	CalendarTableData
 } from '@/types/course-planning';
 import { generateCalendarTableData } from '@/lib/ts/course-planning/schedule-generator';
+import {
+	saveCoursePlanningData,
+	loadCoursePlanningData,
+	clearCoursePlanningData
+} from '@/lib/ts/storage';
 
 // Action Types
 type CoursePlanningAction =
@@ -139,6 +144,7 @@ interface CoursePlanningContextType {
 	setLoading: (loading: boolean) => void;
 	setError: (error: string | null) => void;
 	resetState: () => void;
+	clearStoredData: () => void;
 }
 
 // Context
@@ -147,6 +153,28 @@ const CoursePlanningContext = createContext<CoursePlanningContextType | null>(nu
 // Provider Component
 export function CoursePlanningProvider({ children }: { children: React.ReactNode }) {
 	const [state, dispatch] = useReducer(coursePlanningReducer, initialState);
+
+	// Load data from localStorage on mount
+	useEffect(() => {
+		const storedData = loadCoursePlanningData();
+		if (storedData?.calendar) {
+			dispatch({ type: 'SET_CALENDAR', payload: storedData.calendar });
+			if (storedData.selectedClasses) {
+				dispatch({ type: 'SET_SELECTED_CLASSES', payload: storedData.selectedClasses });
+			}
+		}
+	}, []);
+
+	// Save data to localStorage when state changes
+	useEffect(() => {
+		if (state.calendar) {
+			saveCoursePlanningData({
+				calendar: state.calendar,
+				selectedClasses: state.selectedClasses,
+				lastUpdated: new Date().toISOString()
+			});
+		}
+	}, [state.calendar, state.selectedClasses]);
 
 	// Data loading
 	const loadCalendarData = useCallback((data: JSONResultData) => {
@@ -292,6 +320,11 @@ export function CoursePlanningProvider({ children }: { children: React.ReactNode
 		dispatch({ type: 'RESET_STATE' });
 	}, []);
 
+	const clearStoredData = useCallback(() => {
+		clearCoursePlanningData();
+		dispatch({ type: 'RESET_STATE' });
+	}, []);
+
 	const contextValue: CoursePlanningContextType = {
 		state,
 		loadCalendarData,
@@ -303,7 +336,8 @@ export function CoursePlanningProvider({ children }: { children: React.ReactNode
 		getCalendarTableData,
 		setLoading,
 		setError,
-		resetState
+		resetState,
+		clearStoredData
 	};
 
 	return (

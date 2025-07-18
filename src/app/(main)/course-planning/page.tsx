@@ -1,17 +1,27 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BookOpen, Upload, Calendar } from 'lucide-react';
+import { BookOpen, Upload, Calendar, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/course-planning/FileUpload';
 import { SubjectSelection } from '@/components/course-planning/SubjectSelection';
 import { ScheduleCalendar } from '@/components/course-planning/ScheduleCalendar';
 import { useCoursePlanning } from '@/contexts/CoursePlanningContext';
+import { loadCoursePlanningData } from '@/lib/ts/storage';
 
 export default function CoursePlanningPage() {
-	const { state } = useCoursePlanning();
+	const { state, clearStoredData } = useCoursePlanning();
 	const [activeTab, setActiveTab] = useState('upload');
+	const [showClearConfirm, setShowClearConfirm] = useState(false);
+	const [hasStoredData, setHasStoredData] = useState(false);
+
+	// Check for stored data on mount
+	React.useEffect(() => {
+		const storedData = loadCoursePlanningData();
+		setHasStoredData(storedData?.calendar !== null);
+	}, []);
 
 	// Auto-advance tabs based on progress
 	React.useEffect(() => {
@@ -19,6 +29,13 @@ export default function CoursePlanningPage() {
 			setActiveTab('subjects');
 		}
 	}, [state.calendar, activeTab]);
+
+	const handleClearData = React.useCallback(() => {
+		clearStoredData();
+		setHasStoredData(false);
+		setShowClearConfirm(false);
+		setActiveTab('upload');
+	}, [clearStoredData]);
 
 	const hasSelectedSubjects = Object.values(state.selectedClasses).some((majorData) =>
 		Object.values(majorData).some((subject) => subject.show)
@@ -28,10 +45,36 @@ export default function CoursePlanningPage() {
 		<div className="space-y-6">
 			{/* Page Header */}
 			<div className="text-center space-y-2">
-				<h1 className="text-3xl font-bold flex items-center justify-center gap-2">
-					<BookOpen className="h-8 w-8" />
-					Lập lịch tín chỉ
-				</h1>
+				<div className="flex items-center justify-center gap-4">
+					<h1 className="text-3xl font-bold flex items-center gap-2">
+						<BookOpen className="h-8 w-8" />
+						Lập lịch tín chỉ
+					</h1>
+					{hasStoredData && (
+						<div className="flex gap-2">
+							{!showClearConfirm ? (
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => setShowClearConfirm(true)}
+									className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950"
+								>
+									<Trash2 className="h-4 w-4 mr-2" />
+									Xóa dữ liệu
+								</Button>
+							) : (
+								<div className="flex gap-1">
+									<Button variant="outline" size="sm" onClick={() => setShowClearConfirm(false)}>
+										Hủy
+									</Button>
+									<Button variant="destructive" size="sm" onClick={handleClearData}>
+										Xác nhận xóa
+									</Button>
+								</div>
+							)}
+						</div>
+					)}
+				</div>
 				<p className="text-muted-foreground">Tạo lịch học tối ưu từ file Excel môn học tín chỉ</p>
 			</div>
 

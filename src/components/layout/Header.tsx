@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 const navigation = [
 	{ name: 'Lịch học', href: '/calendar' },
 	{ name: 'Lập lịch tín chỉ', href: '/course-planning' },
+	{ name: 'Quản lý điểm', href: '/grades' },
 	{ name: 'Changelogs', href: '/changelogs' },
 	{ name: 'About', href: '/about' }
 ];

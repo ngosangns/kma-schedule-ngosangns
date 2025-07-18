@@ -20,6 +20,17 @@ A comprehensive schedule management application for KMA (Học viện Kỹ thu�
 - **Visual Calendar Display**: Color-coded calendar view with conflict detection
 - **Alternative Solutions**: Generate multiple schedule options
 
+### 📊 Grade Management (Quản lý bảng điểm)
+
+- **File Import**: Support for CSV and JSON grade data import with validation
+- **Manual Entry**: Form-based grade entry with real-time calculation
+- **Automatic Calculations**: ĐQT, KTHP, and GPA calculations following KMA standards
+- **Grade Conversion**: Automatic conversion between 10-point, 4-point, and letter grades
+- **Statistics Dashboard**: Comprehensive analytics with charts and visualizations
+- **Data Validation**: Real-time error detection and data quality checks
+- **Export Capabilities**: Export processed data to CSV/JSON with customizable options
+- **Mobile Responsive**: Optimized table and card views for all screen sizes
+
 ## Quick Start
 
 ### Prerequisites

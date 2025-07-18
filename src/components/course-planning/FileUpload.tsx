@@ -2,55 +2,77 @@
 
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle } from 'lucide-react';
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Trash2, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCoursePlanning } from '@/contexts/CoursePlanningContext';
+import { loadCoursePlanningData } from '@/lib/ts/storage';
 
 interface FileUploadProps {
 	onSuccess?: () => void;
 }
 
 export function FileUpload({ onSuccess }: FileUploadProps) {
-	const { processExcelFile, state } = useCoursePlanning();
+	const { processExcelFile, state, clearStoredData } = useCoursePlanning();
 	const [title, setTitle] = useState('Học kỳ tín chỉ');
 	const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
 	const [errorMessage, setErrorMessage] = useState<string>('');
+	const [showClearConfirm, setShowClearConfirm] = useState(false);
+	const [storedData, setStoredData] = useState<import('@/types').CoursePlanningStorageData | null>(
+		null
+	);
 
-	const onDrop = useCallback(async (acceptedFiles: File[]) => {
-		const file = acceptedFiles[0];
-		if (!file) return;
+	// Load stored data on mount to avoid hydration mismatch
+	React.useEffect(() => {
+		setStoredData(loadCoursePlanningData());
+	}, []);
 
+	const hasStoredData = storedData?.calendar !== null;
+
+	const handleClearData = useCallback(() => {
+		clearStoredData();
+		setStoredData(null);
+		setShowClearConfirm(false);
 		setUploadStatus('idle');
-		setErrorMessage('');
+	}, [clearStoredData]);
 
-		try {
-			const result = await processExcelFile(file, title);
-			
-			if (result.success) {
-				setUploadStatus('success');
-				onSuccess?.();
-			} else {
+	const onDrop = useCallback(
+		async (acceptedFiles: File[]) => {
+			const file = acceptedFiles[0];
+			if (!file) return;
+
+			setUploadStatus('idle');
+			setErrorMessage('');
+
+			try {
+				const result = await processExcelFile(file, title);
+
+				if (result.success) {
+					setUploadStatus('success');
+					onSuccess?.();
+				} else {
+					setUploadStatus('error');
+					setErrorMessage(result.error || 'Có lỗi xảy ra khi xử lý file');
+				}
+			} catch (error) {
 				setUploadStatus('error');
-				setErrorMessage(result.error || 'Có lỗi xảy ra khi xử lý file');
+				setErrorMessage(error instanceof Error ? error.message : 'Có lỗi xảy ra');
 			}
-		} catch (error) {
-			setUploadStatus('error');
-			setErrorMessage(error instanceof Error ? error.message : 'Có lỗi xảy ra');
-		}
-	}, [processExcelFile, title, onSuccess]);
+		},
+		[processExcelFile, title, onSuccess]
+	);
 
 	const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
 		onDrop,
 		accept: {
 			'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-			'application/vnd.ms-excel': ['.xls'],
+			'application/vnd.ms-excel': ['.xls']
 		},
 		maxFiles: 1,
-		disabled: state.loading,
+		disabled: state.loading
 	});
 
 	return (
@@ -90,7 +112,7 @@ export function FileUpload({ onSuccess }: FileUploadProps) {
 					`}
 				>
 					<input {...getInputProps()} />
-					
+
 					<div className="flex flex-col items-center space-y-4">
 						{state.loading ? (
 							<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -119,9 +141,7 @@ export function FileUpload({ onSuccess }: FileUploadProps) {
 									<p className="text-sm font-medium text-destructive">
 										Có lỗi xảy ra khi xử lý file
 									</p>
-									<p className="text-xs text-muted-foreground">
-										Vui lòng thử lại với file khác
-									</p>
+									<p className="text-xs text-muted-foreground">Vui lòng thử lại với file khác</p>
 								</>
 							) : isDragActive ? (
 								<p className="text-sm text-primary">Thả file vào đây...</p>
@@ -130,9 +150,7 @@ export function FileUpload({ onSuccess }: FileUploadProps) {
 									<p className="text-sm text-muted-foreground">
 										Kéo thả file Excel vào đây hoặc click để chọn file
 									</p>
-									<p className="text-xs text-muted-foreground">
-										Hỗ trợ file .xlsx và .xls
-									</p>
+									<p className="text-xs text-muted-foreground">Hỗ trợ file .xlsx và .xls</p>
 								</>
 							)}
 						</div>
@@ -170,11 +188,58 @@ export function FileUpload({ onSuccess }: FileUploadProps) {
 					</Alert>
 				)}
 
+				{/* Stored Data Management */}
+				{hasStoredData && (
+					<div className="space-y-3">
+						<div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+							<div className="flex items-center gap-2">
+								<Database className="h-4 w-4 text-blue-600" />
+								<div>
+									<p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+										Dữ liệu đã lưu
+									</p>
+									<p className="text-xs text-blue-600 dark:text-blue-400">
+										{storedData?.lastUpdated &&
+											`Cập nhật lần cuối: ${new Date(storedData.lastUpdated).toLocaleString('vi-VN')}`}
+									</p>
+								</div>
+							</div>
+							<div className="flex gap-2">
+								{!showClearConfirm ? (
+									<Button
+										variant="outline"
+										size="sm"
+										onClick={() => setShowClearConfirm(true)}
+										className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950"
+									>
+										<Trash2 className="h-3 w-3 mr-1" />
+										Xóa dữ liệu
+									</Button>
+								) : (
+									<div className="flex gap-1">
+										<Button variant="outline" size="sm" onClick={() => setShowClearConfirm(false)}>
+											Hủy
+										</Button>
+										<Button variant="destructive" size="sm" onClick={handleClearData}>
+											Xác nhận xóa
+										</Button>
+									</div>
+								)}
+							</div>
+						</div>
+					</div>
+				)}
+
 				{/* Instructions */}
 				<div className="text-xs text-muted-foreground space-y-1">
-					<p><strong>Lưu ý:</strong></p>
+					<p>
+						<strong>Lưu ý:</strong>
+					</p>
 					<ul className="list-disc list-inside space-y-1 ml-2">
-						<li>File Excel phải có định dạng chuẩn với các cột: Lớp học, Thứ, Tiết, Ngày bắt đầu, Ngày kết thúc, Giảng viên</li>
+						<li>
+							File Excel phải có định dạng chuẩn với các cột: Lớp học, Thứ, Tiết, Ngày bắt đầu, Ngày
+							kết thúc, Giảng viên
+						</li>
 						<li>Mỗi sheet trong file tương ứng với một chuyên ngành</li>
 						<li>Dữ liệu phải bắt đầu từ dòng 5 (có thể tùy chỉnh trong cấu hình)</li>
 					</ul>

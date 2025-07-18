@@ -22,6 +22,10 @@ export function saveData(data: StorageData): void {
 	if (data.student) {
 		window.localStorage.setItem('student', data.student);
 	}
+
+	if (data.coursePlanning) {
+		window.localStorage.setItem('coursePlanning', JSON.stringify(data.coursePlanning));
+	}
 }
 
 export function loadData(): StorageData {
@@ -31,7 +35,8 @@ export function loadData(): StorageData {
 			student: null,
 			semesters: null,
 			mainForm: null,
-			signInToken: null
+			signInToken: null,
+			coursePlanning: null
 		};
 	}
 
@@ -40,6 +45,7 @@ export function loadData(): StorageData {
 	const semesters = window.localStorage.getItem('semesters');
 	const mainForm = window.localStorage.getItem('mainForm');
 	const signInToken = window.localStorage.getItem('signInToken');
+	const coursePlanning = window.localStorage.getItem('coursePlanning');
 
 	// Helper function to safely parse JSON
 	const safeJsonParse = (value: string | null) => {
@@ -57,7 +63,8 @@ export function loadData(): StorageData {
 		student: student ? student : null,
 		semesters: safeJsonParse(semesters),
 		mainForm: safeJsonParse(mainForm),
-		signInToken: signInToken ? signInToken : null
+		signInToken: signInToken ? signInToken : null,
+		coursePlanning: safeJsonParse(coursePlanning)
 	};
 }
 
@@ -69,4 +76,37 @@ export function clearData(): void {
 	window.localStorage.removeItem('semesters');
 	window.localStorage.removeItem('mainForm');
 	window.localStorage.removeItem('signInToken');
+	window.localStorage.removeItem('coursePlanning');
+}
+
+// Course Planning specific storage functions
+export function saveCoursePlanningData(data: import('@/types').CoursePlanningStorageData): void {
+	if (typeof window === 'undefined') return;
+
+	try {
+		const dataWithTimestamp = {
+			...data,
+			lastUpdated: new Date().toISOString()
+		};
+		window.localStorage.setItem('coursePlanning', JSON.stringify(dataWithTimestamp));
+	} catch (error) {
+		console.error('Failed to save course planning data:', error);
+	}
+}
+
+export function loadCoursePlanningData(): import('@/types').CoursePlanningStorageData | null {
+	if (typeof window === 'undefined') return null;
+
+	try {
+		const stored = window.localStorage.getItem('coursePlanning');
+		return stored ? JSON.parse(stored) : null;
+	} catch (error) {
+		console.error('Failed to load course planning data:', error);
+		return null;
+	}
+}
+
+export function clearCoursePlanningData(): void {
+	if (typeof window === 'undefined') return;
+	window.localStorage.removeItem('coursePlanning');
 }

@@ -143,6 +143,14 @@ export interface CalendarResponse {
 	semesters: SemesterData;
 }
 
+// Course Planning Storage Types
+export interface CoursePlanningStorageData {
+	calendar: import('./course-planning').JSONResultData | null;
+	selectedClasses: import('./course-planning').MajorSelectedSubjects;
+	title?: string;
+	lastUpdated?: string;
+}
+
 // Storage Types
 export interface StorageData {
 	signInToken?: string | null;
@@ -151,6 +159,7 @@ export interface StorageData {
 	calendar?: ProcessedCalendarData | null;
 	student?: string | null;
 	user?: User | null;
+	coursePlanning?: CoursePlanningStorageData | null;
 }
 
 // UI State Types
