@@ -13,8 +13,7 @@ interface FileUploadProps {
 }
 
 export function FileUpload({ onSuccess }: FileUploadProps) {
-	const { processExcelFile, state, clearStoredData } = useCoursePlanning();
-	const [title, setTitle] = useState('Học kỳ tín chỉ');
+	const { processExcelFile, state } = useCoursePlanning();
 	const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
 	const [errorMessage, setErrorMessage] = useState<string>('');
 
@@ -27,7 +26,7 @@ export function FileUpload({ onSuccess }: FileUploadProps) {
 			setErrorMessage('');
 
 			try {
-				const result = await processExcelFile(file, title);
+				const result = await processExcelFile(file, 'Học kỳ tín chỉ');
 
 				if (result.success) {
 					setUploadStatus('success');
@@ -41,7 +40,7 @@ export function FileUpload({ onSuccess }: FileUploadProps) {
 				setErrorMessage(error instanceof Error ? error.message : 'Có lỗi xảy ra');
 			}
 		},
-		[processExcelFile, title, onSuccess]
+		[processExcelFile, onSuccess]
 	);
 
 	const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({

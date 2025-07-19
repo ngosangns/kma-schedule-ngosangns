@@ -70,13 +70,15 @@ export function ScheduleCalendar() {
 	const minDate = state.calendar ? numToDate(state.calendar.minDate) : new Date();
 	const maxDate = state.calendar ? numToDate(state.calendar.maxDate) : new Date();
 
+	// Extract complex expressions to separate variables for useMemo dependency array
+	const currentMonth = currentMonthDate.getMonth();
+	const currentYear = currentMonthDate.getFullYear();
+
 	const getMonthCalendarData = useMemo(() => {
 		if (!calendarData || !state.calendar) return [];
 
 		const monthData: any[] = [];
 		const today = new Date();
-		const currentMonth = currentMonthDate.getMonth();
-		const currentYear = currentMonthDate.getFullYear();
 
 		// Get first day of month
 		const firstDay = new Date(currentYear, currentMonth, 1);
@@ -141,13 +143,7 @@ export function ScheduleCalendar() {
 
 		return monthData;
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		calendarData,
-		currentMonthDate.getMonth(),
-		currentMonthDate.getFullYear(),
-		state.calendar?.minDate,
-		state.calendar?.maxDate
-	]);
+	}, [calendarData, currentMonth, currentYear, state.calendar?.minDate, state.calendar?.maxDate]);
 
 	if (!state.calendar) {
 		return (
