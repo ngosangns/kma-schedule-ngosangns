@@ -25,13 +25,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue
-} from '@/components/ui/select';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
@@ -49,6 +42,13 @@ interface GradeTableProps {
 	onImportComplete?: (result: ImportResult) => void;
 	editable?: boolean;
 	className?: string;
+	// State props for persistence across tab switches
+	sortConfig: GradeSortConfig | null;
+	setSortConfig: (config: GradeSortConfig | null) => void;
+	filterConfig: GradeFilterConfig;
+	setFilterConfig: (config: GradeFilterConfig) => void;
+	showCalculatedColumns: boolean;
+	setShowCalculatedColumns: (show: boolean) => void;
 }
 
 export function GradeTable({
@@ -58,20 +58,16 @@ export function GradeTable({
 	onGradeDelete,
 	onImportComplete,
 	editable = false,
-	className
+	className,
+	sortConfig,
+	setSortConfig,
+	filterConfig,
+	setFilterConfig,
+	showCalculatedColumns,
+	setShowCalculatedColumns
 }: GradeTableProps) {
-	const [sortConfig, setSortConfig] = useState<GradeSortConfig | null>(null);
-	const [filterConfig, setFilterConfig] = useState<GradeFilterConfig>({});
-
-	const [showCalculatedColumns, setShowCalculatedColumns] = useState(false);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingGrade, setEditingGrade] = useState<GradeRecord | null>(null);
-
-	// Get unique semesters for filter
-	const semesters = useMemo(() => {
-		const uniqueSemesters = Array.from(new Set(grades.map((g) => g.ky))).sort((a, b) => a - b);
-		return uniqueSemesters;
-	}, [grades]);
 
 	// Apply filters and sorting
 	const processedGrades = useMemo(() => {
@@ -85,22 +81,21 @@ export function GradeTable({
 	}, [grades, filterConfig, sortConfig]);
 
 	const handleSort = (field: keyof GradeRecord) => {
-		setSortConfig((prev) => {
-			if (prev?.field === field) {
-				return {
-					field,
-					direction: prev.direction === 'asc' ? 'desc' : 'asc'
-				};
-			}
-			return { field, direction: 'asc' };
-		});
+		if (sortConfig?.field === field) {
+			setSortConfig({
+				field,
+				direction: sortConfig.direction === 'asc' ? 'desc' : 'asc'
+			});
+		} else {
+			setSortConfig({ field, direction: 'asc' });
+		}
 	};
 
 	const handleFilterChange = (key: keyof GradeFilterConfig, value: unknown): void => {
-		setFilterConfig((prev) => ({
-			...prev,
+		setFilterConfig({
+			...filterConfig,
 			[key]: value === '' || value === 'all' ? undefined : value
-		}));
+		});
 	};
 
 	const clearFilters = () => {
@@ -213,7 +208,7 @@ export function GradeTable({
 							)}
 						</div>
 
-						<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div className="space-y-2">
 								<label className="text-sm font-medium">Tìm kiếm</label>
 								<Input
@@ -222,28 +217,6 @@ export function GradeTable({
 									onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
 									className="h-9"
 								/>
-							</div>
-
-							<div className="space-y-2">
-								<label className="text-sm font-medium">Kỳ học</label>
-								<Select
-									value={filterConfig.semester?.toString() || 'all'}
-									onValueChange={(value) =>
-										handleFilterChange('semester', value === 'all' ? undefined : parseInt(value))
-									}
-								>
-									<SelectTrigger className="h-9">
-										<SelectValue placeholder="Tất cả kỳ" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="all">Tất cả kỳ</SelectItem>
-										{semesters.map((semester) => (
-											<SelectItem key={semester} value={semester.toString()}>
-												Kỳ {semester}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
 							</div>
 						</div>
 					</div>

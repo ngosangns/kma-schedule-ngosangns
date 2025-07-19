@@ -102,66 +102,7 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 		<div className={className}>
 			<div className="space-y-6">
 				{/* Overview Cards */}
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-					<Card>
-						<CardContent className="p-6">
-							<div className="flex items-center justify-between">
-								<div>
-									<p className="text-sm font-medium text-muted-foreground">GPA Hệ 10</p>
-									<p className="text-2xl font-bold">
-										{statistics.overallGPA10?.toFixed(1) || 'N/A'}
-									</p>
-								</div>
-								<div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-full">
-									<Calculator className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-								</div>
-							</div>
-							{statistics.overallGPA10 && (
-								<div className="mt-2">
-									<Progress value={(statistics.overallGPA10 / 10) * 100} className="h-2" />
-								</div>
-							)}
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardContent className="p-6">
-							<div className="flex items-center justify-between">
-								<div>
-									<p className="text-sm font-medium text-muted-foreground">GPA Hệ 4</p>
-									<p className="text-2xl font-bold">
-										{statistics.overallGPA4?.toFixed(1) || 'N/A'}
-									</p>
-								</div>
-								<div className="p-2 bg-green-100 dark:bg-green-900 rounded-full">
-									<Target className="h-6 w-6 text-green-600 dark:text-green-400" />
-								</div>
-							</div>
-							{statistics.overallGPA4 && (
-								<div className="mt-2">
-									<Progress value={(statistics.overallGPA4 / 4) * 100} className="h-2" />
-								</div>
-							)}
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardContent className="p-6">
-							<div className="flex items-center justify-between">
-								<div>
-									<p className="text-sm font-medium text-muted-foreground">Tổng tín chỉ</p>
-									<p className="text-2xl font-bold">{statistics.totalCredits}</p>
-									<p className="text-xs text-muted-foreground">
-										Đạt: {statistics.totalPassedCredits}
-									</p>
-								</div>
-								<div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-full">
-									<BookOpen className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-
+				<div className="grid grid-cols-1 md:grid-cols-1 gap-4">
 					<Card>
 						<CardContent className="p-6">
 							<div className="flex items-center justify-between">

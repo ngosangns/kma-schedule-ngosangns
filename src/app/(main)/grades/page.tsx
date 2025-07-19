@@ -14,7 +14,7 @@ import { GradeCards } from '@/components/grades/GradeCards';
 import { StatisticsDashboard } from '@/components/grades/StatisticsDashboard';
 
 // Types and Utils
-import { GradeRecord, ImportResult } from '@/types/grades';
+import { GradeRecord, ImportResult, GradeSortConfig, GradeFilterConfig } from '@/types/grades';
 import { calculateOverallStats } from '@/lib/ts/grades/calculations';
 
 export default function GradesPage() {
@@ -22,6 +22,12 @@ export default function GradesPage() {
 	const [activeTab, setActiveTab] = useState('table');
 	const [isMobile, setIsMobile] = useState(false);
 	const [_lastImportResult, setLastImportResult] = useState<ImportResult | null>(null);
+
+	// Table state management - persisted across tab switches
+	const [sortConfig, setSortConfig] = useState<GradeSortConfig | null>(null);
+	const [filterConfig, setFilterConfig] = useState<GradeFilterConfig>({});
+	const [showCalculatedColumns, setShowCalculatedColumns] = useState(false); // Default: hide calculated columns
+
 	const { toast } = useToast();
 
 	// Check if mobile view
@@ -222,6 +228,12 @@ export default function GradesPage() {
 									onGradeDelete={handleGradeDelete}
 									onImportComplete={handleImportComplete}
 									editable={true}
+									sortConfig={sortConfig}
+									setSortConfig={setSortConfig}
+									filterConfig={filterConfig}
+									setFilterConfig={setFilterConfig}
+									showCalculatedColumns={showCalculatedColumns}
+									setShowCalculatedColumns={setShowCalculatedColumns}
 								/>
 							</div>
 
