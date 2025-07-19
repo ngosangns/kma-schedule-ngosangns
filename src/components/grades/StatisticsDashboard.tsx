@@ -1,24 +1,13 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import {
-	TrendingUp,
-	TrendingDown,
-	Award,
-	BookOpen,
-	Calculator,
-	Target,
-	AlertTriangle,
-	CheckCircle
-} from 'lucide-react';
+import { TrendingUp, TrendingDown, Award, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-	BarChart,
-	Bar,
 	XAxis,
 	YAxis,
 	CartesianGrid,
@@ -39,34 +28,8 @@ interface StatisticsDashboardProps {
 	className?: string;
 }
 
-const GRADE_COLORS = {
-	'A+': '#10b981', // green-500
-	A: '#059669', // green-600
-	'B+': '#3b82f6', // blue-500
-	B: '#2563eb', // blue-600
-	'C+': '#f59e0b', // amber-500
-	C: '#d97706', // amber-600
-	'D+': '#ef4444', // red-500
-	D: '#dc2626', // red-600
-	F: '#991b1b' // red-800
-};
-
 export function StatisticsDashboard({ grades, className }: StatisticsDashboardProps) {
 	const statistics = useMemo(() => calculateOverallStats(grades), [grades]);
-
-	// Prepare chart data
-	const gradeDistributionData = useMemo(() => {
-		return Object.entries(statistics.gradeDistribution)
-			.map(([grade, count]) => ({
-				grade,
-				count,
-				percentage: ((count / statistics.totalSubjects) * 100).toFixed(1)
-			}))
-			.sort((a, b) => {
-				const gradeOrder = ['A+', 'A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'F'];
-				return gradeOrder.indexOf(a.grade) - gradeOrder.indexOf(b.grade);
-			});
-	}, [statistics]);
 
 	const semesterProgressData = useMemo(() => {
 		return statistics.semesterStats.map((semester) => ({
@@ -195,43 +158,6 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 									</div>
 								)}
 							</div>
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardHeader>
-							<CardTitle>Phân bố điểm chữ</CardTitle>
-						</CardHeader>
-						<CardContent>
-							{gradeDistributionData.length > 0 ? (
-								<div className="h-64">
-									<ResponsiveContainer width="100%" height="100%">
-										<BarChart data={gradeDistributionData}>
-											<CartesianGrid strokeDasharray="3 3" />
-											<XAxis dataKey="grade" />
-											<YAxis />
-											<Tooltip
-												formatter={(value) => [value, 'Số môn']}
-												labelFormatter={(label) => `Điểm ${label}`}
-											/>
-											<Bar dataKey="count" fill="#8884d8" radius={[4, 4, 0, 0]}>
-												{gradeDistributionData.map((entry, index) => (
-													<Cell
-														key={`cell-${index}`}
-														fill={
-															GRADE_COLORS[entry.grade as keyof typeof GRADE_COLORS] || '#8884d8'
-														}
-													/>
-												))}
-											</Bar>
-										</BarChart>
-									</ResponsiveContainer>
-								</div>
-							) : (
-								<div className="h-64 flex items-center justify-center text-muted-foreground">
-									Chưa có dữ liệu điểm
-								</div>
-							)}
 						</CardContent>
 					</Card>
 				</div>
