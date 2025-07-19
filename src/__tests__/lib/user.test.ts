@@ -53,16 +53,12 @@ describe('User Authentication Functions', () => {
 			expect(global.fetch).toHaveBeenCalledTimes(2);
 
 			// Verify GET request
-			expect(global.fetch).toHaveBeenNthCalledWith(
-				1,
-				'https://actvn-schedule.cors-ngosangns.workers.dev/login',
-				{ method: 'GET' }
-			);
+			expect(global.fetch).toHaveBeenNthCalledWith(1, '/api/kma/login', { method: 'GET' });
 
 			// Verify POST request
 			expect(global.fetch).toHaveBeenNthCalledWith(
 				2,
-				'https://actvn-schedule.cors-ngosangns.workers.dev/login',
+				'/api/kma/login',
 				expect.objectContaining({
 					method: 'POST',
 					headers: {

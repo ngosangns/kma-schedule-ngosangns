@@ -54,24 +54,16 @@ describe('user utilities', () => {
 			expect(fetch).toHaveBeenCalledTimes(2);
 
 			// Check first call (GET)
-			expect(fetch).toHaveBeenNthCalledWith(
-				1,
-				'https://actvn-schedule.cors-ngosangns.workers.dev/login',
-				{ method: 'GET' }
-			);
+			expect(fetch).toHaveBeenNthCalledWith(1, '/api/kma/login', { method: 'GET' });
 
 			// Check second call (POST)
-			expect(fetch).toHaveBeenNthCalledWith(
-				2,
-				'https://actvn-schedule.cors-ngosangns.workers.dev/login',
-				{
-					method: 'POST',
-					body: expect.stringContaining('txtUserName=STUDENT001'),
-					headers: {
-						'Content-Type': 'application/x-www-form-urlencoded'
-					}
+			expect(fetch).toHaveBeenNthCalledWith(2, '/api/kma/login', {
+				method: 'POST',
+				body: expect.stringContaining('txtUserName=STUDENT001'),
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded'
 				}
-			);
+			});
 
 			expect(mockMd5).toHaveBeenCalledWith('password123');
 			expect(result).toBe('SignIn=test-token; Path=/');

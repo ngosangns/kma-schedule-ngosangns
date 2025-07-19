@@ -7,7 +7,25 @@ export async function fetchCalendarWithPost(
 	formObj: MainFormData,
 	signInToken: string
 ): Promise<string> {
-	const response = await fetch('https://actvn-schedule.cors-ngosangns.workers.dev/subject', {
+	// Validate token
+	if (!signInToken || typeof signInToken !== 'string') {
+		throw new Error('Invalid signInToken provided');
+	}
+
+	// Clean token - remove any potential invalid characters and newlines
+	const cleanToken = signInToken.trim().replace(/[\r\n]/g, '');
+
+	// Validate clean token
+	if (!cleanToken || cleanToken.length === 0) {
+		throw new Error('Token is empty after cleaning');
+	}
+
+	// Ensure token doesn't contain invalid characters for HTTP headers
+	if (!/^[a-zA-Z0-9=;._-]+$/.test(cleanToken)) {
+		throw new Error('Token contains invalid characters');
+	}
+
+	const response = await fetch('/api/kma/subject', {
 		method: 'POST',
 		body: Object.keys(formObj)
 			.map((key) => {
@@ -16,23 +34,46 @@ export async function fetchCalendarWithPost(
 			.join('&'),
 		headers: {
 			'Content-Type': 'application/x-www-form-urlencoded',
-			'x-cors-headers': JSON.stringify({
-				Cookie: signInToken
-			})
+			Authorization: `Bearer ${cleanToken}`
 		}
 	});
+
+	if (!response.ok) {
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
+
 	return await response.text();
 }
 
 export async function fetchCalendarWithGet(signInToken: string): Promise<string> {
-	const response = await fetch('https://actvn-schedule.cors-ngosangns.workers.dev/subject', {
+	// Validate token
+	if (!signInToken || typeof signInToken !== 'string') {
+		throw new Error('Invalid signInToken provided');
+	}
+
+	// Clean token - remove any potential invalid characters and newlines
+	const cleanToken = signInToken.trim().replace(/[\r\n]/g, '');
+
+	// Validate clean token
+	if (!cleanToken || cleanToken.length === 0) {
+		throw new Error('Token is empty after cleaning');
+	}
+
+	// Ensure token doesn't contain invalid characters for HTTP headers
+	if (!/^[a-zA-Z0-9=;._-]+$/.test(cleanToken)) {
+		throw new Error('Token contains invalid characters');
+	}
+
+	const response = await fetch('/api/kma/subject', {
 		method: 'GET',
 		headers: {
-			'x-cors-headers': JSON.stringify({
-				Cookie: signInToken
-			})
+			Authorization: `Bearer ${cleanToken}`
 		}
 	});
+
+	if (!response.ok) {
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
 
 	return await response.text();
 }

@@ -206,17 +206,17 @@ src/
 
 ## API Integration
 
-The application integrates with the KMA server through an external CORS proxy:
+The application integrates with the KMA server through internal Next.js API routes:
 
 ### Endpoints
 
-- **Login**: `GET/POST https://actvn-schedule.cors-ngosangns.workers.dev/login` - Authentication
-- **Schedule**: `GET/POST https://actvn-schedule.cors-ngosangns.workers.dev/subject` - Calendar data
+- **Login**: `GET/POST /api/kma/login` - Authentication
+- **Schedule**: `GET/POST /api/kma/subject` - Calendar data
 
 ### Data Flow
 
 ```
-Client → CORS Proxy (Cloudflare Workers) → KMA Server → CORS Proxy → Client
+Client → Next.js API Routes → KMA Server → Next.js API Routes → Client
 ```
 
 ### Security

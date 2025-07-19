@@ -1,15 +1,12 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Trash2, Database } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useCoursePlanning } from '@/contexts/CoursePlanningContext';
-import { loadCoursePlanningData } from '@/lib/ts/storage';
+import { AlertCircle, CheckCircle, FileSpreadsheet, Upload } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
+import { useDropzone } from 'react-dropzone';
 
 interface FileUploadProps {
 	onSuccess?: () => void;
@@ -20,24 +17,6 @@ export function FileUpload({ onSuccess }: FileUploadProps) {
 	const [title, setTitle] = useState('Học kỳ tín chỉ');
 	const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
 	const [errorMessage, setErrorMessage] = useState<string>('');
-	const [showClearConfirm, setShowClearConfirm] = useState(false);
-	const [storedData, setStoredData] = useState<import('@/types').CoursePlanningStorageData | null>(
-		null
-	);
-
-	// Load stored data on mount to avoid hydration mismatch
-	React.useEffect(() => {
-		setStoredData(loadCoursePlanningData());
-	}, []);
-
-	const hasStoredData = storedData?.calendar !== null;
-
-	const handleClearData = useCallback(() => {
-		clearStoredData();
-		setStoredData(null);
-		setShowClearConfirm(false);
-		setUploadStatus('idle');
-	}, [clearStoredData]);
 
 	const onDrop = useCallback(
 		async (acceptedFiles: File[]) => {
@@ -87,18 +66,6 @@ export function FileUpload({ onSuccess }: FileUploadProps) {
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
-				{/* Title Input */}
-				<div className="space-y-2">
-					<Label htmlFor="title">Tên học kỳ</Label>
-					<Input
-						id="title"
-						value={title}
-						onChange={(e) => setTitle(e.target.value)}
-						placeholder="Ví dụ: Học kỳ 1 năm học 2024-2025"
-						disabled={state.loading}
-					/>
-				</div>
-
 				{/* File Drop Zone */}
 				<div
 					{...getRootProps()}
@@ -186,48 +153,6 @@ export function FileUpload({ onSuccess }: FileUploadProps) {
 							môn học
 						</AlertDescription>
 					</Alert>
-				)}
-
-				{/* Stored Data Management */}
-				{hasStoredData && (
-					<div className="space-y-3">
-						<div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-							<div className="flex items-center gap-2">
-								<Database className="h-4 w-4 text-blue-600" />
-								<div>
-									<p className="text-sm font-medium text-blue-800 dark:text-blue-200">
-										Dữ liệu đã lưu
-									</p>
-									<p className="text-xs text-blue-600 dark:text-blue-400">
-										{storedData?.lastUpdated &&
-											`Cập nhật lần cuối: ${new Date(storedData.lastUpdated).toLocaleString('vi-VN')}`}
-									</p>
-								</div>
-							</div>
-							<div className="flex gap-2">
-								{!showClearConfirm ? (
-									<Button
-										variant="outline"
-										size="sm"
-										onClick={() => setShowClearConfirm(true)}
-										className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950"
-									>
-										<Trash2 className="h-3 w-3 mr-1" />
-										Xóa dữ liệu
-									</Button>
-								) : (
-									<div className="flex gap-1">
-										<Button variant="outline" size="sm" onClick={() => setShowClearConfirm(false)}>
-											Hủy
-										</Button>
-										<Button variant="destructive" size="sm" onClick={handleClearData}>
-											Xác nhận xóa
-										</Button>
-									</div>
-								)}
-							</div>
-						</div>
-					</div>
 				)}
 
 				{/* Instructions */}

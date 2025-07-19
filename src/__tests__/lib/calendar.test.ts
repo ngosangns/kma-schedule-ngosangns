@@ -85,17 +85,12 @@ describe('Calendar Processing Functions', () => {
 			const signInToken = 'SignIn=test_token';
 			const result = await fetchCalendarWithGet(signInToken);
 
-			expect(global.fetch).toHaveBeenCalledWith(
-				'https://actvn-schedule.cors-ngosangns.workers.dev/subject',
-				{
-					method: 'GET',
-					headers: {
-						'x-cors-headers': JSON.stringify({
-							Cookie: signInToken
-						})
-					}
+			expect(global.fetch).toHaveBeenCalledWith('/api/kma/subject', {
+				method: 'GET',
+				headers: {
+					Authorization: `Bearer ${signInToken}`
 				}
-			);
+			});
 			expect(result).toBe(mockResponse);
 		});
 	});
@@ -111,19 +106,14 @@ describe('Calendar Processing Functions', () => {
 			const signInToken = 'SignIn=test_token';
 			const result = await fetchCalendarWithPost(formObj, signInToken);
 
-			expect(global.fetch).toHaveBeenCalledWith(
-				'https://actvn-schedule.cors-ngosangns.workers.dev/subject',
-				{
-					method: 'POST',
-					body: 'semester=20241&student=test',
-					headers: {
-						'Content-Type': 'application/x-www-form-urlencoded',
-						'x-cors-headers': JSON.stringify({
-							Cookie: signInToken
-						})
-					}
+			expect(global.fetch).toHaveBeenCalledWith('/api/kma/subject', {
+				method: 'POST',
+				body: 'semester=20241&student=test',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+					Authorization: `Bearer ${signInToken}`
 				}
-			);
+			});
 			expect(result).toBe(mockResponse);
 		});
 	});

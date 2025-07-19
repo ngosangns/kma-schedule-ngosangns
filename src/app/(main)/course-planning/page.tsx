@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BookOpen, Calendar, Trash2 } from 'lucide-react';
+import { BookOpen, Calendar } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,18 +21,14 @@ import { FileUpload } from '@/components/course-planning/FileUpload';
 import { SubjectSelection } from '@/components/course-planning/SubjectSelection';
 import { ScheduleCalendar } from '@/components/course-planning/ScheduleCalendar';
 import { useCoursePlanning } from '@/contexts/CoursePlanningContext';
-import { loadCoursePlanningData } from '@/lib/ts/storage';
 
 export default function CoursePlanningPage() {
 	const { state, clearStoredData } = useCoursePlanning();
 	const [activeTab, setActiveTab] = useState('subjects');
-	const [hasStoredData, setHasStoredData] = useState(false);
 	const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-	// Check for stored data on mount
+	// Check for initial loading
 	React.useEffect(() => {
-		const storedData = loadCoursePlanningData();
-		setHasStoredData(storedData?.calendar !== null);
 		// Simulate loading time for better UX
 		setTimeout(() => {
 			setIsInitialLoading(false);
@@ -48,7 +44,6 @@ export default function CoursePlanningPage() {
 
 	const handleClearData = React.useCallback(() => {
 		clearStoredData();
-		setHasStoredData(false);
 		setActiveTab('subjects');
 	}, [clearStoredData]);
 
@@ -56,26 +51,46 @@ export default function CoursePlanningPage() {
 		Object.values(majorData).some((subject) => subject.show)
 	);
 
+	// Calculate stats for quick stats display
+	const getStats = () => {
+		if (!state.calendar) return null;
+
+		const totalMajors = Object.keys(state.calendar.majors).length;
+		const selectedSubjectsCount = Object.values(state.selectedClasses).reduce(
+			(total, majorData) =>
+				total + Object.values(majorData).filter((subject) => subject.show).length,
+			0
+		);
+		const selectedClassesCount = Object.values(state.selectedClasses).reduce(
+			(total, majorData) =>
+				total + Object.values(majorData).filter((subject) => subject.show && subject.class).length,
+			0
+		);
+
+		return {
+			totalMajors,
+			selectedSubjectsCount,
+			selectedClassesCount
+		};
+	};
+
+	const stats = getStats();
+
 	return (
-		<div className="space-y-6">
-			{/* Page Header */}
-			<div className="text-center space-y-2">
-				<div className="flex items-center justify-center gap-4">
-					<h1 className="text-3xl font-bold flex items-center gap-2">
-						<BookOpen className="h-8 w-8" />
-						Lập lịch tín chỉ
-					</h1>
-					{hasStoredData && (
+		<div className="container mx-auto py-6 space-y-6">
+			{/* Header */}
+			<div className="space-y-4">
+				<div className="flex items-center justify-between">
+					<div>
+						<h1 className="text-3xl font-bold">Lập lịch tín chỉ</h1>
+						<p className="text-muted-foreground">
+							Tạo lịch học tối ưu từ file Excel môn học tín chỉ
+						</p>
+					</div>
+					{state.calendar && (
 						<AlertDialog>
 							<AlertDialogTrigger asChild>
-								<Button
-									variant="outline"
-									size="sm"
-									className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950"
-								>
-									<Trash2 className="h-4 w-4 mr-2" />
-									Xóa dữ liệu
-								</Button>
+								<Button variant="destructive">Xóa tất cả dữ liệu</Button>
 							</AlertDialogTrigger>
 							<AlertDialogContent>
 								<AlertDialogHeader>
@@ -98,7 +113,42 @@ export default function CoursePlanningPage() {
 						</AlertDialog>
 					)}
 				</div>
-				<p className="text-muted-foreground">Tạo lịch học tối ưu từ file Excel môn học tín chỉ</p>
+
+				{/* Quick Stats */}
+				{stats && stats.selectedSubjectsCount > 0 && (
+					<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+						<Card className="p-4">
+							<div className="text-center">
+								<div className="text-2xl font-bold">{stats.totalMajors}</div>
+								<div className="text-sm text-muted-foreground">Ngành học</div>
+							</div>
+						</Card>
+						<Card className="p-4">
+							<div className="text-center">
+								<div className="text-2xl font-bold text-blue-600">
+									{stats.selectedSubjectsCount}
+								</div>
+								<div className="text-sm text-muted-foreground">Môn đã chọn</div>
+							</div>
+						</Card>
+						<Card className="p-4">
+							<div className="text-center">
+								<div className="text-2xl font-bold text-green-600">
+									{stats.selectedClassesCount}
+								</div>
+								<div className="text-sm text-muted-foreground">Lớp đã chọn</div>
+							</div>
+						</Card>
+						<Card className="p-4">
+							<div className="text-center">
+								<div className="text-2xl font-bold text-purple-600">
+									{stats.selectedClassesCount === stats.selectedSubjectsCount ? '✓' : '⚠'}
+								</div>
+								<div className="text-sm text-muted-foreground">Trạng thái</div>
+							</div>
+						</Card>
+					</div>
+				)}
 			</div>
 
 			{/* Main Content */}

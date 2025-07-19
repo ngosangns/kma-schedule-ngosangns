@@ -50,11 +50,10 @@ KMA Schedule is a Next.js-based web application that converts raw HTML from the 
 ┌─────────────────────────────────────────────────────────────┐
 │              External Services                              │
 ├─────────────────────────────────────────────────────────────┤
-│  CORS Proxy (Cloudflare Workers)                          │
-│  ├── https://actvn-schedule.cors-ngosangns.workers.dev    │
-│  ├── /login - Authentication proxy                        │
-│  ├── /subject - Schedule data proxy                       │
-│  └── Header forwarding & CORS handling                    │
+│  Internal API Routes (Next.js)                            │
+│  ├── /api/kma/login - Authentication endpoint             │
+│  ├── /api/kma/subject - Schedule data endpoint            │
+│  └── Server-side KMA communication                        │
 ├─────────────────────────────────────────────────────────────┤
 │  KMA Official Server                                       │
 │  ├── http://qldt.actvn.edu.vn                            │
@@ -247,14 +246,14 @@ class NotificationService {
 
 ## API Integration
 
-### CORS Proxy Endpoints
+### Internal API Endpoints
 
-The application uses an external Cloudflare Workers CORS proxy to communicate with the KMA server:
+The application uses Next.js API routes to communicate with the KMA server:
 
 #### 1. Login Endpoint
 
 ```
-GET https://actvn-schedule.cors-ngosangns.workers.dev/login
+GET /api/kma/login
 ```
 
 - Fetches login page with ViewState tokens
@@ -263,7 +262,7 @@ GET https://actvn-schedule.cors-ngosangns.workers.dev/login
 #### 2. Authentication Endpoint
 
 ```
-POST https://actvn-schedule.cors-ngosangns.workers.dev/login
+POST /api/kma/login
 Content-Type: application/x-www-form-urlencoded
 
 __VIEWSTATE={viewstate}&__EVENTVALIDATION={validation}&txtUserName={username}&txtPassword={md5_password}&btnSubmit=Đăng nhập
@@ -275,26 +274,26 @@ __VIEWSTATE={viewstate}&__EVENTVALIDATION={validation}&txtUserName={username}&tx
 #### 3. Schedule Data Endpoint
 
 ```
-GET/POST https://actvn-schedule.cors-ngosangns.workers.dev/subject
+GET/POST /api/kma/subject
 ```
 
 - GET: Fetch current semester schedule
 - POST: Fetch specific semester schedule
-- Requires SignIn token in `x-cors-headers`
+- Requires SignIn token in `Authorization` header
 
 ### KMA Server Integration
 
-The CORS proxy forwards requests to the actual KMA server:
+The API routes communicate directly with the KMA server:
 
 ```
 KMA Server: http://qldt.actvn.edu.vn
-Proxy: https://actvn-schedule.cors-ngosangns.workers.dev
+API Routes: /api/kma/*
 ```
 
-#### Proxy Features
+#### API Features
 
-- Cross-origin request handling
-- Header forwarding via `x-cors-headers`
+- Server-side request handling
+- Standard HTTP authentication
 - Cookie and session management
 - Error handling and validation
 - Request/response transformation

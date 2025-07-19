@@ -3,7 +3,7 @@ import { clearData } from './storage';
 import md5 from 'md5';
 
 export async function login(username: string, password: string): Promise<string> {
-	let result = await fetch('https://actvn-schedule.cors-ngosangns.workers.dev/login', {
+	let result = await fetch('/api/kma/login', {
 		method: 'GET'
 	});
 
@@ -24,7 +24,7 @@ export async function login(username: string, password: string): Promise<string>
 		btnSubmit: 'Đăng nhập'
 	};
 
-	result = await fetch('https://actvn-schedule.cors-ngosangns.workers.dev/login', {
+	result = await fetch('/api/kma/login', {
 		method: 'POST',
 		body: Object.keys(data)
 			.map((key: string) => encodeURIComponent(key) + '=' + encodeURIComponent(data[key] || ''))
@@ -34,28 +34,20 @@ export async function login(username: string, password: string): Promise<string>
 		}
 	});
 
-	if (!result || !result.headers) {
+	if (!result) {
 		throw new Error('Failed to authenticate with server');
 	}
 
-	// Get cookies from response headers
-	const setCookieHeader = result.headers.get('set-cookie') || result.headers.get('Set-Cookie');
-
-	if (setCookieHeader) {
-		return setCookieHeader;
+	if (!result.ok) {
+		throw new Error(`Authentication failed with status: ${result.status}`);
 	}
 
-	// If no cookies in headers, try to extract from response text
-	if (!result.text) {
-		throw new Error('Invalid response from server');
-	}
-
+	// Get response text (our API returns the token directly)
 	const responseText = await result.text();
 
-	// The response text appears to be the cookie value directly
-	// Format it as a proper cookie string
+	// The response text should be the cookie value directly
 	if (responseText && responseText.startsWith('SignIn=')) {
-		return responseText;
+		return responseText.trim();
 	}
 
 	// If we get here, authentication likely failed

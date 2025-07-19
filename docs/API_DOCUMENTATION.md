@@ -6,19 +6,19 @@ This document describes the API integration, data models, and communication prot
 
 ## API Architecture
 
-### CORS Proxy Integration
+### Internal API Routes
 
-Due to CORS restrictions, the application uses an external Cloudflare Workers CORS proxy to communicate with the KMA server:
+The application uses Next.js API routes to communicate with the KMA server, eliminating the need for external CORS proxy:
 
 ```
-CORS Proxy: https://actvn-schedule.cors-ngosangns.workers.dev
+Internal API Routes: /api/kma/*
 Target Server: http://qldt.actvn.edu.vn (KMA Official Schedule System)
 ```
 
 ### Request Flow
 
 ```
-Client App → CORS Proxy (Cloudflare Workers) → KMA Server → CORS Proxy → Client App
+Client App → Next.js API Routes → KMA Server → Next.js API Routes → Client App
 ```
 
 ## Authentication API
@@ -30,13 +30,13 @@ Retrieves the login page with necessary form tokens.
 **Endpoint:**
 
 ```
-GET https://actvn-schedule.cors-ngosangns.workers.dev/login
+GET /api/kma/login
 ```
 
 **Request:**
 
 ```http
-GET https://actvn-schedule.cors-ngosangns.workers.dev/login
+GET /api/kma/login
 ```
 
 **Response:**
@@ -67,13 +67,13 @@ Authenticates user credentials and returns session token.
 **Endpoint:**
 
 ```
-POST https://actvn-schedule.cors-ngosangns.workers.dev/login
+POST /api/kma/login
 ```
 
 **Request:**
 
 ```http
-POST https://actvn-schedule.cors-ngosangns.workers.dev/login
+POST /api/kma/login
 Content-Type: application/x-www-form-urlencoded
 
 __VIEWSTATE={viewstate}&__EVENTVALIDATION={validation}&txtUserName={username}&txtPassword={md5_password}&btnSubmit=Đăng nhập
@@ -107,19 +107,19 @@ Retrieves schedule data for the current semester.
 **Endpoint:**
 
 ```
-GET https://actvn-schedule.cors-ngosangns.workers.dev/subject
+GET /api/kma/subject
 ```
 
 **Request:**
 
 ```http
-GET https://actvn-schedule.cors-ngosangns.workers.dev/subject
-x-cors-headers: {"Cookie": "SignIn=..."}
+GET /api/kma/subject
+Authorization: Bearer SignIn=...
 ```
 
 **Headers:**
 
-- `x-cors-headers`: JSON string containing headers to forward to KMA server, including authentication cookie
+- `Authorization`: Bearer token containing the SignIn cookie from authentication
 
 **Response:**
 
@@ -142,15 +142,15 @@ Retrieves schedule data for a specific semester.
 **Endpoint:**
 
 ```
-POST https://actvn-schedule.cors-ngosangns.workers.dev/subject
+POST /api/kma/subject
 ```
 
 **Request:**
 
 ```http
-POST https://actvn-schedule.cors-ngosangns.workers.dev/subject
+POST /api/kma/subject
 Content-Type: application/x-www-form-urlencoded
-x-cors-headers: {"Cookie": "SignIn=..."}
+Authorization: Bearer SignIn=...
 
 __VIEWSTATE={viewstate}&__EVENTVALIDATION={validation}&drpSemester={semester_id}&...
 ```
@@ -369,11 +369,11 @@ interface ApiError {
 
 // Common error scenarios
 - Network timeout
-- CORS proxy unavailable (https://actvn-schedule.cors-ngosangns.workers.dev)
+- API route errors (/api/kma/*)
 - KMA server maintenance (http://qldt.actvn.edu.vn)
 - Invalid credentials
 - Session expired
-- Proxy service errors
+- Authentication token missing or invalid
 ```
 
 ### 2. Data Validation
@@ -445,7 +445,7 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3)
 // Complete authentication process
 async function authenticateUser(username: string, password: string) {
 	// 1. Get login page
-	const loginPage = await fetch('https://actvn-schedule.cors-ngosangns.workers.dev/login');
+	const loginPage = await fetch('/api/kma/login');
 	const html = await loginPage.text();
 
 	// 2. Extract tokens
@@ -453,7 +453,7 @@ async function authenticateUser(username: string, password: string) {
 	const eventValidation = getFieldFromResult(html, '__EVENTVALIDATION');
 
 	// 3. Submit credentials
-	const authResponse = await fetch('https://actvn-schedule.cors-ngosangns.workers.dev/login', {
+	const authResponse = await fetch('/api/kma/login', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/x-www-form-urlencoded'
@@ -467,12 +467,7 @@ async function authenticateUser(username: string, password: string) {
 		}).toString()
 	});
 
-	// 4. Extract token from response headers or text
-	const setCookieHeader = authResponse.headers.get('set-cookie');
-	if (setCookieHeader) {
-		return setCookieHeader;
-	}
-
+	// 4. Extract token from response text
 	const token = await authResponse.text();
 	return token;
 }
@@ -483,15 +478,13 @@ async function authenticateUser(username: string, password: string) {
 ```typescript
 // Fetch and process schedule data
 async function fetchScheduleData(token: string, semester?: string) {
-	const endpoint = 'https://actvn-schedule.cors-ngosangns.workers.dev/subject';
+	const endpoint = '/api/kma/subject';
 	const method = semester ? 'POST' : 'GET';
 
 	const response = await fetch(endpoint, {
 		method,
 		headers: {
-			'x-cors-headers': JSON.stringify({
-				Cookie: token
-			}),
+			Authorization: `Bearer ${token}`,
 			...(semester && { 'Content-Type': 'application/x-www-form-urlencoded' })
 		},
 		body: semester ? createFormData(semester) : undefined
@@ -509,18 +502,18 @@ async function fetchScheduleData(token: string, semester?: string) {
 }
 ```
 
-## CORS Proxy Implementation
+## Internal API Implementation
 
-The application currently uses an external Cloudflare Workers CORS proxy to handle cross-origin requests to the KMA server.
+The application uses Next.js API routes to handle requests to the KMA server, eliminating the need for external CORS proxy.
 
 ### Current Architecture
 
-- **External dependency**: `https://actvn-schedule.cors-ngosangns.workers.dev`
-- **Custom header**: `x-cors-headers` - JSON string containing headers to forward
-- **Proxy-based CORS handling**: All requests go through the proxy
-- **Authentication**: Session tokens passed via `x-cors-headers`
+- **Internal API routes**: `/api/kma/login` and `/api/kma/subject`
+- **Server-side requests**: All KMA server communication happens server-side
+- **Standard authentication**: Session tokens passed via Authorization header
+- **No external dependencies**: Everything runs within the Next.js application
 
-### Proxy Features
+### API Features
 
 1. **CORS Handling**: Manages cross-origin requests between client and KMA server
 2. **Header Forwarding**: Forwards authentication cookies and other headers
