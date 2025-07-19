@@ -28,18 +28,6 @@ export default function AboutPage() {
 							Kỹ thuật Mật mã xem thời khóa biểu một cách dễ dàng và tiện lợi.
 						</p>
 
-						<div className="space-y-2">
-							<h4 className="font-medium">Tính năng chính:</h4>
-							<ul className="text-sm text-muted-foreground space-y-1 ml-4">
-								<li>• Xem thời khóa biểu theo tuần</li>
-								<li>• Giao diện responsive, thân thiện với mobile</li>
-								<li>• Xuất lịch sang Google Calendar</li>
-								<li>• Lọc theo buổi học (sáng, chiều, tối)</li>
-								<li>• Chế độ xem lịch và danh sách</li>
-								<li>• Dark mode</li>
-							</ul>
-						</div>
-
 						<div className="flex flex-wrap gap-2">
 							<Badge variant="secondary">Next.js</Badge>
 							<Badge variant="secondary">TypeScript</Badge>
@@ -118,26 +106,6 @@ export default function AboutPage() {
 									className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
 								>
 									Xem trên Google Play
-									<ExternalLink className="h-3 w-3" />
-								</a>
-							</div>
-
-							<div className="p-4 border rounded-lg">
-								<div className="flex items-start justify-between mb-2">
-									<h4 className="font-medium">KMA Tín chỉ</h4>
-									<Badge variant="outline">Web Tool</Badge>
-								</div>
-								<p className="text-sm text-muted-foreground mb-3">
-									Tool hỗ trợ sinh viên sắp xếp lịch học hợp lí cho bản thân vào mỗi mùa đăng ký
-									học.
-								</p>
-								<a
-									href="https://github.com/ngosangns/tin-chi"
-									target="_blank"
-									rel="noopener noreferrer"
-									className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-								>
-									Xem trên GitHub
 									<ExternalLink className="h-3 w-3" />
 								</a>
 							</div>

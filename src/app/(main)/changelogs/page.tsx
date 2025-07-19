@@ -6,25 +6,57 @@ import { Calendar, Plus, Bug, Zap, Palette, Shield } from 'lucide-react';
 const changelogs = [
 	{
 		version: 'v2025.07',
-		date: '2025-07-01',
+		date: '2025-07-20',
 		type: 'major',
-		title: 'Nâng cấp giao diện',
+		title: 'Hạ tầng API, lập kế hoạch Khóa học và quản lý điểm số',
 		changes: [
 			{
 				type: 'feature',
-				description: 'Giao diện mới với shadcn/ui components'
+				description: 'Hệ thống lập kế hoạch khóa học'
 			},
 			{
-				type: 'improvement',
-				description: 'Cải thiện performance và loading states'
+				type: 'feature',
+				description: 'Hệ thống quản lý điểm số'
 			},
 			{
-				type: 'improvement',
-				description: 'Better error handling và user feedback'
+				type: 'feature',
+				description: 'Thêm cấu hình triển khai Vercel'
+			},
+			{
+				type: 'feature',
+				description: 'Giao diện mới với thành phần shadcn/ui'
 			},
 			{
 				type: 'feature',
 				description: 'Thêm chế độ xem tháng (Month View)'
+			},
+			{
+				type: 'improvement',
+				description: 'Cải thiện xử lý lỗi và xác thực cho token đăng nhập'
+			},
+			{
+				type: 'improvement',
+				description: 'Thêm loading component để cải thiện trải nghiệm người dùng'
+			},
+			{
+				type: 'improvement',
+				description: 'Tái cấu trúc code để cải thiện khả năng đọc và bảo trì'
+			},
+			{
+				type: 'improvement',
+				description: 'Cải thiện cấu hình ESLint với các quy tắc nghiêm ngặt hơn'
+			},
+			{
+				type: 'improvement',
+				description: 'Cập nhật tài liệu cấu trúc dự án và tài liệu kỹ thuật'
+			},
+			{
+				type: 'improvement',
+				description: 'Cải thiện hiệu suất và trạng thái tải'
+			},
+			{
+				type: 'improvement',
+				description: 'Xử lý lỗi tốt hơn và phản hồi người dùng'
 			}
 		]
 	},
@@ -44,7 +76,7 @@ const changelogs = [
 			},
 			{
 				type: 'improvement',
-				description: 'Cải thiện navigation giữa các tuần'
+				description: 'Cải thiện điều hướng giữa các tuần'
 			},
 			{
 				type: 'fix',
@@ -92,7 +124,7 @@ const changelogs = [
 			},
 			{
 				type: 'feature',
-				description: 'Giao diện web responsive'
+				description: 'Giao diện web thích ứng'
 			}
 		]
 	}
@@ -118,13 +150,13 @@ const getChangeIcon = (type: string) => {
 const getVersionBadge = (type: string) => {
 	switch (type) {
 		case 'major':
-			return <Badge variant="default">Major</Badge>;
+			return <Badge variant="default">Lớn</Badge>;
 		case 'minor':
-			return <Badge variant="secondary">Minor</Badge>;
+			return <Badge variant="secondary">Nhỏ</Badge>;
 		case 'patch':
-			return <Badge variant="outline">Patch</Badge>;
+			return <Badge variant="outline">Vá lỗi</Badge>;
 		default:
-			return <Badge variant="outline">Release</Badge>;
+			return <Badge variant="outline">Phát hành</Badge>;
 	}
 };
 
