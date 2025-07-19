@@ -5,10 +5,7 @@ import {
 	ChevronUp,
 	ChevronDown,
 	ArrowUpDown,
-	Filter,
 	AlertTriangle,
-	Eye,
-	EyeOff,
 	Plus,
 	Edit,
 	Trash2
@@ -25,11 +22,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue
+} from '@/components/ui/select';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger
+} from '@/components/ui/alert-dialog';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { GradeRecord, GradeSortConfig, GradeFilterConfig, ImportResult } from '@/types/grades';
 import { filterGrades, sortGrades } from '@/lib/ts/grades/validation';
+import { isSubjectFailed } from '@/lib/ts/grades/calculations';
 import { GradeEditModal } from './GradeEditModal';
 import { SimpleCSVImport } from './SimpleCSVImport';
 import { SimpleCSVExport } from './SimpleCSVExport';
@@ -42,13 +59,12 @@ interface GradeTableProps {
 	onImportComplete?: (result: ImportResult) => void;
 	editable?: boolean;
 	className?: string;
+	loading?: boolean;
 	// State props for persistence across tab switches
 	sortConfig: GradeSortConfig | null;
 	setSortConfig: (config: GradeSortConfig | null) => void;
 	filterConfig: GradeFilterConfig;
 	setFilterConfig: (config: GradeFilterConfig) => void;
-	showCalculatedColumns: boolean;
-	setShowCalculatedColumns: (show: boolean) => void;
 }
 
 export function GradeTable({
@@ -59,12 +75,11 @@ export function GradeTable({
 	onImportComplete,
 	editable = false,
 	className,
+	loading = false,
 	sortConfig,
 	setSortConfig,
 	filterConfig,
-	setFilterConfig,
-	showCalculatedColumns,
-	setShowCalculatedColumns
+	setFilterConfig
 }: GradeTableProps) {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingGrade, setEditingGrade] = useState<GradeRecord | null>(null);
@@ -98,11 +113,6 @@ export function GradeTable({
 		});
 	};
 
-	const clearFilters = () => {
-		setFilterConfig({});
-		setSortConfig(null);
-	};
-
 	// Modal handlers
 	const handleAddNew = () => {
 		setEditingGrade(null);
@@ -115,9 +125,7 @@ export function GradeTable({
 	};
 
 	const handleDelete = (gradeId: string) => {
-		if (confirm('Bạn có chắc chắn muốn xóa môn học này?')) {
-			onGradeDelete?.(gradeId);
-		}
+		onGradeDelete?.(gradeId);
 	};
 
 	const handleModalSave = (gradeData: Omit<GradeRecord, 'id'>) => {
@@ -149,11 +157,11 @@ export function GradeTable({
 	};
 
 	const getGradeColor = (grade: GradeRecord) => {
+		if (isSubjectFailed(grade)) return 'text-red-600 dark:text-red-400';
 		if (!grade.kthp) return '';
 		if (grade.kthp >= 8.5) return 'text-green-600 dark:text-green-400';
 		if (grade.kthp >= 7.0) return 'text-blue-600 dark:text-blue-400';
-		if (grade.kthp >= 5.0) return 'text-yellow-600 dark:text-yellow-400';
-		return 'text-red-600 dark:text-red-400';
+		return 'text-yellow-600 dark:text-yellow-400';
 	};
 
 	const invalidGradesCount = grades.filter((g) => !g.isValid).length;
@@ -179,127 +187,126 @@ export function GradeTable({
 									Thêm môn
 								</Button>
 							)}
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={() => setShowCalculatedColumns(!showCalculatedColumns)}
-								className="flex items-center gap-2"
-							>
-								{showCalculatedColumns ? (
-									<EyeOff className="h-4 w-4" />
-								) : (
-									<Eye className="h-4 w-4" />
-								)}
-								{showCalculatedColumns ? 'Ẩn' : 'Hiện'} cột tính toán
-							</Button>
 						</div>
 					</div>
 				</CardHeader>
 				<CardContent className="space-y-4">
-					{/* Filters */}
-					<div className="space-y-4">
-						<div className="flex items-center gap-2">
-							<Filter className="h-4 w-4" />
-							<span className="font-medium">Bộ lọc</span>
-							{(Object.keys(filterConfig).length > 0 || sortConfig) && (
-								<Button variant="ghost" size="sm" onClick={clearFilters}>
-									Xóa bộ lọc
-								</Button>
-							)}
+					{loading ? (
+						<div className="flex items-center justify-center min-h-[400px]">
+							<LoadingSpinner size="lg" text="Đang tải dữ liệu..." />
 						</div>
-
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<div className="space-y-2">
-								<label className="text-sm font-medium">Tìm kiếm</label>
-								<Input
-									placeholder="Tên môn học..."
-									value={filterConfig.searchTerm || ''}
-									onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
-									className="h-9"
-								/>
+					) : (
+						<>
+							{/* Filters */}
+							<div className="space-y-4">
+								<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+									<div className="space-y-2">
+										<label className="text-sm font-medium">Tìm kiếm</label>
+										<Input
+											placeholder="Tên môn học..."
+											value={filterConfig.searchTerm || ''}
+											onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
+											className="h-9"
+										/>
+									</div>
+									<div className="space-y-2">
+										<label className="text-sm font-medium">Lọc theo kết quả</label>
+										<Select
+											value={
+												filterConfig.onlyFailed
+													? 'failed'
+													: filterConfig.onlyExcellent
+														? 'excellent'
+														: 'all'
+											}
+											onValueChange={(value) => {
+												if (value === 'failed') {
+													setFilterConfig({
+														...filterConfig,
+														onlyFailed: true,
+														onlyExcellent: false
+													});
+												} else if (value === 'excellent') {
+													setFilterConfig({
+														...filterConfig,
+														onlyFailed: false,
+														onlyExcellent: true
+													});
+												} else {
+													setFilterConfig({
+														...filterConfig,
+														onlyFailed: false,
+														onlyExcellent: false
+													});
+												}
+											}}
+										>
+											<SelectTrigger className="h-9">
+												<SelectValue placeholder="Tất cả môn học" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="all">Tất cả môn học</SelectItem>
+												<SelectItem value="failed">Chỉ môn trượt</SelectItem>
+												<SelectItem value="excellent">Chỉ môn xuất sắc (≥8.5)</SelectItem>
+											</SelectContent>
+										</Select>
+									</div>
+								</div>
 							</div>
-						</div>
-					</div>
 
-					<Separator />
+							<Separator />
 
-					{/* Validation Alert */}
-					{invalidGradesCount > 0 && (
-						<Alert className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950">
-							<AlertTriangle className="h-4 w-4 text-yellow-600" />
-							<AlertDescription>Có {invalidGradesCount} bản ghi có lỗi dữ liệu.</AlertDescription>
-						</Alert>
-					)}
+							{/* Validation Alert */}
+							{invalidGradesCount > 0 && (
+								<Alert className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950">
+									<AlertTriangle className="h-4 w-4 text-yellow-600" />
+									<AlertDescription>
+										Có {invalidGradesCount} bản ghi có lỗi dữ liệu.
+									</AlertDescription>
+								</Alert>
+							)}
 
-					{/* Table */}
-					<div className="rounded-md border overflow-hidden">
-						<div className="overflow-x-auto">
-							<Table>
-								<TableHeader>
-									<TableRow>
-										<TableHead
-											className="cursor-pointer hover:bg-muted/50"
-											onClick={() => handleSort('tenMon')}
-										>
-											<div className="flex items-center gap-2">
-												Tên môn
-												{getSortIcon('tenMon')}
-											</div>
-										</TableHead>
-										<TableHead
-											className="cursor-pointer hover:bg-muted/50 text-center"
-											onClick={() => handleSort('ky')}
-										>
-											<div className="flex items-center justify-center gap-2">
-												Kỳ
-												{getSortIcon('ky')}
-											</div>
-										</TableHead>
-										<TableHead
-											className="cursor-pointer hover:bg-muted/50 text-center"
-											onClick={() => handleSort('tin')}
-										>
-											<div className="flex items-center justify-center gap-2">
-												TC
-												{getSortIcon('tin')}
-											</div>
-										</TableHead>
-										<TableHead
-											className="cursor-pointer hover:bg-muted/50 text-center"
-											onClick={() => handleSort('tp1')}
-										>
-											<div className="flex items-center justify-center gap-2">
-												TP1
-												{getSortIcon('tp1')}
-											</div>
-										</TableHead>
-										<TableHead
-											className="cursor-pointer hover:bg-muted/50 text-center"
-											onClick={() => handleSort('tp2')}
-										>
-											<div className="flex items-center justify-center gap-2">
-												TP2
-												{getSortIcon('tp2')}
-											</div>
-										</TableHead>
-										<TableHead
-											className="cursor-pointer hover:bg-muted/50 text-center"
-											onClick={() => handleSort('thi')}
-										>
-											<div className="flex items-center justify-center gap-2">
-												Thi
-												{getSortIcon('thi')}
-											</div>
-										</TableHead>
-										{showCalculatedColumns && (
-											<>
+							{/* Table */}
+							<div className="rounded-md border overflow-hidden">
+								<div className="overflow-x-auto">
+									<Table>
+										<TableHeader>
+											<TableRow>
+												<TableHead>Tên môn</TableHead>
+												<TableHead
+													className="cursor-pointer hover:bg-muted/50 text-center"
+													onClick={() => handleSort('ky')}
+												>
+													<div className="flex items-center justify-center gap-2">
+														Kỳ
+														{getSortIcon('ky')}
+													</div>
+												</TableHead>
+												<TableHead
+													className="cursor-pointer hover:bg-muted/50 text-center"
+													onClick={() => handleSort('tin')}
+												>
+													<div className="flex items-center justify-center gap-2">
+														TC
+														{getSortIcon('tin')}
+													</div>
+												</TableHead>
 												<TableHead
 													className="cursor-pointer hover:bg-muted/50 text-center"
 													onClick={() => handleSort('dqt')}
 												>
 													<div className="flex items-center justify-center gap-2">
-														ĐQT
+														TP1 | TP2 | ĐQT
 														{getSortIcon('dqt')}
+													</div>
+												</TableHead>
+												<TableHead
+													className="cursor-pointer hover:bg-muted/50 text-center"
+													onClick={() => handleSort('thi')}
+												>
+													<div className="flex items-center justify-center gap-2">
+														Thi
+														{getSortIcon('thi')}
 													</div>
 												</TableHead>
 												<TableHead
@@ -311,53 +318,47 @@ export function GradeTable({
 														{getSortIcon('kthp')}
 													</div>
 												</TableHead>
-											</>
-										)}
 
-										{editable && <TableHead className="text-center">Thao tác</TableHead>}
-									</TableRow>
-								</TableHeader>
-								<TableBody>
-									{processedGrades.length === 0 ? (
-										<TableRow>
-											<TableCell
-												colSpan={showCalculatedColumns ? (editable ? 9 : 8) : editable ? 7 : 6}
-												className="text-center py-8 text-muted-foreground"
-											>
-												Không có dữ liệu phù hợp với bộ lọc
-											</TableCell>
-										</TableRow>
-									) : (
-										processedGrades.map((grade) => (
-											<TableRow
-												key={grade.id}
-												className={`${!grade.isValid ? 'bg-red-50 dark:bg-red-950/20' : ''} hover:bg-muted/50`}
-											>
-												<TableCell className="font-medium max-w-48">
-													<div className="truncate" title={grade.tenMon}>
-														{grade.tenMon}
-													</div>
-													{grade.excludeFromGPA && (
-														<Badge variant="outline" className="mt-1 text-xs">
-															Không tính GPA
-														</Badge>
-													)}
-												</TableCell>
-												<TableCell className="text-center">{grade.ky}</TableCell>
-												<TableCell className="text-center">{grade.tin}</TableCell>
-												<TableCell className="text-center">
-													{grade.tp1 !== null ? grade.tp1.toFixed(1) : '-'}
-												</TableCell>
-												<TableCell className="text-center">
-													{grade.tp2 !== null ? grade.tp2.toFixed(1) : '-'}
-												</TableCell>
-												<TableCell className="text-center">
-													{grade.thi !== null ? grade.thi.toFixed(1) : '-'}
-												</TableCell>
-												{showCalculatedColumns && (
-													<>
+												{editable && <TableHead className="text-center">Thao tác</TableHead>}
+											</TableRow>
+										</TableHeader>
+										<TableBody>
+											{processedGrades.length === 0 ? (
+												<TableRow>
+													<TableCell
+														colSpan={editable ? 7 : 6}
+														className="text-center py-8 text-muted-foreground"
+													>
+														Không có dữ liệu phù hợp với bộ lọc
+													</TableCell>
+												</TableRow>
+											) : (
+												processedGrades.map((grade) => (
+													<TableRow
+														key={grade.id}
+														className={`${!grade.isValid ? 'bg-red-50 dark:bg-red-950/20' : ''} hover:bg-muted/50`}
+													>
+														<TableCell className="font-medium max-w-48">
+															<div className="truncate" title={grade.tenMon}>
+																{grade.tenMon}
+															</div>
+															{grade.excludeFromGPA && (
+																<Badge variant="outline" className="mt-1 text-xs">
+																	Không tính GPA
+																</Badge>
+															)}
+														</TableCell>
+														<TableCell className="text-center">{grade.ky}</TableCell>
+														<TableCell className="text-center">{grade.tin}</TableCell>
 														<TableCell className="text-center">
-															{grade.dqt !== null ? grade.dqt.toFixed(1) : '-'}
+															<div className="text-sm">
+																{grade.tp1 !== null ? grade.tp1.toFixed(1) : '-'} |{' '}
+																{grade.tp2 !== null ? grade.tp2.toFixed(1) : '-'} |{' '}
+																{grade.dqt !== null ? grade.dqt.toFixed(1) : '-'}
+															</div>
+														</TableCell>
+														<TableCell className="text-center">
+															{grade.thi !== null ? grade.thi.toFixed(1) : '-'}
 														</TableCell>
 														<TableCell
 															className={`text-center font-medium ${getGradeColor(grade)}`}
@@ -368,44 +369,65 @@ export function GradeTable({
 																	? grade.kthp.toFixed(1)
 																	: '-'}
 														</TableCell>
-													</>
-												)}
 
-												{editable && (
-													<TableCell className="text-center">
-														<div className="flex items-center justify-center gap-1">
-															<Button
-																size="sm"
-																variant="ghost"
-																onClick={() => handleEdit(grade)}
-																className="h-8 w-8 p-0"
-															>
-																<Edit className="h-4 w-4" />
-															</Button>
-															<Button
-																size="sm"
-																variant="ghost"
-																onClick={() => handleDelete(grade.id)}
-																className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-															>
-																<Trash2 className="h-4 w-4" />
-															</Button>
-														</div>
-													</TableCell>
-												)}
-											</TableRow>
-										))
-									)}
-								</TableBody>
-							</Table>
-						</div>
-					</div>
+														{editable && (
+															<TableCell className="text-center">
+																<div className="flex items-center justify-center gap-1">
+																	<Button
+																		size="sm"
+																		variant="ghost"
+																		onClick={() => handleEdit(grade)}
+																		className="h-8 w-8 p-0"
+																	>
+																		<Edit className="h-4 w-4" />
+																	</Button>
+																	<AlertDialog>
+																		<AlertDialogTrigger asChild>
+																			<Button
+																				size="sm"
+																				variant="ghost"
+																				className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+																			>
+																				<Trash2 className="h-4 w-4" />
+																			</Button>
+																		</AlertDialogTrigger>
+																		<AlertDialogContent>
+																			<AlertDialogHeader>
+																				<AlertDialogTitle>Xác nhận xóa môn học</AlertDialogTitle>
+																				<AlertDialogDescription>
+																					Bạn có chắc chắn muốn xóa môn &ldquo;{grade.tenMon}
+																					&rdquo;? Hành động này không thể hoàn tác.
+																				</AlertDialogDescription>
+																			</AlertDialogHeader>
+																			<AlertDialogFooter>
+																				<AlertDialogCancel>Hủy</AlertDialogCancel>
+																				<AlertDialogAction
+																					onClick={() => handleDelete(grade.id)}
+																					className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+																				>
+																					Xóa môn học
+																				</AlertDialogAction>
+																			</AlertDialogFooter>
+																		</AlertDialogContent>
+																	</AlertDialog>
+																</div>
+															</TableCell>
+														)}
+													</TableRow>
+												))
+											)}
+										</TableBody>
+									</Table>
+								</div>
+							</div>
 
-					{/* Summary */}
-					{processedGrades.length > 0 && (
-						<div className="text-sm text-muted-foreground text-center">
-							Hiển thị {processedGrades.length} / {grades.length} môn học
-						</div>
+							{/* Summary */}
+							{processedGrades.length > 0 && (
+								<div className="text-sm text-muted-foreground text-center">
+									Hiển thị {processedGrades.length} / {grades.length} môn học
+								</div>
+							)}
+						</>
 					)}
 				</CardContent>
 			</Card>

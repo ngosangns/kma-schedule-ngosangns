@@ -19,33 +19,28 @@ import { Badge } from '@/components/ui/badge';
 import { useCoursePlanning } from '@/contexts/CoursePlanningContext';
 import { AutoMode } from '@/types/course-planning';
 
-const AUTO_MODES: { value: AutoMode; label: string; description: string; icon: React.ReactNode }[] =
-	[
-		{
-			value: 'refer-non-overlap',
-			label: 'Tối ưu tổng thể',
-			description: 'Tìm lịch học với ít xung đột nhất',
-			icon: <Calendar className="h-4 w-4" />
-		},
-		{
-			value: 'refer-non-overlap-morning',
-			label: 'Ưu tiên buổi sáng',
-			description: 'Tối ưu lịch học buổi sáng (tiết 1-6)',
-			icon: <Sun className="h-4 w-4" />
-		},
-		{
-			value: 'refer-non-overlap-afternoon',
-			label: 'Ưu tiên buổi chiều',
-			description: 'Tối ưu lịch học buổi chiều (tiết 7-12)',
-			icon: <Sunset className="h-4 w-4" />
-		},
-		{
-			value: 'refer-non-overlap-evening',
-			label: 'Ưu tiên buổi tối',
-			description: 'Tối ưu lịch học buổi tối (tiết 13-16)',
-			icon: <Moon className="h-4 w-4" />
-		}
-	];
+const AUTO_MODES: { value: AutoMode; label: string; icon: React.ReactNode }[] = [
+	{
+		value: 'refer-non-overlap',
+		label: 'Tối ưu tổng thể',
+		icon: <Calendar className="h-4 w-4" />
+	},
+	{
+		value: 'refer-non-overlap-morning',
+		label: 'Ưu tiên buổi sáng',
+		icon: <Sun className="h-4 w-4" />
+	},
+	{
+		value: 'refer-non-overlap-afternoon',
+		label: 'Ưu tiên buổi chiều',
+		icon: <Sunset className="h-4 w-4" />
+	},
+	{
+		value: 'refer-non-overlap-evening',
+		label: 'Ưu tiên buổi tối',
+		icon: <Moon className="h-4 w-4" />
+	}
+];
 
 // Step component for the wizard
 interface StepProps {
@@ -223,7 +218,6 @@ export function ScheduleControls() {
 										</div>
 										<div className="flex-1">
 											<h4 className="font-medium">{mode.label}</h4>
-											<p className="text-sm text-muted-foreground">{mode.description}</p>
 										</div>
 									</div>
 								</CardContent>
@@ -295,7 +289,7 @@ export function ScheduleControls() {
 									className="flex items-center gap-2"
 								>
 									<RotateCcw className="h-4 w-4" />
-									Tìm giải pháp khác
+									Tạo lịch
 								</Button>
 								<Button onClick={() => setCurrentStep(2)} variant="outline">
 									Thay đổi chế độ tối ưu

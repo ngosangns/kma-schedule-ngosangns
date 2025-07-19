@@ -11,7 +11,6 @@ export interface GradeRecord {
 	dqt: number | null; // Điểm quá trình (calculated)
 	kthp: number | null; // Kết thúc học phần (calculated)
 	kthpHe4: number | null; // KTHP hệ 4 (calculated)
-	diemChu: string | null; // Điểm chữ (calculated)
 	excludeFromGPA?: boolean; // Loại trừ khỏi tính GPA (Giáo dục thể chất, Giáo dục quốc phòng)
 	isValid?: boolean; // Validation status
 	errors?: string[]; // Validation errors
@@ -27,7 +26,6 @@ export interface RawGradeData {
 	ĐQT?: string | number | null;
 	KTHP?: string | number | null;
 	'KTHP hệ 4'?: string | number | null;
-	'Điểm chữ'?: string | null;
 }
 
 export interface SemesterData {
@@ -50,13 +48,10 @@ export interface GradeStatistics {
 	totalSubjects: number;
 	passedSubjects: number;
 	failedSubjects: number;
-	excellentSubjects: number; // A+, A
-	goodSubjects: number; // B+, B
-	averageSubjects: number; // C+, C
-	weakSubjects: number; // D+, D
-	gradeDistribution: {
-		[key: string]: number; // Grade letter -> count
-	};
+	excellentSubjects: number; // >= 8.5
+	goodSubjects: number; // 7.0 - 8.4
+	averageSubjects: number; // 5.5 - 6.9
+	weakSubjects: number; // 4.0 - 5.4
 	semesterStats: SemesterData[];
 }
 
@@ -64,7 +59,6 @@ export interface GradeConversionRule {
 	minScore: number;
 	maxScore: number;
 	grade4: number;
-	gradeLetter: string;
 }
 
 export interface ImportResult {
@@ -108,11 +102,15 @@ export interface GradeFilterConfig {
 
 // Grade calculation constants
 export const GRADE_CONVERSION_TABLE: GradeConversionRule[] = [
-	{ minScore: 8.5, maxScore: 10, grade4: 4.0, gradeLetter: 'Xuất sắc' },
-	{ minScore: 7.0, maxScore: 8.4, grade4: 3.0, gradeLetter: 'Giỏi' },
-	{ minScore: 5.5, maxScore: 6.9, grade4: 2.0, gradeLetter: 'Khá' },
-	{ minScore: 4.0, maxScore: 5.4, grade4: 1.0, gradeLetter: 'Trung bình' },
-	{ minScore: 0, maxScore: 3.9, grade4: 0.0, gradeLetter: 'Yếu/Kém' }
+	{ minScore: 9.0, maxScore: 10, grade4: 4.0 },
+	{ minScore: 8.5, maxScore: 8.9, grade4: 3.8 },
+	{ minScore: 7.8, maxScore: 8.4, grade4: 3.5 },
+	{ minScore: 7.0, maxScore: 7.7, grade4: 3.0 },
+	{ minScore: 6.3, maxScore: 6.9, grade4: 2.5 },
+	{ minScore: 5.5, maxScore: 6.2, grade4: 2.0 },
+	{ minScore: 4.8, maxScore: 5.4, grade4: 1.5 },
+	{ minScore: 4.0, maxScore: 4.7, grade4: 1.0 },
+	{ minScore: 0, maxScore: 3.9, grade4: 0.0 }
 ];
 
 export const CALCULATION_WEIGHTS = {

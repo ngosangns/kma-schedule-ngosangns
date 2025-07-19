@@ -322,10 +322,7 @@ export function DataExport({ grades, statistics, className }: DataExportProps) {
 										<div key={grade.id} className="p-2 bg-muted/30 rounded text-xs">
 											{index + 1}. {grade.tenMon} - Kỳ {grade.ky} - {grade.tin} TC
 											{exportOptions.includeCalculated && grade.kthp && (
-												<span>
-													{' '}
-													- KTHP: {grade.kthp} ({grade.diemChu})
-												</span>
+												<span> - KTHP: {grade.kthp}</span>
 											)}
 										</div>
 									))}

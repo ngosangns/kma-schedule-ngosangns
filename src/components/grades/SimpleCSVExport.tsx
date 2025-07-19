@@ -55,7 +55,7 @@ export function SimpleCSVExport({ grades, className }: SimpleCSVExportProps) {
 				) : (
 					<>
 						<Download className="h-4 w-4" />
-						Xuất CSV
+						Xuất
 					</>
 				)}
 			</Button>

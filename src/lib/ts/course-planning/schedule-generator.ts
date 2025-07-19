@@ -62,7 +62,10 @@ export function generateCalendarTableData(
 			const classData = calendar.majors[majorKey]?.[subjectName]?.[selectedSubjectData.class];
 			if (!classData) continue;
 
-			for (const schedule of classData.schedules) {
+			// Ensure schedules is an array
+			const schedules = Array.isArray(classData.schedules) ? classData.schedules : [];
+
+			for (const schedule of schedules) {
 				let isMeetRightDayOfWeek = false;
 
 				const startDate = numToDate(schedule[Field.StartDate]);
@@ -176,7 +179,10 @@ export function generateCombinationOfSubjects(params: {
 			const classScheduleGrid: [number, number, number, number][] = [];
 			let totalShiftSession = 0;
 
-			for (const schedule of classData.schedules) {
+			// Ensure schedules is an array
+			const schedules = Array.isArray(classData.schedules) ? classData.schedules : [];
+
+			for (const schedule of schedules) {
 				const classScheduleGridAtI: [number, number, number, number] = [
 					numToDate(schedule[Field.StartDate]).getTime(),
 					numToDate(schedule[Field.EndDate]).getTime() + aDayInMilliseconds - 1,

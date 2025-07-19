@@ -14,6 +14,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue
+} from '@/components/ui/select';
+import {
 	Form,
 	FormControl,
 	FormField,
@@ -90,7 +97,7 @@ export function GradeEditModal({
 		});
 
 		// Remove the id field for the callback
-		const { id, ...gradeWithoutId } = processedGrade;
+		const { id: _id, ...gradeWithoutId } = processedGrade;
 
 		// Close modal first, then save to avoid state update conflicts
 		onClose();
@@ -141,15 +148,23 @@ export function GradeEditModal({
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>Kỳ học</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												min="1"
-												max="20"
-												{...field}
-												onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-											/>
-										</FormControl>
+										<Select
+											value={field.value?.toString()}
+											onValueChange={(value) => field.onChange(parseInt(value))}
+										>
+											<FormControl>
+												<SelectTrigger>
+													<SelectValue placeholder="Chọn kỳ học" />
+												</SelectTrigger>
+											</FormControl>
+											<SelectContent>
+												{Array.from({ length: 10 }, (_, i) => i + 1).map((semester) => (
+													<SelectItem key={semester} value={semester.toString()}>
+														Kỳ {semester}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
 										<FormMessage />
 									</FormItem>
 								)}

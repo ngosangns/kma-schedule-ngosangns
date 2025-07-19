@@ -47,7 +47,7 @@ export default function Header() {
 					</div>
 
 					{/* Desktop Navigation */}
-					<div className="hidden md:flex items-center space-x-6">
+					<div className="hidden table:flex items-center space-x-6">
 						<nav className="flex items-center space-x-6">
 							{navigation.map((item) => (
 								<Link
@@ -82,7 +82,7 @@ export default function Header() {
 					</div>
 
 					{/* Mobile controls */}
-					<div className="md:hidden flex items-center space-x-2">
+					<div className="table:hidden flex items-center space-x-2">
 						<ThemeToggle />
 						<Button
 							variant="ghost"
@@ -98,7 +98,7 @@ export default function Header() {
 
 				{/* Mobile Navigation */}
 				{sidebarOpen && (
-					<div className="md:hidden border-t bg-background/95 backdrop-blur-md">
+					<div className="table:hidden border-t bg-background/95 backdrop-blur-md">
 						<nav className="flex flex-col py-4 px-2">
 							{navigation.map((item) => (
 								<Link

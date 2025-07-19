@@ -1,17 +1,29 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Table, BarChart3, Smartphone } from 'lucide-react';
+import { Table, BarChart3, Smartphone, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger
+} from '@/components/ui/alert-dialog';
 
 // Grade Management Components
 import { GradeTable } from '@/components/grades/GradeTable';
-import { GradeCards } from '@/components/grades/GradeCards';
 import { StatisticsDashboard } from '@/components/grades/StatisticsDashboard';
+import { SimpleCSVImport } from '@/components/grades/SimpleCSVImport';
+import { GradeEditModal } from '@/components/grades/GradeEditModal';
 
 // Types and Utils
 import { GradeRecord, ImportResult, GradeSortConfig, GradeFilterConfig } from '@/types/grades';
@@ -21,12 +33,15 @@ export default function GradesPage() {
 	const [grades, setGrades] = useState<GradeRecord[]>([]);
 	const [activeTab, setActiveTab] = useState('table');
 	const [isMobile, setIsMobile] = useState(false);
-	const [_lastImportResult, setLastImportResult] = useState<ImportResult | null>(null);
+	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
 
 	// Table state management - persisted across tab switches
-	const [sortConfig, setSortConfig] = useState<GradeSortConfig | null>(null);
+	const [sortConfig, setSortConfig] = useState<GradeSortConfig | null>({
+		field: 'ky',
+		direction: 'asc'
+	});
 	const [filterConfig, setFilterConfig] = useState<GradeFilterConfig>({});
-	const [showCalculatedColumns, setShowCalculatedColumns] = useState(false); // Default: hide calculated columns
 
 	const { toast } = useToast();
 
@@ -43,14 +58,21 @@ export default function GradesPage() {
 
 	// Load data from localStorage on mount
 	useEffect(() => {
+		setIsLoading(true);
 		const savedGrades = localStorage.getItem('grades-data');
 		if (savedGrades) {
 			try {
 				const parsedGrades = JSON.parse(savedGrades);
-				setGrades(parsedGrades);
+				setTimeout(() => {
+					setGrades(parsedGrades);
+					setIsLoading(false);
+				}, 500); // Simulate loading time
 			} catch (error) {
 				console.error('Error loading saved grades:', error);
+				setIsLoading(false);
 			}
+		} else {
+			setIsLoading(false);
 		}
 	}, []);
 
@@ -62,70 +84,83 @@ export default function GradesPage() {
 	}, [grades]);
 
 	const handleImportComplete = (result: ImportResult) => {
-		setLastImportResult(result);
+		setIsLoading(true);
 
-		if (result.success && result.data.length > 0) {
-			setGrades(result.data);
-			toast({
-				title: 'Nhập dữ liệu thành công!',
-				description: `Đã nhập ${result.validRecords} bản ghi hợp lệ.`
-			});
+		// Simulate processing time for better UX
+		setTimeout(() => {
+			if (result.success && result.data.length > 0) {
+				setGrades(result.data);
+				toast({
+					title: 'Nhập dữ liệu thành công!',
+					description: `Đã nhập ${result.validRecords} bản ghi hợp lệ.`
+				});
 
-			// No need to switch tabs since import/export are now in the table tab
-		} else {
-			toast({
-				title: 'Nhập dữ liệu thất bại',
-				description: result.errors[0] || 'Có lỗi xảy ra khi nhập dữ liệu.',
-				variant: 'destructive'
-			});
-		}
+				// No need to switch tabs since import/export are now in the table tab
+			} else {
+				toast({
+					title: 'Nhập dữ liệu thất bại',
+					description: result.errors[0] || 'Có lỗi xảy ra khi nhập dữ liệu.',
+					variant: 'destructive'
+				});
+			}
+			setIsLoading(false);
+		}, 1000);
 	};
 
 	// Enhanced table handlers
 	const handleGradeAdd = (gradeData: Omit<GradeRecord, 'id'>) => {
-		const newGrade = {
-			...gradeData,
-			id: `grade-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-		};
-		const newGrades = [...grades, newGrade];
-		setGrades(newGrades);
-		toast({
-			title: 'Đã thêm môn học',
-			description: `Môn "${gradeData.tenMon}" đã được thêm thành công.`
-		});
+		setIsLoading(true);
+		setTimeout(() => {
+			const newGrade = {
+				...gradeData,
+				id: `grade-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+			};
+			const newGrades = [...grades, newGrade];
+			setGrades(newGrades);
+			toast({
+				title: 'Đã thêm môn học',
+				description: `Môn "${gradeData.tenMon}" đã được thêm thành công.`
+			});
+			setIsLoading(false);
+		}, 500);
 	};
 
 	const handleGradeEdit = (gradeId: string, updatedGradeData: Omit<GradeRecord, 'id'>) => {
-		const newGrades = grades.map((grade) =>
-			grade.id === gradeId ? { ...updatedGradeData, id: gradeId } : grade
-		);
-		setGrades(newGrades);
-		toast({
-			title: 'Đã cập nhật môn học',
-			description: `Môn "${updatedGradeData.tenMon}" đã được cập nhật thành công.`
-		});
+		setIsLoading(true);
+		setTimeout(() => {
+			const newGrades = grades.map((grade) =>
+				grade.id === gradeId ? { ...updatedGradeData, id: gradeId } : grade
+			);
+			setGrades(newGrades);
+			toast({
+				title: 'Đã cập nhật môn học',
+				description: `Môn "${updatedGradeData.tenMon}" đã được cập nhật thành công.`
+			});
+			setIsLoading(false);
+		}, 500);
 	};
 
 	const handleGradeDelete = (gradeId: string) => {
-		const gradeToDelete = grades.find((g) => g.id === gradeId);
-		const newGrades = grades.filter((grade) => grade.id !== gradeId);
-		setGrades(newGrades);
-		toast({
-			title: 'Đã xóa môn học',
-			description: `Môn "${gradeToDelete?.tenMon || 'không xác định'}" đã được xóa.`
-		});
+		setIsLoading(true);
+		setTimeout(() => {
+			const gradeToDelete = grades.find((g) => g.id === gradeId);
+			const newGrades = grades.filter((grade) => grade.id !== gradeId);
+			setGrades(newGrades);
+			toast({
+				title: 'Đã xóa môn học',
+				description: `Môn "${gradeToDelete?.tenMon || 'không xác định'}" đã được xóa.`
+			});
+			setIsLoading(false);
+		}, 500);
 	};
 
 	const clearAllData = () => {
-		if (confirm('Bạn có chắc chắn muốn xóa tất cả dữ liệu? Hành động này không thể hoàn tác.')) {
-			setGrades([]);
-			setLastImportResult(null);
-			localStorage.removeItem('grades-data');
-			toast({
-				title: 'Đã xóa tất cả dữ liệu',
-				description: 'Tất cả dữ liệu điểm đã được xóa.'
-			});
-		}
+		setGrades([]);
+		localStorage.removeItem('grades-data');
+		toast({
+			title: 'Đã xóa tất cả dữ liệu',
+			description: 'Tất cả dữ liệu điểm đã được xóa.'
+		});
 	};
 
 	const statistics = useMemo(() => {
@@ -142,9 +177,28 @@ export default function GradesPage() {
 						<p className="text-muted-foreground">Nhập, xem và phân tích điểm số các môn học</p>
 					</div>
 					{grades.length > 0 && (
-						<Button variant="destructive" onClick={clearAllData}>
-							Xóa tất cả dữ liệu
-						</Button>
+						<AlertDialog>
+							<AlertDialogTrigger asChild>
+								<Button variant="destructive">Xóa tất cả dữ liệu</Button>
+							</AlertDialogTrigger>
+							<AlertDialogContent>
+								<AlertDialogHeader>
+									<AlertDialogTitle>Xác nhận xóa dữ liệu</AlertDialogTitle>
+									<AlertDialogDescription>
+										Bạn có chắc chắn muốn xóa tất cả dữ liệu điểm? Hành động này không thể hoàn tác.
+									</AlertDialogDescription>
+								</AlertDialogHeader>
+								<AlertDialogFooter>
+									<AlertDialogCancel>Hủy</AlertDialogCancel>
+									<AlertDialogAction
+										onClick={clearAllData}
+										className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+									>
+										Xóa tất cả dữ liệu
+									</AlertDialogAction>
+								</AlertDialogFooter>
+							</AlertDialogContent>
+						</AlertDialog>
 					)}
 				</div>
 
@@ -160,7 +214,7 @@ export default function GradesPage() {
 						<Card className="p-4">
 							<div className="text-center">
 								<div className="text-2xl font-bold text-green-600">
-									{statistics?.overallGPA4?.toFixed(1) || 'N/A'}
+									{statistics?.overallGPA4?.toFixed(2) || 'N/A'}
 								</div>
 								<div className="text-sm text-muted-foreground">GPA Hệ 4</div>
 							</div>
@@ -168,7 +222,7 @@ export default function GradesPage() {
 						<Card className="p-4">
 							<div className="text-center">
 								<div className="text-2xl font-bold text-blue-600">
-									{statistics?.overallGPA10?.toFixed(1) || 'N/A'}
+									{statistics?.overallGPA10?.toFixed(2) || 'N/A'}
 								</div>
 								<div className="text-sm text-muted-foreground">GPA Hệ 10</div>
 							</div>
@@ -187,7 +241,7 @@ export default function GradesPage() {
 
 			{/* Main Content */}
 			<Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-				<TabsList className="grid w-full grid-cols-1 md:grid-cols-2">
+				<TabsList className="grid w-full grid-cols-2">
 					<TabsTrigger value="table" className="flex items-center gap-2">
 						{isMobile ? <Smartphone className="h-4 w-4" /> : <Table className="h-4 w-4" />}
 						<span className="hidden sm:inline">Bảng điểm</span>
@@ -212,43 +266,35 @@ export default function GradesPage() {
 							<CardContent className="p-8 text-center">
 								<Table className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
 								<h3 className="text-lg font-medium mb-2">Chưa có dữ liệu điểm</h3>
-								<p className="text-muted-foreground mb-4">
-									Hãy nhập dữ liệu từ file CSV ở trên hoặc thêm thủ công để bắt đầu.
+								<p className="text-muted-foreground mb-6">
+									Bắt đầu bằng cách nhập dữ liệu từ file CSV hoặc thêm môn học thủ công.
 								</p>
+								<div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+									<SimpleCSVImport onImportComplete={handleImportComplete} />
+									<Button
+										onClick={() => setIsAddModalOpen(true)}
+										className="flex items-center gap-2"
+									>
+										<Plus className="h-4 w-4" />
+										Thêm môn học
+									</Button>
+								</div>
 							</CardContent>
 						</Card>
 					) : (
-						<div className="space-y-6">
-							{/* Desktop Table View */}
-							<div className="hidden md:block">
-								<GradeTable
-									grades={grades}
-									onGradeAdd={handleGradeAdd}
-									onGradeEdit={handleGradeEdit}
-									onGradeDelete={handleGradeDelete}
-									onImportComplete={handleImportComplete}
-									editable={true}
-									sortConfig={sortConfig}
-									setSortConfig={setSortConfig}
-									filterConfig={filterConfig}
-									setFilterConfig={setFilterConfig}
-									showCalculatedColumns={showCalculatedColumns}
-									setShowCalculatedColumns={setShowCalculatedColumns}
-								/>
-							</div>
-
-							{/* Mobile Card View */}
-							<div className="md:hidden">
-								<GradeCards
-									grades={grades}
-									onGradeEdit={(_grade) => {
-										// For mobile, we could implement a similar modal approach
-										// For now, keeping the existing card view
-									}}
-									onGradeDelete={handleGradeDelete}
-								/>
-							</div>
-						</div>
+						<GradeTable
+							grades={grades}
+							onGradeAdd={handleGradeAdd}
+							onGradeEdit={handleGradeEdit}
+							onGradeDelete={handleGradeDelete}
+							onImportComplete={handleImportComplete}
+							editable={true}
+							loading={isLoading}
+							sortConfig={sortConfig}
+							setSortConfig={setSortConfig}
+							filterConfig={filterConfig}
+							setFilterConfig={setFilterConfig}
+						/>
 					)}
 				</TabsContent>
 
@@ -269,6 +315,14 @@ export default function GradesPage() {
 					)}
 				</TabsContent>
 			</Tabs>
+
+			{/* Add Grade Modal */}
+			<GradeEditModal
+				isOpen={isAddModalOpen}
+				onClose={() => setIsAddModalOpen(false)}
+				onSave={handleGradeAdd}
+				title="Thêm môn học mới"
+			/>
 		</div>
 	);
 }

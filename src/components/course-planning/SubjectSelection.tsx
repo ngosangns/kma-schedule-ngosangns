@@ -38,33 +38,28 @@ import { Field, AutoMode, ClassData } from '@/types/course-planning';
 type SubjectData = Record<string, ClassData>;
 
 // AUTO_MODES configuration
-const AUTO_MODES: { value: AutoMode; label: string; description: string; icon: React.ReactNode }[] =
-	[
-		{
-			value: 'refer-non-overlap',
-			label: 'Tối ưu tổng thể',
-			description: 'Tìm lịch học với ít xung đột nhất',
-			icon: <Calendar className="h-4 w-4" />
-		},
-		{
-			value: 'refer-non-overlap-morning',
-			label: 'Ưu tiên buổi sáng',
-			description: 'Tối ưu lịch học buổi sáng (tiết 1-6)',
-			icon: <Sun className="h-4 w-4" />
-		},
-		{
-			value: 'refer-non-overlap-afternoon',
-			label: 'Ưu tiên buổi chiều',
-			description: 'Tối ưu lịch học buổi chiều (tiết 7-12)',
-			icon: <Sunset className="h-4 w-4" />
-		},
-		{
-			value: 'refer-non-overlap-evening',
-			label: 'Ưu tiên buổi tối',
-			description: 'Tối ưu lịch học buổi tối (tiết 13-16)',
-			icon: <Moon className="h-4 w-4" />
-		}
-	];
+const AUTO_MODES: { value: AutoMode; label: string; icon: React.ReactNode }[] = [
+	{
+		value: 'refer-non-overlap',
+		label: 'Tối ưu tổng thể',
+		icon: <Calendar className="h-4 w-4" />
+	},
+	{
+		value: 'refer-non-overlap-morning',
+		label: 'Ưu tiên buổi sáng',
+		icon: <Sun className="h-4 w-4" />
+	},
+	{
+		value: 'refer-non-overlap-afternoon',
+		label: 'Ưu tiên buổi chiều',
+		icon: <Sunset className="h-4 w-4" />
+	},
+	{
+		value: 'refer-non-overlap-evening',
+		label: 'Ưu tiên buổi tối',
+		icon: <Moon className="h-4 w-4" />
+	}
+];
 
 // SubjectCard component for individual subjects
 interface SubjectCardProps {
@@ -362,9 +357,6 @@ function ScheduleWizard({
 										<div className="flex-shrink-0">{mode.icon}</div>
 										<div className="text-left">
 											<div className="font-medium text-left">{mode.label}</div>
-											<div className="text-xs text-muted-foreground text-left">
-												{mode.description}
-											</div>
 										</div>
 									</div>
 								</SelectItem>
@@ -385,20 +377,15 @@ function ScheduleWizard({
 								<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
 								Đang tạo lịch...
 							</>
-						) : autoTh >= 0 ? (
-							<>
-								<RotateCcw className="h-4 w-4 mr-2" />
-								Tìm giải pháp khác
-							</>
 						) : (
 							<>
-								<Wand2 className="h-4 w-4 mr-2" />
-								Tạo lịch tự động
+								<RotateCcw className="h-4 w-4 mr-2" />
+								Tạo lịch
 							</>
 						)}
 					</Button>
 
-					<Button onClick={onContinue} variant="outline" className="w-full">
+					<Button onClick={onContinue} className="w-full">
 						<ArrowRight className="h-4 w-4 mr-2" />
 						Tiếp tục
 					</Button>
@@ -436,14 +423,14 @@ function SubjectSummary({ selectedSubjects, onClassSelect }: SubjectSummaryProps
 						Chưa có môn học nào được chọn
 					</p>
 				) : (
-					<div className="grid gap-3 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+					<div className="columns-1 sm:columns-2 lg:columns-1 xl:columns-2 gap-3 space-y-3">
 						{selectedSubjects.map(({ majorKey, subjectName, selectedClass, subjectData }) => {
 							const availableClasses = Object.keys(subjectData);
 
 							return (
 								<div
 									key={`${majorKey}-${subjectName}`}
-									className="p-3 rounded-lg border bg-muted/30 space-y-2"
+									className="p-3 rounded-lg border bg-muted/30 space-y-2 break-inside-avoid mb-3"
 								>
 									{/* Subject Info */}
 									<div>
@@ -632,11 +619,8 @@ export function SubjectSelection({ onContinue }: SubjectSelectionProps = {}) {
 									<div>
 										<CardTitle className="flex items-center gap-2">
 											<BookOpen className="h-5 w-5" />
-											Chọn môn học và tạo lịch
+											Chọn môn học
 										</CardTitle>
-										<CardDescription>
-											Chọn các môn học bạn muốn đăng ký, sau đó tạo lịch học tối ưu.
-										</CardDescription>
 									</div>
 								</div>
 								<div className="flex gap-4 text-sm text-muted-foreground">

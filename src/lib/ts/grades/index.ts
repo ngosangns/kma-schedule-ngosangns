@@ -5,7 +5,7 @@ export {
 	calculateDQT,
 	calculateKTHP,
 	convertToGrade4,
-	convertToLetterGrade,
+	isSubjectFailed,
 	shouldExcludeFromGPA,
 	processGradeRecord,
 	calculateGPA10,
@@ -18,14 +18,7 @@ export {
 export { parseCSV, parseJSON, exportToCSV, exportToJSON, downloadFile } from './import-export';
 
 // Validation
-export {
-	validateGradeRecord,
-	validateGradeRecords,
-	filterGrades,
-	sortGrades,
-	getValidationSummary,
-	isDataCompleteForGPA
-} from './validation';
+export { validateGradeRecord, validateGradeRecords, filterGrades, sortGrades } from './validation';
 
 // Re-export types for convenience
 export type {

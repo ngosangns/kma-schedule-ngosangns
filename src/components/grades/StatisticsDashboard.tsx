@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { TrendingUp, TrendingDown, Award, AlertTriangle, CheckCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -13,9 +13,6 @@ import {
 	CartesianGrid,
 	Tooltip,
 	ResponsiveContainer,
-	PieChart,
-	Pie,
-	Cell,
 	LineChart,
 	Line,
 	Legend
@@ -41,127 +38,9 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 		}));
 	}, [statistics]);
 
-	const performanceData = useMemo(() => {
-		return [
-			{ name: 'Xuất sắc (A+, A)', value: statistics.excellentSubjects, color: '#10b981' },
-			{ name: 'Giỏi (B+, B)', value: statistics.goodSubjects, color: '#3b82f6' },
-			{ name: 'Khá (C+, C)', value: statistics.averageSubjects, color: '#f59e0b' },
-			{ name: 'Yếu (D+, D)', value: statistics.weakSubjects, color: '#ef4444' },
-			{ name: 'Rớt (F)', value: statistics.failedSubjects, color: '#991b1b' }
-		].filter((item) => item.value > 0);
-	}, [statistics]);
-
-	const passRate =
-		statistics.totalSubjects > 0
-			? ((statistics.passedSubjects / statistics.totalSubjects) * 100).toFixed(1)
-			: '0';
-
-	const excellentRate =
-		statistics.totalSubjects > 0
-			? ((statistics.excellentSubjects / statistics.totalSubjects) * 100).toFixed(1)
-			: '0';
-
 	return (
 		<div className={className}>
 			<div className="space-y-6">
-				{/* Overview Cards */}
-				<div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-					<Card>
-						<CardContent className="p-6">
-							<div className="flex items-center justify-between">
-								<div>
-									<p className="text-sm font-medium text-muted-foreground">Tỷ lệ đậu</p>
-									<p className="text-2xl font-bold">{passRate}%</p>
-									<p className="text-xs text-muted-foreground">
-										{statistics.passedSubjects}/{statistics.totalSubjects} môn
-									</p>
-								</div>
-								<div className="p-2 bg-amber-100 dark:bg-amber-900 rounded-full">
-									{parseFloat(passRate) >= 80 ? (
-										<TrendingUp className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-									) : (
-										<TrendingDown className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-									)}
-								</div>
-							</div>
-							<div className="mt-2">
-								<Progress value={parseFloat(passRate)} className="h-2" />
-							</div>
-						</CardContent>
-					</Card>
-				</div>
-
-				{/* Performance Summary */}
-				<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-					<Card>
-						<CardHeader>
-							<CardTitle className="flex items-center gap-2">
-								<Award className="h-5 w-5" />
-								Phân loại kết quả học tập
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div className="space-y-4">
-								<div className="grid grid-cols-2 gap-4">
-									<div className="text-center p-4 bg-green-50 dark:bg-green-950 rounded-lg">
-										<div className="text-2xl font-bold text-green-600">
-											{statistics.excellentSubjects}
-										</div>
-										<div className="text-sm text-muted-foreground">Xuất sắc</div>
-										<div className="text-xs text-green-600">{excellentRate}%</div>
-									</div>
-									<div className="text-center p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
-										<div className="text-2xl font-bold text-blue-600">
-											{statistics.goodSubjects}
-										</div>
-										<div className="text-sm text-muted-foreground">Giỏi</div>
-									</div>
-									<div className="text-center p-4 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
-										<div className="text-2xl font-bold text-yellow-600">
-											{statistics.averageSubjects}
-										</div>
-										<div className="text-sm text-muted-foreground">Khá</div>
-									</div>
-									<div className="text-center p-4 bg-red-50 dark:bg-red-950 rounded-lg">
-										<div className="text-2xl font-bold text-red-600">
-											{statistics.failedSubjects}
-										</div>
-										<div className="text-sm text-muted-foreground">Rớt</div>
-									</div>
-								</div>
-
-								{/* Performance Chart */}
-								{performanceData.length > 0 && (
-									<div className="h-64">
-										<ResponsiveContainer width="100%" height="100%">
-											<PieChart>
-												<Pie
-													data={performanceData}
-													cx="50%"
-													cy="50%"
-													innerRadius={60}
-													outerRadius={100}
-													paddingAngle={5}
-													dataKey="value"
-												>
-													{performanceData.map((entry, index) => (
-														<Cell key={`cell-${index}`} fill={entry.color} />
-													))}
-												</Pie>
-												<Tooltip
-													formatter={(value, name) => [value, name]}
-													labelFormatter={() => ''}
-												/>
-												<Legend />
-											</PieChart>
-										</ResponsiveContainer>
-									</div>
-								)}
-							</div>
-						</CardContent>
-					</Card>
-				</div>
-
 				{/* Semester Progress */}
 				{semesterProgressData.length > 1 && (
 					<Card>
@@ -221,13 +100,13 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 										</div>
 										<div className="text-center">
 											<div className="text-lg font-semibold">
-												{semester.gpa10?.toFixed(1) || 'N/A'}
+												{semester.gpa10?.toFixed(2) || 'N/A'}
 											</div>
 											<div className="text-xs text-muted-foreground">GPA 10</div>
 										</div>
 										<div className="text-center">
 											<div className="text-lg font-semibold">
-												{semester.gpa4?.toFixed(1) || 'N/A'}
+												{semester.gpa4?.toFixed(2) || 'N/A'}
 											</div>
 											<div className="text-xs text-muted-foreground">GPA 4</div>
 										</div>
@@ -245,7 +124,7 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 											<div className="flex items-center justify-center gap-2">
 												{semester.failedSubjects > 0 ? (
 													<Badge variant="destructive" className="text-xs">
-														{semester.failedSubjects} rớt
+														{semester.failedSubjects} chưa đạt
 													</Badge>
 												) : (
 													<Badge variant="default" className="text-xs">

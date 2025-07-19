@@ -108,7 +108,7 @@ export function SimpleCSVImport({
 			>
 				<input {...getInputProps()} />
 				<Upload className="h-4 w-4" />
-				{isProcessing ? 'Đang xử lý...' : 'Nhập CSV'}
+				{isProcessing ? 'Đang xử lý...' : 'Nhập'}
 			</Button>
 
 			{/* Import Result */}

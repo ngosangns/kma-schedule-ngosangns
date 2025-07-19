@@ -52,7 +52,7 @@ export function MobileDrawer({
 	};
 
 	return (
-		<div className="fixed inset-0 z-50 md:hidden">
+		<div className="fixed inset-0 z-50 table:hidden">
 			{/* Backdrop */}
 			<div
 				className={cn(

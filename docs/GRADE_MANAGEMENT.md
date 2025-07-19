@@ -39,10 +39,14 @@ KTHP = 0.3 × ĐQT + 0.7 × Thi
 
 | KTHP (10-point) | 4-point Scale | Xếp loại   |
 | --------------- | ------------- | ---------- |
-| 8.5 – 10        | 4.0           | Xuất sắc   |
-| 7.0 – 8.4       | 3.0           | Giỏi       |
-| 5.5 – 6.9       | 2.0           | Khá        |
-| 4.0 – 5.4       | 1.0           | Trung bình |
+| 9.0 – 10        | 4.0           | Xuất sắc   |
+| 8.5 – 8.9       | 3.8           | Xuất sắc   |
+| 7.8 – 8.4       | 3.5           | Giỏi       |
+| 7.0 – 7.7       | 3.0           | Giỏi       |
+| 6.3 – 6.9       | 2.5           | Khá        |
+| 5.5 – 6.2       | 2.0           | Khá        |
+| 4.8 – 5.4       | 1.5           | Trung bình |
+| 4.0 – 4.7       | 1.0           | Trung bình |
 | < 4.0           | 0.0           | Yếu/Kém    |
 
 #### GPA Calculation
@@ -114,11 +118,8 @@ Hóa học đại cương,1,3,9.0,8.0,8.5
 
 - **`FileImport`**: Drag-and-drop file upload with validation
 - **`SampleDataGenerator`**: Downloadable sample files
-- **`ManualDataEntry`**: Form-based data entry
 - **`GradeTable`**: Desktop table view with sorting/filtering
-- **`GradeCards`**: Mobile-friendly card layout
 - **`StatisticsDashboard`**: Analytics and charts
-- **`ValidationSummary`**: Error detection and reporting
 - **`DataExport`**: Export functionality
 
 ### Utility Functions

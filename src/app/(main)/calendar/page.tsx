@@ -919,7 +919,6 @@ export default function CalendarPage() {
 											year: 'numeric'
 										})}
 									</p>
-									<p className="text-xs sm:text-sm text-muted-foreground">Xem theo tháng</p>
 								</div>
 
 								<Button
@@ -1309,13 +1308,6 @@ export default function CalendarPage() {
 				<Card>
 					<CardContent className="p-3 sm:p-4">
 						<div className="space-y-4">
-							{/* Month Header */}
-							<div className="text-center">
-								<h3 className="text-lg font-semibold">
-									{currentMonthDate.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })}
-								</h3>
-							</div>
-
 							{/* Calendar Grid */}
 							<div className="grid grid-cols-7 gap-1 sm:gap-2">
 								{/* Day Headers */}

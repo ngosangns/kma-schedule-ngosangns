@@ -235,8 +235,8 @@ export function restructureTKB(data: string[][] | false): ProcessedCalendarData 
 	// create var
 	const header_data = data[0];
 	const content_data = data.slice(1, data.length);
-	let min_time: Date | null = null;
-	let max_time: Date | null = null;
+	let min_time: any = null;
+	let max_time: any = null;
 	const data_subject = content_data.map((td: string[]) => {
 		if (!header_data) return null;
 		const regex_time_spliter =
@@ -244,14 +244,14 @@ export function restructureTKB(data: string[][] | false): ProcessedCalendarData 
 		const regex_time_spliter_multi = new RegExp(regex_time_spliter, 'g');
 		const regex_time_spliter_line = new RegExp(regex_time_spliter);
 
-		let temp_dia_diem = td[header_data.indexOf(categories.dia_diem)];
+		let temp_dia_diem: any = td[header_data.indexOf(categories.dia_diem)];
 		const temp_dia_diem_season_index = temp_dia_diem?.match(/\([0-9,]+?\)/g);
 		// return null (not remove) if not match the pattern (to sync with season time)
 		if (!temp_dia_diem_season_index) temp_dia_diem = null;
-		if (temp_dia_diem) {
+		if (temp_dia_diem && temp_dia_diem_season_index) {
 			// add \n before each season
 			temp_dia_diem_season_index.forEach(
-				(child_item: any) => (temp_dia_diem = temp_dia_diem.replace(child_item, '\n' + child_item))
+				(child_item: any) => (temp_dia_diem = temp_dia_diem!.replace(child_item, '\n' + child_item))
 			);
 			// split season
 			temp_dia_diem = temp_dia_diem.match(/\n\(([0-9,]+?)\)(.+)/g);
@@ -279,7 +279,7 @@ export function restructureTKB(data: string[][] | false): ProcessedCalendarData 
 		// ---------------------------------
 
 		const temp_thoi_gian =
-			td[header_data.indexOf(categories.thoi_gian)].match(regex_time_spliter_multi);
+			td[header_data.indexOf(categories.thoi_gian)]?.match(regex_time_spliter_multi);
 		// throw Error if subject hasn't had class times
 		if (!temp_thoi_gian) return false;
 		temp_thoi_gian.forEach((item: any, index: any) => {
@@ -353,8 +353,8 @@ export function restructureTKB(data: string[][] | false): ProcessedCalendarData 
 			tkb: temp_thoi_gian
 		};
 	});
-	min_time = min_time.getTime();
-	max_time = max_time.getTime();
+	min_time = min_time?.getTime() || 0;
+	max_time = max_time?.getTime() || 0;
 
 	const days_outline: any = [];
 	const one_day_time = 86400000;

@@ -1,10 +1,21 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BookOpen, Upload, Calendar, Trash2 } from 'lucide-react';
+import { BookOpen, Calendar, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger
+} from '@/components/ui/alert-dialog';
 import { FileUpload } from '@/components/course-planning/FileUpload';
 import { SubjectSelection } from '@/components/course-planning/SubjectSelection';
 import { ScheduleCalendar } from '@/components/course-planning/ScheduleCalendar';
@@ -13,8 +24,7 @@ import { loadCoursePlanningData } from '@/lib/ts/storage';
 
 export default function CoursePlanningPage() {
 	const { state, clearStoredData } = useCoursePlanning();
-	const [activeTab, setActiveTab] = useState('upload');
-	const [showClearConfirm, setShowClearConfirm] = useState(false);
+	const [activeTab, setActiveTab] = useState('subjects');
 	const [hasStoredData, setHasStoredData] = useState(false);
 
 	// Check for stored data on mount
@@ -25,7 +35,7 @@ export default function CoursePlanningPage() {
 
 	// Auto-advance tabs based on progress
 	React.useEffect(() => {
-		if (state.calendar && activeTab === 'upload') {
+		if (!state.calendar && activeTab === 'calendar') {
 			setActiveTab('subjects');
 		}
 	}, [state.calendar, activeTab]);
@@ -33,8 +43,7 @@ export default function CoursePlanningPage() {
 	const handleClearData = React.useCallback(() => {
 		clearStoredData();
 		setHasStoredData(false);
-		setShowClearConfirm(false);
-		setActiveTab('upload');
+		setActiveTab('subjects');
 	}, [clearStoredData]);
 
 	const hasSelectedSubjects = Object.values(state.selectedClasses).some((majorData) =>
@@ -51,28 +60,36 @@ export default function CoursePlanningPage() {
 						Lập lịch tín chỉ
 					</h1>
 					{hasStoredData && (
-						<div className="flex gap-2">
-							{!showClearConfirm ? (
+						<AlertDialog>
+							<AlertDialogTrigger asChild>
 								<Button
 									variant="outline"
 									size="sm"
-									onClick={() => setShowClearConfirm(true)}
 									className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950"
 								>
 									<Trash2 className="h-4 w-4 mr-2" />
 									Xóa dữ liệu
 								</Button>
-							) : (
-								<div className="flex gap-1">
-									<Button variant="outline" size="sm" onClick={() => setShowClearConfirm(false)}>
-										Hủy
-									</Button>
-									<Button variant="destructive" size="sm" onClick={handleClearData}>
-										Xác nhận xóa
-									</Button>
-								</div>
-							)}
-						</div>
+							</AlertDialogTrigger>
+							<AlertDialogContent>
+								<AlertDialogHeader>
+									<AlertDialogTitle>Xác nhận xóa dữ liệu</AlertDialogTitle>
+									<AlertDialogDescription>
+										Bạn có chắc chắn muốn xóa tất cả dữ liệu lập lịch? Hành động này không thể hoàn
+										tác.
+									</AlertDialogDescription>
+								</AlertDialogHeader>
+								<AlertDialogFooter>
+									<AlertDialogCancel>Hủy</AlertDialogCancel>
+									<AlertDialogAction
+										onClick={handleClearData}
+										className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+									>
+										Xóa dữ liệu
+									</AlertDialogAction>
+								</AlertDialogFooter>
+							</AlertDialogContent>
+						</AlertDialog>
 					)}
 				</div>
 				<p className="text-muted-foreground">Tạo lịch học tối ưu từ file Excel môn học tín chỉ</p>
@@ -82,16 +99,8 @@ export default function CoursePlanningPage() {
 			<div className="space-y-6">
 				<Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
 					{/* Tab Navigation */}
-					<TabsList className="grid w-full grid-cols-3">
-						<TabsTrigger value="upload" className="flex items-center gap-2">
-							<Upload className="h-4 w-4" />
-							<span className="hidden sm:inline">Tải file</span>
-						</TabsTrigger>
-						<TabsTrigger
-							value="subjects"
-							disabled={!state.calendar}
-							className="flex items-center gap-2"
-						>
+					<TabsList className="grid w-full grid-cols-2">
+						<TabsTrigger value="subjects" className="flex items-center gap-2">
 							<BookOpen className="h-4 w-4" />
 							<span className="hidden sm:inline">Chọn môn & Tạo lịch</span>
 						</TabsTrigger>
@@ -107,72 +116,71 @@ export default function CoursePlanningPage() {
 
 					{/* Tab Content */}
 					<div className="space-y-6">
-						{/* Upload Tab */}
-						<TabsContent value="upload" className="space-y-6">
-							<div className="max-w-4xl mx-auto">
-								<FileUpload onSuccess={() => setActiveTab('subjects')} />
-
-								{/* Instructions */}
-								<Card className="mt-6">
-									<CardHeader>
-										<CardTitle>Hướng dẫn sử dụng</CardTitle>
-										<CardDescription>Các bước để tạo lịch học tối ưu</CardDescription>
-									</CardHeader>
-									<CardContent className="space-y-4">
-										<div className="grid gap-4 md:grid-cols-2">
-											<div className="space-y-2">
-												<h4 className="font-medium flex items-center gap-2">
-													<div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm flex items-center justify-center">
-														1
-													</div>
-													Tải lên file Excel
-												</h4>
-												<p className="text-sm text-muted-foreground ml-8">
-													Tải lên file Excel chứa thông tin các môn học và lớp học từ trường
-												</p>
-											</div>
-											<div className="space-y-2">
-												<h4 className="font-medium flex items-center gap-2">
-													<div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm flex items-center justify-center">
-														2
-													</div>
-													Chọn môn học
-												</h4>
-												<p className="text-sm text-muted-foreground ml-8">
-													Chọn các môn học bạn muốn đăng ký và lớp học tương ứng
-												</p>
-											</div>
-											<div className="space-y-2">
-												<h4 className="font-medium flex items-center gap-2">
-													<div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm flex items-center justify-center">
-														3
-													</div>
-													Tạo lịch tự động
-												</h4>
-												<p className="text-sm text-muted-foreground ml-8">
-													Sử dụng thuật toán tối ưu để tạo lịch học không xung đột
-												</p>
-											</div>
-											<div className="space-y-2">
-												<h4 className="font-medium flex items-center gap-2">
-													<div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm flex items-center justify-center">
-														4
-													</div>
-													Xem và xuất lịch
-												</h4>
-												<p className="text-sm text-muted-foreground ml-8">
-													Xem lịch học đã tạo và có thể in hoặc lưu lại
-												</p>
-											</div>
-										</div>
-									</CardContent>
-								</Card>
-							</div>
-						</TabsContent>
-
 						{/* Subjects Tab */}
 						<TabsContent value="subjects" className="space-y-6">
-							<SubjectSelection onContinue={() => setActiveTab('calendar')} />
+							{!state.calendar ? (
+								<div className="max-w-4xl mx-auto">
+									<FileUpload onSuccess={() => setActiveTab('subjects')} />
+
+									{/* Instructions */}
+									<Card className="mt-6">
+										<CardHeader>
+											<CardTitle>Hướng dẫn sử dụng</CardTitle>
+											<CardDescription>Các bước để tạo lịch học tối ưu</CardDescription>
+										</CardHeader>
+										<CardContent className="space-y-4">
+											<div className="grid gap-4 md:grid-cols-2">
+												<div className="space-y-2">
+													<h4 className="font-medium flex items-center gap-2">
+														<div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm flex items-center justify-center">
+															1
+														</div>
+														Tải lên file Excel
+													</h4>
+													<p className="text-sm text-muted-foreground ml-8">
+														Tải lên file Excel chứa thông tin các môn học và lớp học từ trường
+													</p>
+												</div>
+												<div className="space-y-2">
+													<h4 className="font-medium flex items-center gap-2">
+														<div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm flex items-center justify-center">
+															2
+														</div>
+														Chọn môn học
+													</h4>
+													<p className="text-sm text-muted-foreground ml-8">
+														Chọn các môn học bạn muốn đăng ký và lớp học tương ứng
+													</p>
+												</div>
+												<div className="space-y-2">
+													<h4 className="font-medium flex items-center gap-2">
+														<div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm flex items-center justify-center">
+															3
+														</div>
+														Tạo lịch tự động
+													</h4>
+													<p className="text-sm text-muted-foreground ml-8">
+														Sử dụng thuật toán tối ưu để tạo lịch học không xung đột
+													</p>
+												</div>
+												<div className="space-y-2">
+													<h4 className="font-medium flex items-center gap-2">
+														<div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm flex items-center justify-center">
+															4
+														</div>
+														Xem và xuất lịch
+													</h4>
+													<p className="text-sm text-muted-foreground ml-8">
+														Xem lịch học đã tạo và có thể in hoặc lưu lại
+													</p>
+												</div>
+											</div>
+										</CardContent>
+									</Card>
+								</div>
+							) : (
+								<SubjectSelection onContinue={() => setActiveTab('calendar')} />
+							)}
 						</TabsContent>
 
 						{/* Calendar Tab */}

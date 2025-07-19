@@ -82,6 +82,7 @@ export function parseCSV(csvContent: string): Promise<ImportResult> {
 		Papa.parse(csvContent, {
 			header: true,
 			skipEmptyLines: true,
+			delimiter: '|',
 			transformHeader: (header) => header.trim(),
 			complete: (results) => {
 				const importResult = processRawData(results.data as RawGradeData[]);
@@ -171,8 +172,7 @@ function processRawData(rawData: RawGradeData[]): ImportResult {
 				thi: validatedRow['Thi'] ?? null,
 				dqt: validatedRow['ĐQT'] ?? null,
 				kthp: validatedRow['KTHP'] ?? null,
-				kthpHe4: validatedRow['KTHP hệ 4'] ?? null,
-				diemChu: validatedRow['Điểm chữ'] ?? null
+				kthpHe4: validatedRow['KTHP hệ 4'] ?? null
 			});
 
 			// Only include valid records in the result
@@ -183,7 +183,7 @@ function processRawData(rawData: RawGradeData[]): ImportResult {
 				// Count invalid records but don't include them
 				invalidRecords++;
 			}
-		} catch (_error) {
+		} catch {
 			// Count parsing errors but don't include them
 			invalidRecords++;
 		}
@@ -215,7 +215,7 @@ export function exportToCSV(
 	const headers = ['Tên môn', 'Kỳ', 'Tín', 'TP1', 'TP2', 'Thi'];
 
 	if (options.includeCalculated) {
-		headers.push('ĐQT', 'KTHP', 'KTHP hệ 4', 'Điểm chữ');
+		headers.push('ĐQT', 'KTHP', 'KTHP hệ 4');
 	}
 
 	const rows = grades.map((grade) => {
@@ -232,18 +232,22 @@ export function exportToCSV(
 			row.push(
 				grade.dqt?.toString() || '',
 				grade.kthp?.toString() || '',
-				grade.kthpHe4?.toString() || '',
-				grade.diemChu || ''
+				grade.kthpHe4?.toString() || ''
 			);
 		}
 
 		return row;
 	});
 
-	return Papa.unparse({
-		fields: headers,
-		data: rows
-	});
+	return Papa.unparse(
+		{
+			fields: headers,
+			data: rows
+		},
+		{
+			delimiter: '|'
+		}
+	);
 }
 
 /**
@@ -276,7 +280,6 @@ export function exportToJSON(
 				exportGrade['ĐQT'] = grade.dqt;
 				exportGrade['KTHP'] = grade.kthp;
 				exportGrade['KTHP hệ 4'] = grade.kthpHe4;
-				exportGrade['Điểm chữ'] = grade.diemChu;
 			}
 
 			return exportGrade;
@@ -292,8 +295,7 @@ export function exportToJSON(
 				overallGPA4: statistics.overallGPA4,
 				totalSubjects: statistics.totalSubjects,
 				passedSubjects: statistics.passedSubjects,
-				failedSubjects: statistics.failedSubjects,
-				gradeDistribution: statistics.gradeDistribution
+				failedSubjects: statistics.failedSubjects
 			};
 		}
 

@@ -47,16 +47,18 @@ export function convertToGrade4(kthp: number | null): number | null {
 }
 
 /**
- * Convert KTHP to letter grade
+ * Check if a subject is failed based on new criteria:
+ * A subject fails if it doesn't have enough scores OR if any individual score is below 4
  */
-export function convertToLetterGrade(kthp: number | null): string | null {
-	if (kthp === null || kthp < 0 || kthp > 10) return null;
+export function isSubjectFailed(grade: GradeRecord): boolean {
+	// Check if missing required scores (incomplete data)
+	const hasInsufficientData = grade.tp1 === null || grade.tp2 === null || grade.thi === null;
 
-	const rule = GRADE_CONVERSION_TABLE.find(
-		(rule) => kthp >= rule.minScore && kthp <= rule.maxScore
-	);
+	// Check if any existing score is below 4
+	const scores = [grade.tp1, grade.tp2, grade.thi, grade.dqt, grade.kthp];
+	const hasFailingScore = scores.some((score) => score !== null && score < 4);
 
-	return rule ? rule.gradeLetter : null;
+	return hasInsufficientData || hasFailingScore;
 }
 
 /**
@@ -72,7 +74,7 @@ export function shouldExcludeFromGPA(subjectName: string): boolean {
  * Process a single grade record with calculations
  */
 export function processGradeRecord(record: Partial<GradeRecord>): GradeRecord {
-	const id = record.id || `grade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+	const id = record.id || `grade_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
 	// Calculate DQT if not provided or incorrect
 	const calculatedDQT = calculateDQT(record.tp1 || null, record.tp2 || null);
@@ -82,9 +84,8 @@ export function processGradeRecord(record: Partial<GradeRecord>): GradeRecord {
 	const calculatedKTHP = calculateKTHP(dqt, record.thi || null);
 	const kthp = record.kthp !== null && record.kthp !== undefined ? record.kthp : calculatedKTHP;
 
-	// Convert to 4-point scale and letter grade
+	// Convert to 4-point scale
 	const kthpHe4 = convertToGrade4(kthp);
-	const diemChu = convertToLetterGrade(kthp);
 
 	// Check if should be excluded from GPA
 	const excludeFromGPA = record.excludeFromGPA || shouldExcludeFromGPA(record.tenMon || '');
@@ -112,7 +113,6 @@ export function processGradeRecord(record: Partial<GradeRecord>): GradeRecord {
 		dqt,
 		kthp,
 		kthpHe4,
-		diemChu,
 		excludeFromGPA,
 		isValid: errors.length === 0,
 		errors
@@ -121,10 +121,12 @@ export function processGradeRecord(record: Partial<GradeRecord>): GradeRecord {
 
 /**
  * Calculate GPA for a set of grades (10-point scale)
+ * Only includes passed subjects in the calculation
  */
 export function calculateGPA10(grades: GradeRecord[]): number | null {
 	const validGrades = grades.filter(
-		(grade) => grade.kthp !== null && !grade.excludeFromGPA && grade.tin > 0
+		(grade) =>
+			grade.kthp !== null && !grade.excludeFromGPA && grade.tin > 0 && !isSubjectFailed(grade)
 	);
 
 	if (validGrades.length === 0) return null;
@@ -132,15 +134,17 @@ export function calculateGPA10(grades: GradeRecord[]): number | null {
 	const totalWeightedScore = validGrades.reduce((sum, grade) => sum + grade.kthp! * grade.tin, 0);
 	const totalCredits = validGrades.reduce((sum, grade) => sum + grade.tin, 0);
 
-	return totalCredits > 0 ? Number((totalWeightedScore / totalCredits).toFixed(1)) : null;
+	return totalCredits > 0 ? Number((totalWeightedScore / totalCredits).toFixed(2)) : null;
 }
 
 /**
  * Calculate GPA for a set of grades (4-point scale)
+ * Only includes passed subjects in the calculation
  */
 export function calculateGPA4(grades: GradeRecord[]): number | null {
 	const validGrades = grades.filter(
-		(grade) => grade.kthpHe4 !== null && !grade.excludeFromGPA && grade.tin > 0
+		(grade) =>
+			grade.kthpHe4 !== null && !grade.excludeFromGPA && grade.tin > 0 && !isSubjectFailed(grade)
 	);
 
 	if (validGrades.length === 0) return null;
@@ -151,7 +155,7 @@ export function calculateGPA4(grades: GradeRecord[]): number | null {
 	);
 	const totalCredits = validGrades.reduce((sum, grade) => sum + grade.tin, 0);
 
-	return totalCredits > 0 ? Number((totalWeightedScore / totalCredits).toFixed(1)) : null;
+	return totalCredits > 0 ? Number((totalWeightedScore / totalCredits).toFixed(2)) : null;
 }
 
 /**
@@ -162,12 +166,10 @@ export function calculateSemesterStats(grades: GradeRecord[], semester: number):
 
 	const totalCredits = semesterGrades.reduce((sum, grade) => sum + grade.tin, 0);
 	const passedCredits = semesterGrades
-		.filter((grade) => grade.kthp !== null && grade.kthp >= 5)
+		.filter((grade) => !isSubjectFailed(grade))
 		.reduce((sum, grade) => sum + grade.tin, 0);
 
-	const failedSubjects = semesterGrades.filter(
-		(grade) => grade.kthp !== null && grade.kthp < 5
-	).length;
+	const failedSubjects = semesterGrades.filter((grade) => isSubjectFailed(grade)).length;
 
 	const excellentSubjects = semesterGrades.filter(
 		(grade) => grade.kthp !== null && grade.kthp >= 8.5
@@ -194,13 +196,13 @@ export function calculateOverallStats(grades: GradeRecord[]): GradeStatistics {
 
 	const totalCredits = grades.reduce((sum, grade) => sum + grade.tin, 0);
 	const totalPassedCredits = grades
-		.filter((grade) => grade.kthp !== null && grade.kthp >= 5)
+		.filter((grade) => !isSubjectFailed(grade))
 		.reduce((sum, grade) => sum + grade.tin, 0);
 	const totalFailedCredits = totalCredits - totalPassedCredits;
 
 	const totalSubjects = grades.length;
-	const passedSubjects = grades.filter((grade) => grade.kthp !== null && grade.kthp >= 5).length;
-	const failedSubjects = grades.filter((grade) => grade.kthp !== null && grade.kthp < 5).length;
+	const passedSubjects = grades.filter((grade) => !isSubjectFailed(grade)).length;
+	const failedSubjects = grades.filter((grade) => isSubjectFailed(grade)).length;
 	const excellentSubjects = grades.filter(
 		(grade) => grade.kthp !== null && grade.kthp >= 8.5
 	).length;
@@ -213,14 +215,6 @@ export function calculateOverallStats(grades: GradeRecord[]): GradeStatistics {
 	const weakSubjects = grades.filter(
 		(grade) => grade.kthp !== null && grade.kthp >= 4.0 && grade.kthp < 5.5
 	).length;
-
-	// Grade distribution
-	const gradeDistribution: { [key: string]: number } = {};
-	grades.forEach((grade) => {
-		if (grade.diemChu) {
-			gradeDistribution[grade.diemChu] = (gradeDistribution[grade.diemChu] || 0) + 1;
-		}
-	});
 
 	return {
 		totalCredits,
@@ -235,7 +229,6 @@ export function calculateOverallStats(grades: GradeRecord[]): GradeStatistics {
 		goodSubjects,
 		averageSubjects,
 		weakSubjects,
-		gradeDistribution,
 		semesterStats
 	};
 }

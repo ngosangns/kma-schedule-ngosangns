@@ -7,17 +7,17 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { downloadFile } from '@/lib/ts/grades/import-export';
 
-const SAMPLE_CSV_DATA = `Tên môn,Kỳ,Tín,TP1,TP2,Thi
-Toán cao cấp A1,1,4,8.5,9.0,7.5
-Vật lý đại cương,1,3,7.0,8.5,6.5
-Hóa học đại cương,1,3,9.0,8.0,8.5
-Tiếng Anh 1,1,3,8.0,9.5,7.0
-Giáo dục thể chất 1,1,1,8.5,9.0,8.0
-Lập trình C,2,4,7.5,8.0,8.5
-Cấu trúc dữ liệu,2,3,8.0,7.5,9.0
-Cơ sở dữ liệu,2,3,6.5,7.0,7.5
-Tiếng Anh 2,2,3,7.0,8.0,6.0
-Giáo dục quốc phòng,2,2,9.0,9.5,9.0`;
+const SAMPLE_CSV_DATA = `Tên môn|Kỳ|Tín|TP1|TP2|Thi
+Toán cao cấp A1|1|4|8.5|9.0|7.5
+Vật lý đại cương|1|3|7.0|8.5|6.5
+Hóa học đại cương|1|3|9.0|8.0|8.5
+Tiếng Anh 1|1|3|8.0|9.5|7.0
+Giáo dục thể chất 1|1|1|8.5|9.0|8.0
+Lập trình C|2|4|7.5|8.0|8.5
+Cấu trúc dữ liệu|2|3|8.0|7.5|9.0
+Cơ sở dữ liệu|2|3|6.5|7.0|7.5
+Tiếng Anh 2|2|3|7.0|8.0|6.0
+Giáo dục quốc phòng|2|2|9.0|9.5|9.0`;
 
 const SAMPLE_JSON_DATA = [
 	{

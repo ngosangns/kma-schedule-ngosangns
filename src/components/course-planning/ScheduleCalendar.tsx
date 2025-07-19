@@ -1,34 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Calendar, Clock, AlertTriangle, User, BookOpen } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import {
+	Calendar,
+	Clock,
+	AlertTriangle,
+	User,
+	BookOpen,
+	ChevronLeft,
+	ChevronRight
+} from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useCoursePlanning } from '@/contexts/CoursePlanningContext';
 import { numToDate, getTotalDaysBetweenDates } from '@/lib/ts/course-planning/schedule-generator';
 import { CalendarTableItem } from '@/types/course-planning';
 
 const DAYS_OF_WEEK = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-
-const SHIFTS = [
-	{
-		name: 'Sáng',
-		sessions: [1, 2, 3, 4, 5, 6],
-		color: 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800'
-	},
-	{
-		name: 'Chiều',
-		sessions: [7, 8, 9, 10, 11, 12],
-		color: 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'
-	},
-	{
-		name: 'Tối',
-		sessions: [13, 14, 15, 16],
-		color: 'bg-purple-50 border-purple-200 dark:bg-purple-900/20 dark:border-purple-800'
-	}
-];
 
 // Interface for detailed session info
 interface DetailedSessionInfo extends CalendarTableItem {
@@ -43,6 +34,120 @@ export function ScheduleCalendar() {
 	const { state, getCalendarTableData } = useCoursePlanning();
 	const [selectedSession, setSelectedSession] = useState<DetailedSessionInfo | null>(null);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
+	const [selectedDayData, setSelectedDayData] = useState<any>(null);
+	const [showDayDetails, setShowDayDetails] = useState(false);
+	const [isMobile, setIsMobile] = useState(false);
+
+	// Check if mobile on mount and resize
+	useEffect(() => {
+		const checkMobile = () => {
+			setIsMobile(window.innerWidth < 667);
+		};
+
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+
+		return () => window.removeEventListener('resize', checkMobile);
+	}, []);
+
+	// Get calendar data
+	const calendarData = state.calendar ? getCalendarTableData() : null;
+
+	// Auto-adjust month when calendar data changes
+	useEffect(() => {
+		if (state.calendar && calendarData) {
+			const minDate = numToDate(state.calendar.minDate);
+			// Always navigate to the first month of the calendar when data is available
+			setCurrentMonthDate(new Date(minDate.getFullYear(), minDate.getMonth(), 1));
+		}
+	}, [state.calendar?.minDate]); // eslint-disable-line react-hooks/exhaustive-deps
+	const hasSelectedSubjects = Object.values(state.selectedClasses).some((majorData) =>
+		Object.values(majorData).some((subject) => subject.show)
+	);
+
+	// Generate month calendar data - moved here to avoid conditional hook call
+	const minDate = state.calendar ? numToDate(state.calendar.minDate) : new Date();
+	const maxDate = state.calendar ? numToDate(state.calendar.maxDate) : new Date();
+
+	const getMonthCalendarData = useMemo(() => {
+		if (!calendarData || !state.calendar) return [];
+
+		const monthData: any[] = [];
+		const today = new Date();
+		const currentMonth = currentMonthDate.getMonth();
+		const currentYear = currentMonthDate.getFullYear();
+
+		// Get first day of month
+		const firstDay = new Date(currentYear, currentMonth, 1);
+
+		// Get first day of week for the first day of month (0 = Sunday, 1 = Monday, etc.)
+		const firstDayOfWeek = firstDay.getDay();
+		const startDate = new Date(firstDay);
+		startDate.setDate(startDate.getDate() - firstDayOfWeek);
+
+		// Generate 6 weeks of calendar data
+		for (let week = 0; week < 6; week++) {
+			const weekData: any[] = [];
+			for (let day = 0; day < 7; day++) {
+				const currentDate = new Date(startDate);
+				currentDate.setDate(startDate.getDate() + week * 7 + day);
+
+				const isCurrentMonth = currentDate.getMonth() === currentMonth;
+				const isToday = currentDate.toDateString() === today.toDateString();
+
+				// Get sessions for this day
+				const dayIndex = getTotalDaysBetweenDates(minDate, currentDate);
+				const dayData =
+					dayIndex >= 0 && dayIndex < calendarData.data.length
+						? calendarData.data[dayIndex] || []
+						: [];
+
+				// Flatten the 2D array of sessions for this day
+				const sessions: CalendarTableItem[] = [];
+				dayData.forEach((sessionRow) => {
+					if (Array.isArray(sessionRow)) {
+						sessions.push(...sessionRow);
+					}
+				});
+
+				// Sort sessions by start session time
+				sessions.sort((a, b) => a.startSession - b.startSession);
+
+				// Group sessions by shift
+				const sessionsByShift = {
+					morning: sessions.filter(
+						(session) => session && session.startSession >= 1 && session.startSession <= 6
+					),
+					afternoon: sessions.filter(
+						(session) => session && session.startSession >= 7 && session.startSession <= 12
+					),
+					evening: sessions.filter(
+						(session) => session && session.startSession >= 13 && session.startSession <= 16
+					)
+				};
+
+				weekData.push({
+					date: currentDate,
+					isCurrentMonth,
+					isToday,
+					sessions,
+					sessionsByShift,
+					hasClasses: sessions.length > 0
+				});
+			}
+			monthData.push(weekData);
+		}
+
+		return monthData;
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		calendarData,
+		currentMonthDate.getMonth(),
+		currentMonthDate.getFullYear(),
+		state.calendar?.minDate,
+		state.calendar?.maxDate
+	]);
 
 	if (!state.calendar) {
 		return (
@@ -56,11 +161,6 @@ export function ScheduleCalendar() {
 			</Card>
 		);
 	}
-
-	const calendarData = getCalendarTableData();
-	const hasSelectedSubjects = Object.values(state.selectedClasses).some((majorData) =>
-		Object.values(majorData).some((subject) => subject.show)
-	);
 
 	if (!hasSelectedSubjects) {
 		return (
@@ -99,54 +199,43 @@ export function ScheduleCalendar() {
 		);
 	}
 
-	const minDate = numToDate(state.calendar.minDate);
-	const maxDate = numToDate(state.calendar.maxDate);
-
-	// Create weekly view
-	const weeks: Date[][] = [];
-	const currentDate = new Date(minDate);
-
-	// Find the Monday of the first week
-	while (currentDate.getDay() !== 1) {
-		currentDate.setDate(currentDate.getDate() - 1);
-	}
-
-	while (currentDate <= maxDate) {
-		const week: Date[] = [];
-		for (let i = 0; i < 7; i++) {
-			week.push(new Date(currentDate));
-			currentDate.setDate(currentDate.getDate() + 1);
-		}
-		weeks.push(week);
-	}
-
-	const getSessionsForDay = (date: Date) => {
-		const dayIndex = getTotalDaysBetweenDates(minDate, date);
-		if (dayIndex < 0 || dayIndex >= calendarData.data.length) return [];
-
-		return calendarData.data[dayIndex] || [];
+	// Month navigation functions
+	const canGoToPreviousMonth = () => {
+		const newDate = new Date(currentMonthDate);
+		newDate.setMonth(newDate.getMonth() - 1);
+		const firstStudyMonth = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+		return newDate.getTime() >= firstStudyMonth.getTime();
 	};
 
-	const getSessionsByShift = (sessions: CalendarTableItem[][], shiftSessions: number[]) => {
-		const shiftItems: CalendarTableItem[] = [];
+	const canGoToNextMonth = () => {
+		const newDate = new Date(currentMonthDate);
+		newDate.setMonth(newDate.getMonth() + 1);
+		const lastStudyMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+		return newDate.getTime() <= lastStudyMonth.getTime();
+	};
 
-		sessions.forEach((sessionRow) => {
-			sessionRow.forEach((session) => {
-				// Check if session overlaps with this shift
-				const sessionStart = session.startSession;
-				const sessionEnd = session.endSession;
+	const goToPreviousMonth = () => {
+		if (canGoToPreviousMonth()) {
+			const newDate = new Date(currentMonthDate);
+			newDate.setMonth(newDate.getMonth() - 1);
+			setCurrentMonthDate(newDate);
+		}
+	};
 
-				const hasOverlap = shiftSessions.some(
-					(shiftSession) => sessionStart <= shiftSession && sessionEnd >= shiftSession
-				);
+	const goToNextMonth = () => {
+		if (canGoToNextMonth()) {
+			const newDate = new Date(currentMonthDate);
+			newDate.setMonth(newDate.getMonth() + 1);
+			setCurrentMonthDate(newDate);
+		}
+	};
 
-				if (hasOverlap) {
-					shiftItems.push(session);
-				}
-			});
-		});
-
-		return shiftItems;
+	// Handle day cell click for mobile
+	const handleDayClick = (day: any) => {
+		if (isMobile && day.hasClasses) {
+			setSelectedDayData(day);
+			setShowDayDetails(true);
+		}
 	};
 
 	// Get detailed session information
@@ -198,24 +287,21 @@ export function ScheduleCalendar() {
 		setIsDialogOpen(true);
 	};
 
-	const getSessionColor = (subjectName: string) => {
-		// Generate consistent color based on subject name
-		const colors = [
-			'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-700',
-			'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-200 dark:border-green-700',
-			'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-200 dark:border-purple-700',
-			'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-200 dark:border-orange-700',
-			'bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/30 dark:text-pink-200 dark:border-pink-700',
-			'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-200 dark:border-indigo-700',
-			'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-200 dark:border-yellow-700',
-			'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-200 dark:border-red-700'
-		];
-
-		let hash = 0;
-		for (let i = 0; i < subjectName.length; i++) {
-			hash = subjectName.charCodeAt(i) + ((hash << 5) - hash);
+	const getSessionColorByShift = (startSession: number) => {
+		// Color based on shift (morning, afternoon, evening)
+		if (startSession >= 1 && startSession <= 6) {
+			// Morning (Sáng) - Yellow/Orange theme
+			return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-200 dark:border-yellow-700';
+		} else if (startSession >= 7 && startSession <= 12) {
+			// Afternoon (Chiều) - Blue theme
+			return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-700';
+		} else if (startSession >= 13 && startSession <= 16) {
+			// Evening (Tối) - Purple theme
+			return 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-200 dark:border-purple-700';
+		} else {
+			// Default fallback
+			return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-200 dark:border-gray-700';
 		}
-		return colors[Math.abs(hash) % colors.length];
 	};
 
 	return (
@@ -239,115 +325,157 @@ export function ScheduleCalendar() {
 					</Alert>
 				)}
 
-				{/* Calendar Grid */}
-				<div className="space-y-6">
-					{weeks.map((week, weekIndex) => (
-						<div key={weekIndex} className="border rounded-lg overflow-hidden">
-							{/* Week Header */}
-							<div className="bg-muted/50 p-3 border-b">
-								<h3 className="font-medium">
-									Tuần {weekIndex + 1}: {week[0]?.toLocaleDateString('vi-VN')} -{' '}
-									{week[6]?.toLocaleDateString('vi-VN')}
-								</h3>
-							</div>
+				{/* Month Navigation */}
+				<div className="flex items-center justify-between">
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={goToPreviousMonth}
+						disabled={!canGoToPreviousMonth()}
+						className="flex-shrink-0"
+					>
+						<ChevronLeft className="w-4 h-4 sm:mr-2" />
+						<span className="hidden sm:inline">Tháng trước</span>
+					</Button>
 
-							{/* Days Grid */}
-							<div className="grid grid-cols-7 gap-0 min-h-[600px]">
-								{week.map((date, dayIndex) => {
-									const sessions = getSessionsForDay(date);
-									const isToday = date.toDateString() === new Date().toDateString();
-									const isWeekend = dayIndex === 0 || dayIndex === 6;
+					<div className="text-center flex-1 px-2">
+						<p className="font-medium text-sm sm:text-base">
+							{currentMonthDate.toLocaleDateString('vi-VN', {
+								month: 'long',
+								year: 'numeric'
+							})}
+						</p>
+					</div>
 
-									return (
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={goToNextMonth}
+						disabled={!canGoToNextMonth()}
+						className="flex-shrink-0"
+					>
+						<span className="hidden sm:inline">Tháng sau</span>
+						<ChevronRight className="w-4 h-4 sm:ml-2" />
+					</Button>
+				</div>
+
+				{/* Month Calendar Grid */}
+				<div className="space-y-4">
+					{/* Calendar Grid */}
+					<div className="space-y-1 sm:space-y-2">
+						{/* Day Headers */}
+						<div className="grid grid-cols-7 gap-1 sm:gap-2">
+							{DAYS_OF_WEEK.map((day) => (
+								<div
+									key={day}
+									className="p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold text-muted-foreground bg-muted/50 rounded-md"
+								>
+									{day}
+								</div>
+							))}
+						</div>
+
+						{/* Calendar Weeks */}
+						{getMonthCalendarData.map((week, weekIndex) => (
+							<div key={weekIndex} className="grid grid-cols-7 gap-1 sm:gap-2">
+								{week.map((day: any, dayIndex: number) => (
+									<div
+										key={`${weekIndex}-${dayIndex}`}
+										onClick={() => handleDayClick(day)}
+										className={`p-1 sm:p-2 border rounded-lg transition-all hover:shadow-md cursor-pointer touch-manipulation ${
+											day.isCurrentMonth
+												? 'bg-background border-border'
+												: 'bg-muted/20 border-muted text-muted-foreground'
+										} ${day.isToday ? 'ring-2 ring-primary bg-primary/5' : ''} ${
+											day.hasClasses ? 'hover:bg-muted/10' : ''
+										}`}
+									>
 										<div
-											key={dayIndex}
-											className={`border-r last:border-r-0 flex flex-col ${
-												isToday ? 'bg-primary/5' : isWeekend ? 'bg-muted/20' : ''
-											}`}
+											className={`text-xs sm:text-sm font-medium mb-1 sm:mb-2 ${day.isToday ? 'text-primary' : ''}`}
 										>
-											{/* Day Header */}
-											<div
-												className={`p-2 border-b text-center ${
-													isToday ? 'bg-primary text-primary-foreground' : 'bg-muted/30'
-												}`}
-											>
-												<div className="text-xs font-medium">{DAYS_OF_WEEK[dayIndex]}</div>
-												<div className="text-sm">{date.getDate()}</div>
-											</div>
+											{day.date.getDate()}
+										</div>
 
-											{/* Sessions by Shifts */}
-											<div className="flex-1 flex flex-col">
-												{SHIFTS.map((shift, shiftIndex) => {
-													const shiftSessions = getSessionsByShift(sessions, shift.sessions);
-
+										{/* Sessions Display */}
+										<div className="space-y-1">
+											{/* Desktop: Show all session details */}
+											<div className="hidden sm:block space-y-1">
+												{day.sessions.map((session: CalendarTableItem, index: number) => {
+													if (!session || !session.subjectName) return null;
 													return (
 														<div
-															key={shiftIndex}
-															className={`border-b last:border-b-0 flex-1 flex flex-col ${shift.color}`}
+															key={index}
+															onClick={(e) => {
+																e.stopPropagation();
+																handleSessionClick(session, day.date, day.date.getDay(), 'Tự động');
+															}}
+															className={`text-xs p-1.5 rounded border ${getSessionColorByShift(session.startSession)} cursor-pointer hover:shadow-sm transition-shadow mb-1`}
 														>
-															<div className="px-2 py-1 text-xs font-medium text-center border-b bg-background/50 flex-shrink-0">
-																{shift.name}
+															<div className="font-medium truncate" title={session.subjectName}>
+																{session.subjectName}
 															</div>
-															<div className="p-2 flex-1 overflow-hidden">
-																{shiftSessions.length > 0 ? (
-																	<div className="space-y-1 h-full overflow-y-auto">
-																		{shiftSessions.map((session, sessionIndex) => (
-																			<div
-																				key={sessionIndex}
-																				onClick={() =>
-																					handleSessionClick(session, date, dayIndex, shift.name)
-																				}
-																				className={`text-xs p-1.5 rounded border ${getSessionColor(session.subjectName)} flex-shrink-0 cursor-pointer hover:shadow-md transition-shadow`}
-																			>
-																				<div
-																					className="font-medium truncate text-xs leading-tight"
-																					title={session.subjectName}
-																				>
-																					{session.subjectName}
-																				</div>
-																				<div className="text-xs opacity-75 truncate">
-																					{session.classCode}
-																				</div>
-																				<div className="flex items-center gap-1 text-xs opacity-75">
-																					<Clock className="h-2 w-2 flex-shrink-0" />
-																					<span className="truncate">
-																						Tiết {session.startSession}
-																						{session.startSession !== session.endSession &&
-																							`-${session.endSession}`}
-																					</span>
-																				</div>
-																			</div>
-																		))}
-																	</div>
-																) : (
-																	<div className="text-xs text-muted-foreground text-center py-4 italic h-full flex items-center justify-center">
-																		Không có tiết học
-																	</div>
-																)}
+															<div className="text-xs opacity-75">
+																Tiết {session.startSession}
+																{session.startSession !== session.endSession &&
+																	`-${session.endSession}`}
 															</div>
 														</div>
 													);
 												})}
 											</div>
+
+											{/* Mobile: Show dots for all sessions */}
+											<div className="block sm:hidden">
+												{day.hasClasses && (
+													<div className="flex flex-wrap gap-1 justify-center">
+														{day.sessions
+															.filter(
+																(session: CalendarTableItem) => session && session.subjectName
+															)
+															.map((session: CalendarTableItem, index: number) => (
+																<div
+																	key={index}
+																	className={`w-2 h-2 rounded-full ${(() => {
+																		const color = getSessionColorByShift(session.startSession);
+																		return color && color.includes('bg-')
+																			? color.split(' ')[0]
+																			: 'bg-primary';
+																	})()} opacity-75`}
+																></div>
+															))}
+													</div>
+												)}
+											</div>
 										</div>
-									);
-								})}
+									</div>
+								))}
 							</div>
-						</div>
-					))}
+						))}
+					</div>
 				</div>
 
 				{/* Legend */}
-				<div className="text-xs text-muted-foreground">
+				<div className="text-xs text-muted-foreground space-y-2">
 					<p>
-						<strong>Chú thích:</strong>
+						💡 <strong>Gợi ý:</strong> Nhấp vào tiết học để xem chi tiết. Trên mobile, nhấp vào ngày
+						để xem danh sách tiết học.
 					</p>
-					<ul className="list-disc list-inside space-y-1 ml-2">
-						<li>Mỗi màu đại diện cho một môn học khác nhau</li>
-						<li>Tiết học được hiển thị theo thời gian thực tế</li>
-						<li>Các tiết trùng nhau sẽ được cảnh báo ở trên</li>
-						<li>Click vào thẻ môn học để xem thông tin chi tiết</li>
-					</ul>
+
+					{/* Color Legend */}
+					<div className="flex flex-wrap gap-4 text-xs">
+						<div className="flex items-center gap-1">
+							<div className="w-3 h-3 rounded bg-yellow-200 border border-yellow-300"></div>
+							<span>Sáng (Tiết 1-6)</span>
+						</div>
+						<div className="flex items-center gap-1">
+							<div className="w-3 h-3 rounded bg-blue-200 border border-blue-300"></div>
+							<span>Chiều (Tiết 7-12)</span>
+						</div>
+						<div className="flex items-center gap-1">
+							<div className="w-3 h-3 rounded bg-purple-200 border border-purple-300"></div>
+							<span>Tối (Tiết 13-16)</span>
+						</div>
+					</div>
 				</div>
 			</CardContent>
 
@@ -422,6 +550,54 @@ export function ScheduleCalendar() {
 								</div>
 								<p className="text-muted-foreground ml-6">{selectedSession.teacher}</p>
 							</div>
+						</div>
+					)}
+				</DialogContent>
+			</Dialog>
+
+			{/* Mobile Day Details Dialog */}
+			<Dialog open={showDayDetails} onOpenChange={setShowDayDetails}>
+				<DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2">
+							<Calendar className="h-5 w-5" />
+							Lịch học ngày {selectedDayData?.date.toLocaleDateString('vi-VN')}
+						</DialogTitle>
+					</DialogHeader>
+					{selectedDayData && (
+						<div className="space-y-2">
+							{selectedDayData.sessions
+								.filter((session: CalendarTableItem) => session && session.subjectName)
+								.sort(
+									(a: CalendarTableItem, b: CalendarTableItem) => a.startSession - b.startSession
+								)
+								.map((session: CalendarTableItem, index: number) => (
+									<div
+										key={index}
+										onClick={() => {
+											const detailedInfo = getDetailedSessionInfo(
+												session,
+												selectedDayData.date,
+												selectedDayData.date.getDay(),
+												'Tự động'
+											);
+											setSelectedSession(detailedInfo);
+											setShowDayDetails(false);
+											setIsDialogOpen(true);
+										}}
+										className={`p-3 rounded-lg border ${getSessionColorByShift(session.startSession)} cursor-pointer hover:shadow-md transition-shadow`}
+									>
+										<div className="font-medium text-sm mb-1">{session.subjectName}</div>
+										<div className="text-xs text-muted-foreground mb-1">{session.classCode}</div>
+										<div className="flex items-center gap-1 text-xs text-muted-foreground">
+											<Clock className="h-3 w-3" />
+											<span>
+												Tiết {session.startSession}
+												{session.startSession !== session.endSession && `-${session.endSession}`}
+											</span>
+										</div>
+									</div>
+								))}
 						</div>
 					)}
 				</DialogContent>
