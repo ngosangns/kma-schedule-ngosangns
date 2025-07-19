@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useToast } from '@/hooks/use-toast';
 import {
 	AlertDialog,
@@ -34,7 +35,7 @@ export default function GradesPage() {
 	const [activeTab, setActiveTab] = useState('table');
 	const [isMobile, setIsMobile] = useState(false);
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-	const [isLoading, setIsLoading] = useState(false);
+	const [isLoading, setIsLoading] = useState(true);
 
 	// Table state management - persisted across tab switches
 	const [sortConfig, setSortConfig] = useState<GradeSortConfig | null>({
@@ -58,7 +59,6 @@ export default function GradesPage() {
 
 	// Load data from localStorage on mount
 	useEffect(() => {
-		setIsLoading(true);
 		const savedGrades = localStorage.getItem('grades-data');
 		if (savedGrades) {
 			try {
@@ -240,81 +240,87 @@ export default function GradesPage() {
 			</div>
 
 			{/* Main Content */}
-			<Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-				<TabsList className="grid w-full grid-cols-2">
-					<TabsTrigger value="table" className="flex items-center gap-2">
-						{isMobile ? <Smartphone className="h-4 w-4" /> : <Table className="h-4 w-4" />}
-						<span className="hidden sm:inline">Bảng điểm</span>
-						<span className="sm:hidden">Bảng</span>
-						{grades.length > 0 && (
-							<Badge variant="secondary" className="ml-1 text-xs">
-								{grades.length}
-							</Badge>
+			{isLoading ? (
+				<div className="flex items-center justify-center min-h-[400px]">
+					<LoadingSpinner size="lg" text="Đang tải dữ liệu điểm..." />
+				</div>
+			) : (
+				<Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+					<TabsList className="grid w-full grid-cols-2">
+						<TabsTrigger value="table" className="flex items-center gap-2">
+							{isMobile ? <Smartphone className="h-4 w-4" /> : <Table className="h-4 w-4" />}
+							<span className="hidden sm:inline">Bảng điểm</span>
+							<span className="sm:hidden">Bảng</span>
+							{grades.length > 0 && (
+								<Badge variant="secondary" className="ml-1 text-xs">
+									{grades.length}
+								</Badge>
+							)}
+						</TabsTrigger>
+						<TabsTrigger value="statistics" className="flex items-center gap-2">
+							<BarChart3 className="h-4 w-4" />
+							<span className="hidden sm:inline">Thống kê</span>
+							<span className="sm:hidden">TK</span>
+						</TabsTrigger>
+					</TabsList>
+
+					<TabsContent value="table" className="space-y-6">
+						{/* Table Section */}
+						{grades.length === 0 ? (
+							<Card>
+								<CardContent className="p-8 text-center">
+									<Table className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+									<h3 className="text-lg font-medium mb-2">Chưa có dữ liệu điểm</h3>
+									<p className="text-muted-foreground mb-6">
+										Bắt đầu bằng cách nhập dữ liệu từ file CSV hoặc thêm môn học thủ công.
+									</p>
+									<div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+										<SimpleCSVImport onImportComplete={handleImportComplete} />
+										<Button
+											onClick={() => setIsAddModalOpen(true)}
+											className="flex items-center gap-2"
+										>
+											<Plus className="h-4 w-4" />
+											Thêm môn học
+										</Button>
+									</div>
+								</CardContent>
+							</Card>
+						) : (
+							<GradeTable
+								grades={grades}
+								onGradeAdd={handleGradeAdd}
+								onGradeEdit={handleGradeEdit}
+								onGradeDelete={handleGradeDelete}
+								onImportComplete={handleImportComplete}
+								editable={true}
+								loading={isLoading}
+								sortConfig={sortConfig}
+								setSortConfig={setSortConfig}
+								filterConfig={filterConfig}
+								setFilterConfig={setFilterConfig}
+							/>
 						)}
-					</TabsTrigger>
-					<TabsTrigger value="statistics" className="flex items-center gap-2">
-						<BarChart3 className="h-4 w-4" />
-						<span className="hidden sm:inline">Thống kê</span>
-						<span className="sm:hidden">TK</span>
-					</TabsTrigger>
-				</TabsList>
+					</TabsContent>
 
-				<TabsContent value="table" className="space-y-6">
-					{/* Table Section */}
-					{grades.length === 0 ? (
-						<Card>
-							<CardContent className="p-8 text-center">
-								<Table className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-								<h3 className="text-lg font-medium mb-2">Chưa có dữ liệu điểm</h3>
-								<p className="text-muted-foreground mb-6">
-									Bắt đầu bằng cách nhập dữ liệu từ file CSV hoặc thêm môn học thủ công.
-								</p>
-								<div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-									<SimpleCSVImport onImportComplete={handleImportComplete} />
-									<Button
-										onClick={() => setIsAddModalOpen(true)}
-										className="flex items-center gap-2"
-									>
-										<Plus className="h-4 w-4" />
-										Thêm môn học
-									</Button>
-								</div>
-							</CardContent>
-						</Card>
-					) : (
-						<GradeTable
-							grades={grades}
-							onGradeAdd={handleGradeAdd}
-							onGradeEdit={handleGradeEdit}
-							onGradeDelete={handleGradeDelete}
-							onImportComplete={handleImportComplete}
-							editable={true}
-							loading={isLoading}
-							sortConfig={sortConfig}
-							setSortConfig={setSortConfig}
-							filterConfig={filterConfig}
-							setFilterConfig={setFilterConfig}
-						/>
-					)}
-				</TabsContent>
-
-				<TabsContent value="statistics" className="space-y-6">
-					{grades.length === 0 ? (
-						<Card>
-							<CardContent className="p-8 text-center">
-								<BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-								<h3 className="text-lg font-medium mb-2">Chưa có dữ liệu để thống kê</h3>
-								<p className="text-muted-foreground mb-4">
-									Nhập dữ liệu điểm để xem các thống kê chi tiết.
-								</p>
-								<Button onClick={() => setActiveTab('table')}>Nhập dữ liệu ngay</Button>
-							</CardContent>
-						</Card>
-					) : (
-						<StatisticsDashboard grades={grades} />
-					)}
-				</TabsContent>
-			</Tabs>
+					<TabsContent value="statistics" className="space-y-6">
+						{grades.length === 0 ? (
+							<Card>
+								<CardContent className="p-8 text-center">
+									<BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+									<h3 className="text-lg font-medium mb-2">Chưa có dữ liệu để thống kê</h3>
+									<p className="text-muted-foreground mb-4">
+										Nhập dữ liệu điểm để xem các thống kê chi tiết.
+									</p>
+									<Button onClick={() => setActiveTab('table')}>Nhập dữ liệu ngay</Button>
+								</CardContent>
+							</Card>
+						) : (
+							<StatisticsDashboard grades={grades} />
+						)}
+					</TabsContent>
+				</Tabs>
+			)}
 
 			{/* Add Grade Modal */}
 			<GradeEditModal
