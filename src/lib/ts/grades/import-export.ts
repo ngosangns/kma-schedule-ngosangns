@@ -156,7 +156,7 @@ function processRawData(rawData: RawGradeData[]): ImportResult {
 	let validRecords = 0;
 	let invalidRecords = 0;
 
-	rawData.forEach((row, index) => {
+	rawData.forEach((row) => {
 		try {
 			// Validate with Zod schema
 			const validatedRow = RawGradeSchema.parse(row);
@@ -175,30 +175,17 @@ function processRawData(rawData: RawGradeData[]): ImportResult {
 				diemChu: validatedRow['Điểm chữ'] ?? null
 			});
 
+			// Only include valid records in the result
 			if (gradeRecord.isValid) {
 				validGrades.push(gradeRecord);
 				validRecords++;
 			} else {
+				// Count invalid records but don't include them
 				invalidRecords++;
-				if (gradeRecord.errors) {
-					errors.push(`Row ${index + 1}: ${gradeRecord.errors.join(', ')}`);
-				}
 			}
-
-			// Add warnings for missing data
-			if (!gradeRecord.tp1 && !gradeRecord.tp2 && !gradeRecord.thi) {
-				warnings.push(`Row ${index + 1}: Missing all grade components for ${gradeRecord.tenMon}`);
-			}
-		} catch (error) {
+		} catch (_error) {
+			// Count parsing errors but don't include them
 			invalidRecords++;
-			if (error instanceof z.ZodError) {
-				const fieldErrors = error.errors.map((err) => `${err.path.join('.')}: ${err.message}`);
-				errors.push(`Row ${index + 1}: ${fieldErrors.join(', ')}`);
-			} else {
-				errors.push(
-					`Row ${index + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`
-				);
-			}
 		}
 	});
 

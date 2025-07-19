@@ -4,11 +4,14 @@ import React, { useState, useMemo } from 'react';
 import {
 	ChevronUp,
 	ChevronDown,
+	ArrowUpDown,
 	Filter,
 	AlertTriangle,
-	CheckCircle,
 	Eye,
-	EyeOff
+	EyeOff,
+	Plus,
+	Edit,
+	Trash2
 } from 'lucide-react';
 import {
 	Table,
@@ -29,29 +32,40 @@ import {
 	SelectTrigger,
 	SelectValue
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { GradeRecord, GradeSortConfig, GradeFilterConfig } from '@/types/grades';
+import { GradeRecord, GradeSortConfig, GradeFilterConfig, ImportResult } from '@/types/grades';
 import { filterGrades, sortGrades } from '@/lib/ts/grades/validation';
+import { GradeEditModal } from './GradeEditModal';
+import { SimpleCSVImport } from './SimpleCSVImport';
+import { SimpleCSVExport } from './SimpleCSVExport';
 
 interface GradeTableProps {
 	grades: GradeRecord[];
-	onGradeEdit?: (grade: GradeRecord) => void;
+	onGradeAdd?: (grade: Omit<GradeRecord, 'id'>) => void;
+	onGradeEdit?: (gradeId: string, updatedGrade: Omit<GradeRecord, 'id'>) => void;
 	onGradeDelete?: (gradeId: string) => void;
+	onImportComplete?: (result: ImportResult) => void;
+	editable?: boolean;
 	className?: string;
 }
 
 export function GradeTable({
 	grades,
-	onGradeEdit: _onGradeEdit,
-	onGradeDelete: _onGradeDelete,
+	onGradeAdd,
+	onGradeEdit,
+	onGradeDelete,
+	onImportComplete,
+	editable = false,
 	className
 }: GradeTableProps) {
 	const [sortConfig, setSortConfig] = useState<GradeSortConfig | null>(null);
 	const [filterConfig, setFilterConfig] = useState<GradeFilterConfig>({});
-	const [showInvalidOnly, setShowInvalidOnly] = useState(false);
-	const [showCalculatedColumns, setShowCalculatedColumns] = useState(true);
+
+	const [showCalculatedColumns, setShowCalculatedColumns] = useState(false);
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [editingGrade, setEditingGrade] = useState<GradeRecord | null>(null);
 
 	// Get unique semesters for filter
 	const semesters = useMemo(() => {
@@ -63,16 +77,12 @@ export function GradeTable({
 	const processedGrades = useMemo(() => {
 		let filtered = filterGrades(grades, filterConfig);
 
-		if (showInvalidOnly) {
-			filtered = filtered.filter((grade) => !grade.isValid);
-		}
-
 		if (sortConfig) {
 			filtered = sortGrades(filtered, sortConfig);
 		}
 
 		return filtered;
-	}, [grades, filterConfig, sortConfig, showInvalidOnly]);
+	}, [grades, filterConfig, sortConfig]);
 
 	const handleSort = (field: keyof GradeRecord) => {
 		setSortConfig((prev) => {
@@ -96,11 +106,46 @@ export function GradeTable({
 	const clearFilters = () => {
 		setFilterConfig({});
 		setSortConfig(null);
-		setShowInvalidOnly(false);
+	};
+
+	// Modal handlers
+	const handleAddNew = () => {
+		setEditingGrade(null);
+		setIsModalOpen(true);
+	};
+
+	const handleEdit = (grade: GradeRecord) => {
+		setEditingGrade(grade);
+		setIsModalOpen(true);
+	};
+
+	const handleDelete = (gradeId: string) => {
+		if (confirm('Bạn có chắc chắn muốn xóa môn học này?')) {
+			onGradeDelete?.(gradeId);
+		}
+	};
+
+	const handleModalSave = (gradeData: Omit<GradeRecord, 'id'>) => {
+		if (editingGrade) {
+			// Editing existing grade
+			onGradeEdit?.(editingGrade.id, gradeData);
+		} else {
+			// Adding new grade
+			onGradeAdd?.(gradeData);
+		}
+		setIsModalOpen(false);
+		setEditingGrade(null);
+	};
+
+	const handleModalClose = () => {
+		setIsModalOpen(false);
+		setEditingGrade(null);
 	};
 
 	const getSortIcon = (field: keyof GradeRecord) => {
-		if (sortConfig?.field !== field) return null;
+		if (sortConfig?.field !== field) {
+			return <ArrowUpDown className="h-4 w-4 text-muted-foreground" />;
+		}
 		return sortConfig.direction === 'asc' ? (
 			<ChevronUp className="h-4 w-4" />
 		) : (
@@ -131,6 +176,14 @@ export function GradeTable({
 							<CardDescription>Xem và quản lý điểm số các môn học</CardDescription>
 						</div>
 						<div className="flex items-center gap-2">
+							{onImportComplete && <SimpleCSVImport onImportComplete={onImportComplete} />}
+							<SimpleCSVExport grades={grades} />
+							{editable && (
+								<Button onClick={handleAddNew} size="sm" className="flex items-center gap-2">
+									<Plus className="h-4 w-4" />
+									Thêm môn
+								</Button>
+							)}
 							<Button
 								variant="outline"
 								size="sm"
@@ -153,7 +206,7 @@ export function GradeTable({
 						<div className="flex items-center gap-2">
 							<Filter className="h-4 w-4" />
 							<span className="font-medium">Bộ lọc</span>
-							{(Object.keys(filterConfig).length > 0 || sortConfig || showInvalidOnly) && (
+							{(Object.keys(filterConfig).length > 0 || sortConfig) && (
 								<Button variant="ghost" size="sm" onClick={clearFilters}>
 									Xóa bộ lọc
 								</Button>
@@ -192,101 +245,16 @@ export function GradeTable({
 									</SelectContent>
 								</Select>
 							</div>
-
-							<div className="space-y-2">
-								<label className="text-sm font-medium">Điểm KTHP</label>
-								<div className="flex gap-2">
-									<Input
-										type="number"
-										placeholder="Từ"
-										step="0.1"
-										min="0"
-										max="10"
-										value={filterConfig.minGPA || ''}
-										onChange={(e) =>
-											handleFilterChange(
-												'minGPA',
-												e.target.value ? parseFloat(e.target.value) : undefined
-											)
-										}
-										className="h-9"
-									/>
-									<Input
-										type="number"
-										placeholder="Đến"
-										step="0.1"
-										min="0"
-										max="10"
-										value={filterConfig.maxGPA || ''}
-										onChange={(e) =>
-											handleFilterChange(
-												'maxGPA',
-												e.target.value ? parseFloat(e.target.value) : undefined
-											)
-										}
-										className="h-9"
-									/>
-								</div>
-							</div>
-
-							<div className="space-y-2">
-								<label className="text-sm font-medium">Bộ lọc nhanh</label>
-								<div className="space-y-2">
-									<div className="flex items-center space-x-2">
-										<Checkbox
-											id="failed"
-											checked={filterConfig.onlyFailed || false}
-											onCheckedChange={(checked) =>
-												handleFilterChange('onlyFailed', checked === true)
-											}
-										/>
-										<label htmlFor="failed" className="text-sm">
-											Chỉ môn rớt
-										</label>
-									</div>
-									<div className="flex items-center space-x-2">
-										<Checkbox
-											id="excellent"
-											checked={filterConfig.onlyExcellent || false}
-											onCheckedChange={(checked) =>
-												handleFilterChange('onlyExcellent', checked === true)
-											}
-										/>
-										<label htmlFor="excellent" className="text-sm">
-											Chỉ môn xuất sắc
-										</label>
-									</div>
-									<div className="flex items-center space-x-2">
-										<Checkbox
-											id="invalid"
-											checked={showInvalidOnly}
-											onCheckedChange={(checked) => setShowInvalidOnly(checked === true)}
-										/>
-										<label htmlFor="invalid" className="text-sm">
-											Chỉ dữ liệu lỗi ({invalidGradesCount})
-										</label>
-									</div>
-								</div>
-							</div>
 						</div>
 					</div>
 
 					<Separator />
 
 					{/* Validation Alert */}
-					{invalidGradesCount > 0 && !showInvalidOnly && (
+					{invalidGradesCount > 0 && (
 						<Alert className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950">
 							<AlertTriangle className="h-4 w-4 text-yellow-600" />
-							<AlertDescription>
-								Có {invalidGradesCount} bản ghi có lỗi dữ liệu.
-								<Button
-									variant="link"
-									className="p-0 h-auto text-yellow-700 dark:text-yellow-300"
-									onClick={() => setShowInvalidOnly(true)}
-								>
-									Xem chi tiết
-								</Button>
-							</AlertDescription>
+							<AlertDescription>Có {invalidGradesCount} bản ghi có lỗi dữ liệu.</AlertDescription>
 						</Alert>
 					)}
 
@@ -323,9 +291,33 @@ export function GradeTable({
 												{getSortIcon('tin')}
 											</div>
 										</TableHead>
-										<TableHead className="text-center">TP1</TableHead>
-										<TableHead className="text-center">TP2</TableHead>
-										<TableHead className="text-center">Thi</TableHead>
+										<TableHead
+											className="cursor-pointer hover:bg-muted/50 text-center"
+											onClick={() => handleSort('tp1')}
+										>
+											<div className="flex items-center justify-center gap-2">
+												TP1
+												{getSortIcon('tp1')}
+											</div>
+										</TableHead>
+										<TableHead
+											className="cursor-pointer hover:bg-muted/50 text-center"
+											onClick={() => handleSort('tp2')}
+										>
+											<div className="flex items-center justify-center gap-2">
+												TP2
+												{getSortIcon('tp2')}
+											</div>
+										</TableHead>
+										<TableHead
+											className="cursor-pointer hover:bg-muted/50 text-center"
+											onClick={() => handleSort('thi')}
+										>
+											<div className="flex items-center justify-center gap-2">
+												Thi
+												{getSortIcon('thi')}
+											</div>
+										</TableHead>
 										{showCalculatedColumns && (
 											<>
 												<TableHead
@@ -346,18 +338,17 @@ export function GradeTable({
 														{getSortIcon('kthp')}
 													</div>
 												</TableHead>
-												<TableHead className="text-center">Hệ 4</TableHead>
-												<TableHead className="text-center">Điểm chữ</TableHead>
 											</>
 										)}
-										<TableHead className="text-center">Trạng thái</TableHead>
+
+										{editable && <TableHead className="text-center">Thao tác</TableHead>}
 									</TableRow>
 								</TableHeader>
 								<TableBody>
 									{processedGrades.length === 0 ? (
 										<TableRow>
 											<TableCell
-												colSpan={showCalculatedColumns ? 11 : 7}
+												colSpan={showCalculatedColumns ? (editable ? 9 : 8) : editable ? 7 : 6}
 												className="text-center py-8 text-muted-foreground"
 											>
 												Không có dữ liệu phù hợp với bộ lọc
@@ -381,39 +372,54 @@ export function GradeTable({
 												</TableCell>
 												<TableCell className="text-center">{grade.ky}</TableCell>
 												<TableCell className="text-center">{grade.tin}</TableCell>
-												<TableCell className="text-center">{grade.tp1 ?? '-'}</TableCell>
-												<TableCell className="text-center">{grade.tp2 ?? '-'}</TableCell>
-												<TableCell className="text-center">{grade.thi ?? '-'}</TableCell>
+												<TableCell className="text-center">
+													{grade.tp1 !== null ? grade.tp1.toFixed(1) : '-'}
+												</TableCell>
+												<TableCell className="text-center">
+													{grade.tp2 !== null ? grade.tp2.toFixed(1) : '-'}
+												</TableCell>
+												<TableCell className="text-center">
+													{grade.thi !== null ? grade.thi.toFixed(1) : '-'}
+												</TableCell>
 												{showCalculatedColumns && (
 													<>
-														<TableCell className="text-center">{grade.dqt ?? '-'}</TableCell>
+														<TableCell className="text-center">
+															{grade.dqt !== null ? grade.dqt.toFixed(1) : '-'}
+														</TableCell>
 														<TableCell
 															className={`text-center font-medium ${getGradeColor(grade)}`}
 														>
-															{grade.kthp ?? '-'}
-														</TableCell>
-														<TableCell className="text-center">{grade.kthpHe4 ?? '-'}</TableCell>
-														<TableCell className="text-center">
-															{grade.diemChu && (
-																<Badge
-																	variant={
-																		grade.kthp && grade.kthp >= 5 ? 'default' : 'destructive'
-																	}
-																	className="font-medium"
-																>
-																	{grade.diemChu}
-																</Badge>
-															)}
+															{grade.kthp !== null && grade.kthpHe4 !== null
+																? `${grade.kthp.toFixed(1)}/${grade.kthpHe4.toFixed(1)}`
+																: grade.kthp !== null
+																	? grade.kthp.toFixed(1)
+																	: '-'}
 														</TableCell>
 													</>
 												)}
-												<TableCell className="text-center">
-													{grade.isValid ? (
-														<CheckCircle className="h-4 w-4 text-green-600 mx-auto" />
-													) : (
-														<AlertTriangle className="h-4 w-4 text-red-600 mx-auto" />
-													)}
-												</TableCell>
+
+												{editable && (
+													<TableCell className="text-center">
+														<div className="flex items-center justify-center gap-1">
+															<Button
+																size="sm"
+																variant="ghost"
+																onClick={() => handleEdit(grade)}
+																className="h-8 w-8 p-0"
+															>
+																<Edit className="h-4 w-4" />
+															</Button>
+															<Button
+																size="sm"
+																variant="ghost"
+																onClick={() => handleDelete(grade.id)}
+																className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+															>
+																<Trash2 className="h-4 w-4" />
+															</Button>
+														</div>
+													</TableCell>
+												)}
 											</TableRow>
 										))
 									)}
@@ -430,6 +436,16 @@ export function GradeTable({
 					)}
 				</CardContent>
 			</Card>
+
+			{/* Edit Modal */}
+			{editable && (
+				<GradeEditModal
+					isOpen={isModalOpen}
+					onClose={handleModalClose}
+					onSave={handleModalSave}
+					editingGrade={editingGrade}
+				/>
+			)}
 		</div>
 	);
 }

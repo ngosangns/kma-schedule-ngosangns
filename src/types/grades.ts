@@ -130,6 +130,20 @@ export const EXCLUDED_SUBJECTS = [
 	'Quân sự'
 ];
 
+// Form validation schema for grade input
+import { z } from 'zod';
+
+export const gradeFormSchema = z.object({
+	tenMon: z.string().min(1, 'Tên môn không được để trống'),
+	ky: z.number().min(1, 'Kỳ học phải lớn hơn 0').max(20, 'Kỳ học không được vượt quá 20'),
+	tin: z.number().min(0, 'Số tín chỉ không được âm').max(10, 'Số tín chỉ không được vượt quá 10'),
+	tp1: z.number().min(0, 'TP1 phải từ 0-10').max(10, 'TP1 phải từ 0-10').nullable(),
+	tp2: z.number().min(0, 'TP2 phải từ 0-10').max(10, 'TP2 phải từ 0-10').nullable(),
+	thi: z.number().min(0, 'Điểm thi phải từ 0-10').max(10, 'Điểm thi phải từ 0-10').nullable()
+});
+
+export type GradeFormData = z.infer<typeof gradeFormSchema>;
+
 // UI State types
 export interface GradesUIState {
 	currentView: 'import' | 'table' | 'statistics' | 'export';

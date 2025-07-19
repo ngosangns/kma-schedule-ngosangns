@@ -136,7 +136,7 @@ export function validateGradeRecord(record: GradeRecord): GradeValidationError[]
 	}
 
 	if (record.kthp !== null && record.dqt !== null && record.thi !== null) {
-		const expectedKTHP = Number((0.3 * record.dqt + 0.7 * record.thi).toFixed(2));
+		const expectedKTHP = Number((0.3 * record.dqt + 0.7 * record.thi).toFixed(1));
 		if (Math.abs(record.kthp - expectedKTHP) > 0.01) {
 			errors.push({
 				recordId: record.id,

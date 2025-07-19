@@ -15,7 +15,7 @@ export function calculateDQT(tp1: number | null, tp2: number | null): number | n
 	if (tp1 < 0 || tp1 > 10 || tp2 < 0 || tp2 > 10) return null;
 
 	return Number(
-		(CALCULATION_WEIGHTS.DQT_TP2_WEIGHT * tp2 + CALCULATION_WEIGHTS.DQT_TP1_WEIGHT * tp1).toFixed(2)
+		(CALCULATION_WEIGHTS.DQT_TP2_WEIGHT * tp2 + CALCULATION_WEIGHTS.DQT_TP1_WEIGHT * tp1).toFixed(1)
 	);
 }
 
@@ -28,7 +28,7 @@ export function calculateKTHP(dqt: number | null, thi: number | null): number | 
 
 	return Number(
 		(CALCULATION_WEIGHTS.KTHP_DQT_WEIGHT * dqt + CALCULATION_WEIGHTS.KTHP_THI_WEIGHT * thi).toFixed(
-			2
+			1
 		)
 	);
 }
@@ -132,7 +132,7 @@ export function calculateGPA10(grades: GradeRecord[]): number | null {
 	const totalWeightedScore = validGrades.reduce((sum, grade) => sum + grade.kthp! * grade.tin, 0);
 	const totalCredits = validGrades.reduce((sum, grade) => sum + grade.tin, 0);
 
-	return totalCredits > 0 ? Number((totalWeightedScore / totalCredits).toFixed(2)) : null;
+	return totalCredits > 0 ? Number((totalWeightedScore / totalCredits).toFixed(1)) : null;
 }
 
 /**
@@ -151,7 +151,7 @@ export function calculateGPA4(grades: GradeRecord[]): number | null {
 	);
 	const totalCredits = validGrades.reduce((sum, grade) => sum + grade.tin, 0);
 
-	return totalCredits > 0 ? Number((totalWeightedScore / totalCredits).toFixed(2)) : null;
+	return totalCredits > 0 ? Number((totalWeightedScore / totalCredits).toFixed(1)) : null;
 }
 
 /**

@@ -109,7 +109,7 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 								<div>
 									<p className="text-sm font-medium text-muted-foreground">GPA Hệ 10</p>
 									<p className="text-2xl font-bold">
-										{statistics.overallGPA10?.toFixed(2) || 'N/A'}
+										{statistics.overallGPA10?.toFixed(1) || 'N/A'}
 									</p>
 								</div>
 								<div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-full">
@@ -130,7 +130,7 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 								<div>
 									<p className="text-sm font-medium text-muted-foreground">GPA Hệ 4</p>
 									<p className="text-2xl font-bold">
-										{statistics.overallGPA4?.toFixed(2) || 'N/A'}
+										{statistics.overallGPA4?.toFixed(1) || 'N/A'}
 									</p>
 								</div>
 								<div className="p-2 bg-green-100 dark:bg-green-900 rounded-full">
@@ -354,13 +354,13 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 										</div>
 										<div className="text-center">
 											<div className="text-lg font-semibold">
-												{semester.gpa10?.toFixed(2) || 'N/A'}
+												{semester.gpa10?.toFixed(1) || 'N/A'}
 											</div>
 											<div className="text-xs text-muted-foreground">GPA 10</div>
 										</div>
 										<div className="text-center">
 											<div className="text-lg font-semibold">
-												{semester.gpa4?.toFixed(2) || 'N/A'}
+												{semester.gpa4?.toFixed(1) || 'N/A'}
 											</div>
 											<div className="text-xs text-muted-foreground">GPA 4</div>
 										</div>
