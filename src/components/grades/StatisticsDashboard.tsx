@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { 
-	TrendingUp, 
-	TrendingDown, 
-	Award, 
-	BookOpen, 
+import {
+	TrendingUp,
+	TrendingDown,
+	Award,
+	BookOpen,
 	Calculator,
 	Target,
 	AlertTriangle,
@@ -16,13 +16,13 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-	BarChart, 
-	Bar, 
-	XAxis, 
-	YAxis, 
-	CartesianGrid, 
-	Tooltip, 
+import {
+	BarChart,
+	Bar,
+	XAxis,
+	YAxis,
+	CartesianGrid,
+	Tooltip,
 	ResponsiveContainer,
 	PieChart,
 	Pie,
@@ -31,7 +31,7 @@ import {
 	Line,
 	Legend
 } from 'recharts';
-import { GradeRecord, GradeStatistics } from '@/types/grades';
+import { GradeRecord } from '@/types/grades';
 import { calculateOverallStats } from '@/lib/ts/grades/calculations';
 
 interface StatisticsDashboardProps {
@@ -41,14 +41,14 @@ interface StatisticsDashboardProps {
 
 const GRADE_COLORS = {
 	'A+': '#10b981', // green-500
-	'A': '#059669',  // green-600
+	A: '#059669', // green-600
 	'B+': '#3b82f6', // blue-500
-	'B': '#2563eb',  // blue-600
+	B: '#2563eb', // blue-600
 	'C+': '#f59e0b', // amber-500
-	'C': '#d97706',  // amber-600
+	C: '#d97706', // amber-600
 	'D+': '#ef4444', // red-500
-	'D': '#dc2626',  // red-600
-	'F': '#991b1b'   // red-800
+	D: '#dc2626', // red-600
+	F: '#991b1b' // red-800
 };
 
 export function StatisticsDashboard({ grades, className }: StatisticsDashboardProps) {
@@ -69,7 +69,7 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 	}, [statistics]);
 
 	const semesterProgressData = useMemo(() => {
-		return statistics.semesterStats.map(semester => ({
+		return statistics.semesterStats.map((semester) => ({
 			semester: `Kỳ ${semester.semester}`,
 			gpa10: semester.gpa10 || 0,
 			gpa4: semester.gpa4 || 0,
@@ -85,16 +85,18 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 			{ name: 'Khá (C+, C)', value: statistics.averageSubjects, color: '#f59e0b' },
 			{ name: 'Yếu (D+, D)', value: statistics.weakSubjects, color: '#ef4444' },
 			{ name: 'Rớt (F)', value: statistics.failedSubjects, color: '#991b1b' }
-		].filter(item => item.value > 0);
+		].filter((item) => item.value > 0);
 	}, [statistics]);
 
-	const passRate = statistics.totalSubjects > 0 
-		? ((statistics.passedSubjects / statistics.totalSubjects) * 100).toFixed(1)
-		: '0';
+	const passRate =
+		statistics.totalSubjects > 0
+			? ((statistics.passedSubjects / statistics.totalSubjects) * 100).toFixed(1)
+			: '0';
 
-	const excellentRate = statistics.totalSubjects > 0 
-		? ((statistics.excellentSubjects / statistics.totalSubjects) * 100).toFixed(1)
-		: '0';
+	const excellentRate =
+		statistics.totalSubjects > 0
+			? ((statistics.excellentSubjects / statistics.totalSubjects) * 100).toFixed(1)
+			: '0';
 
 	return (
 		<div className={className}>
@@ -116,10 +118,7 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 							</div>
 							{statistics.overallGPA10 && (
 								<div className="mt-2">
-									<Progress 
-										value={(statistics.overallGPA10 / 10) * 100} 
-										className="h-2"
-									/>
+									<Progress value={(statistics.overallGPA10 / 10) * 100} className="h-2" />
 								</div>
 							)}
 						</CardContent>
@@ -140,10 +139,7 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 							</div>
 							{statistics.overallGPA4 && (
 								<div className="mt-2">
-									<Progress 
-										value={(statistics.overallGPA4 / 4) * 100} 
-										className="h-2"
-									/>
+									<Progress value={(statistics.overallGPA4 / 4) * 100} className="h-2" />
 								</div>
 							)}
 						</CardContent>
@@ -185,10 +181,7 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 								</div>
 							</div>
 							<div className="mt-2">
-								<Progress 
-									value={parseFloat(passRate)} 
-									className="h-2"
-								/>
+								<Progress value={parseFloat(passRate)} className="h-2" />
 							</div>
 						</CardContent>
 					</Card>
@@ -207,20 +200,28 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 							<div className="space-y-4">
 								<div className="grid grid-cols-2 gap-4">
 									<div className="text-center p-4 bg-green-50 dark:bg-green-950 rounded-lg">
-										<div className="text-2xl font-bold text-green-600">{statistics.excellentSubjects}</div>
+										<div className="text-2xl font-bold text-green-600">
+											{statistics.excellentSubjects}
+										</div>
 										<div className="text-sm text-muted-foreground">Xuất sắc</div>
 										<div className="text-xs text-green-600">{excellentRate}%</div>
 									</div>
 									<div className="text-center p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
-										<div className="text-2xl font-bold text-blue-600">{statistics.goodSubjects}</div>
+										<div className="text-2xl font-bold text-blue-600">
+											{statistics.goodSubjects}
+										</div>
 										<div className="text-sm text-muted-foreground">Giỏi</div>
 									</div>
 									<div className="text-center p-4 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
-										<div className="text-2xl font-bold text-yellow-600">{statistics.averageSubjects}</div>
+										<div className="text-2xl font-bold text-yellow-600">
+											{statistics.averageSubjects}
+										</div>
 										<div className="text-sm text-muted-foreground">Khá</div>
 									</div>
 									<div className="text-center p-4 bg-red-50 dark:bg-red-950 rounded-lg">
-										<div className="text-2xl font-bold text-red-600">{statistics.failedSubjects}</div>
+										<div className="text-2xl font-bold text-red-600">
+											{statistics.failedSubjects}
+										</div>
 										<div className="text-sm text-muted-foreground">Rớt</div>
 									</div>
 								</div>
@@ -243,7 +244,7 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 														<Cell key={`cell-${index}`} fill={entry.color} />
 													))}
 												</Pie>
-												<Tooltip 
+												<Tooltip
 													formatter={(value, name) => [value, name]}
 													labelFormatter={() => ''}
 												/>
@@ -268,19 +269,17 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 											<CartesianGrid strokeDasharray="3 3" />
 											<XAxis dataKey="grade" />
 											<YAxis />
-											<Tooltip 
-												formatter={(value, name) => [value, 'Số môn']}
+											<Tooltip
+												formatter={(value) => [value, 'Số môn']}
 												labelFormatter={(label) => `Điểm ${label}`}
 											/>
-											<Bar 
-												dataKey="count" 
-												fill="#8884d8"
-												radius={[4, 4, 0, 0]}
-											>
+											<Bar dataKey="count" fill="#8884d8" radius={[4, 4, 0, 0]}>
 												{gradeDistributionData.map((entry, index) => (
-													<Cell 
-														key={`cell-${index}`} 
-														fill={GRADE_COLORS[entry.grade as keyof typeof GRADE_COLORS] || '#8884d8'} 
+													<Cell
+														key={`cell-${index}`}
+														fill={
+															GRADE_COLORS[entry.grade as keyof typeof GRADE_COLORS] || '#8884d8'
+														}
 													/>
 												))}
 											</Bar>
@@ -301,9 +300,7 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 					<Card>
 						<CardHeader>
 							<CardTitle>Tiến độ học tập theo kỳ</CardTitle>
-							<CardDescription>
-								Theo dõi GPA và tín chỉ tích lũy qua các kỳ học
-							</CardDescription>
+							<CardDescription>Theo dõi GPA và tín chỉ tích lũy qua các kỳ học</CardDescription>
 						</CardHeader>
 						<CardContent>
 							<div className="h-80">
@@ -315,19 +312,19 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 										<YAxis yAxisId="credits" orientation="right" />
 										<Tooltip />
 										<Legend />
-										<Line 
+										<Line
 											yAxisId="gpa"
-											type="monotone" 
-											dataKey="gpa10" 
-											stroke="#8884d8" 
+											type="monotone"
+											dataKey="gpa10"
+											stroke="#8884d8"
 											strokeWidth={2}
 											name="GPA Hệ 10"
 										/>
-										<Line 
+										<Line
 											yAxisId="credits"
-											type="monotone" 
-											dataKey="totalCredits" 
-											stroke="#82ca9d" 
+											type="monotone"
+											dataKey="totalCredits"
+											stroke="#82ca9d"
 											strokeWidth={2}
 											name="Tổng tín chỉ"
 										/>
@@ -403,8 +400,8 @@ export function StatisticsDashboard({ grades, className }: StatisticsDashboardPr
 					<Alert className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950">
 						<AlertTriangle className="h-4 w-4 text-yellow-600" />
 						<AlertDescription>
-							<strong>Khuyến nghị:</strong> GPA hiện tại thấp hơn mức trung bình. 
-							Hãy tập trung cải thiện điểm số ở các kỳ tiếp theo để nâng cao kết quả học tập.
+							<strong>Khuyến nghị:</strong> GPA hiện tại thấp hơn mức trung bình. Hãy tập trung cải
+							thiện điểm số ở các kỳ tiếp theo để nâng cao kết quả học tập.
 						</AlertDescription>
 					</Alert>
 				)}

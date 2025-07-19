@@ -326,7 +326,9 @@ describe('Month View Logic', () => {
 			]
 		};
 
-		const getStudyDateRange = (calendarData: any) => {
+		const getStudyDateRange = (
+			calendarData: any
+		): { firstDate: Date | null; lastDate: Date | null } => {
 			if (!calendarData || !calendarData.weeks) return { firstDate: null, lastDate: null };
 
 			let firstDate: Date | null = null;

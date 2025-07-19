@@ -156,14 +156,14 @@ export function validateGradeRecord(record: GradeRecord): GradeValidationError[]
 export function validateGradeRecords(records: GradeRecord[]): GradeValidationError[] {
 	const allErrors: GradeValidationError[] = [];
 
-	records.forEach(record => {
+	records.forEach((record) => {
 		const recordErrors = validateGradeRecord(record);
 		allErrors.push(...recordErrors);
 	});
 
 	// Check for duplicate subjects in the same semester
 	const subjectSemesterMap = new Map<string, string[]>();
-	records.forEach(record => {
+	records.forEach((record) => {
 		const key = `${record.tenMon}_${record.ky}`;
 		if (!subjectSemesterMap.has(key)) {
 			subjectSemesterMap.set(key, []);
@@ -174,7 +174,7 @@ export function validateGradeRecords(records: GradeRecord[]): GradeValidationErr
 	subjectSemesterMap.forEach((recordIds, key) => {
 		if (recordIds.length > 1) {
 			const [subjectName, semester] = key.split('_');
-			recordIds.forEach(recordId => {
+			recordIds.forEach((recordId) => {
 				allErrors.push({
 					recordId,
 					field: 'duplicate',
@@ -192,7 +192,7 @@ export function validateGradeRecords(records: GradeRecord[]): GradeValidationErr
  * Filter grades based on criteria
  */
 export function filterGrades(grades: GradeRecord[], filter: GradeFilterConfig): GradeRecord[] {
-	return grades.filter(grade => {
+	return grades.filter((grade) => {
 		// Semester filter
 		if (filter.semester !== undefined && grade.ky !== filter.semester) {
 			return false;
@@ -227,7 +227,7 @@ export function filterGrades(grades: GradeRecord[], filter: GradeFilterConfig): 
 			const searchLower = filter.searchTerm.toLowerCase();
 			const subjectNameMatch = grade.tenMon.toLowerCase().includes(searchLower);
 			const gradeLetterMatch = grade.diemChu?.toLowerCase().includes(searchLower);
-			
+
 			if (!subjectNameMatch && !gradeLetterMatch) {
 				return false;
 			}
@@ -278,7 +278,7 @@ export function getValidationSummary(errors: GradeValidationError[]): {
 	let totalErrors = 0;
 	let totalWarnings = 0;
 
-	errors.forEach(error => {
+	errors.forEach((error) => {
 		if (error.severity === 'error') {
 			totalErrors++;
 			errorsByField[error.field] = (errorsByField[error.field] || 0) + 1;
@@ -305,19 +305,17 @@ export function isDataCompleteForGPA(grades: GradeRecord[]): {
 	totalGradableSubjects: number;
 	issues: string[];
 } {
-	const gradableSubjects = grades.filter(grade => !grade.excludeFromGPA);
-	const missingData = gradableSubjects.filter(grade => 
-		grade.kthp === null || grade.tin === 0
-	);
+	const gradableSubjects = grades.filter((grade) => !grade.excludeFromGPA);
+	const missingData = gradableSubjects.filter((grade) => grade.kthp === null || grade.tin === 0);
 
 	const issues: string[] = [];
-	
+
 	if (missingData.length > 0) {
 		issues.push(`${missingData.length} môn học thiếu điểm KTHP hoặc tín chỉ`);
 	}
 
 	const duplicates = new Set();
-	const duplicateSubjects = gradableSubjects.filter(grade => {
+	const duplicateSubjects = gradableSubjects.filter((grade) => {
 		const key = `${grade.tenMon}_${grade.ky}`;
 		if (duplicates.has(key)) {
 			return true;

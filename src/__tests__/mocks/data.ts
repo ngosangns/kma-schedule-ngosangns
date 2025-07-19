@@ -1,4 +1,13 @@
-import { User, Subject, CalendarData, AuthState, UIState } from '@/types';
+import {
+	User,
+	Subject,
+	CalendarData,
+	ProcessedCalendarData,
+	SubjectData,
+	AuthState,
+	UIState,
+	StorageData
+} from '@/types';
 
 // Mock Users
 export const mockUsers: User[] = [
@@ -16,7 +25,7 @@ export const mockUsers: User[] = [
 	}
 ];
 
-export const mockUser = mockUsers[0];
+export const mockUser: User = mockUsers[0]!;
 
 // Mock Subjects
 export const mockSubjects: Subject[] = [
@@ -75,12 +84,75 @@ export const mockSubjects: Subject[] = [
 // Mock Calendar Data
 export const mockCalendarData: CalendarData = {
 	data_subject: mockSubjects,
-	semester: {
-		id: '20231',
-		name: 'Học kỳ 1 năm 2023-2024',
-		startDate: '2023-09-04',
-		endDate: '2024-01-15'
+	weeks: [],
+	currentWeek: 1
+};
+
+// Mock Subject Data for ProcessedCalendarData
+export const mockSubjectData: SubjectData[] = [
+	{
+		lop_hoc_phan: 'IT4409_01',
+		hoc_phan: 'Lập trình Web',
+		giang_vien: 'TS. Nguyễn Văn X',
+		si_so: '40',
+		so_dk: '35',
+		so_tc: '3',
+		tkb: [
+			{
+				startTime: new Date('2023-09-04T07:00:00'),
+				endTime: new Date('2023-09-04T09:30:00'),
+				dayOfWeek: [{ dow: 2, shi: ['1', '2'] }],
+				address: 'TC-201'
+			}
+		]
+	},
+	{
+		lop_hoc_phan: 'IT3090_01',
+		hoc_phan: 'Cơ sở dữ liệu',
+		giang_vien: 'PGS.TS. Lê Thị Y',
+		si_so: '45',
+		so_dk: '42',
+		so_tc: '3',
+		tkb: [
+			{
+				startTime: new Date('2023-09-05T13:30:00'),
+				endTime: new Date('2023-09-05T16:00:00'),
+				dayOfWeek: [{ dow: 3, shi: ['3', '4'] }],
+				address: 'TC-105'
+			}
+		]
 	}
+];
+
+// Mock Processed Calendar Data
+export const mockProcessedCalendarData: ProcessedCalendarData = {
+	data_subject: mockSubjectData,
+	weeks: [
+		{
+			1: {
+				time: new Date('2023-09-04').getTime(),
+				shift: [
+					{
+						content: 'Lập trình Web',
+						name: 'IT4409_01',
+						address: 'TC-201',
+						length: 2
+					}
+				]
+			},
+			2: {
+				time: new Date('2023-09-05').getTime(),
+				shift: [
+					{
+						content: 'Cơ sở dữ liệu',
+						name: 'IT3090_01',
+						address: 'TC-105',
+						length: 2
+					}
+				]
+			}
+		}
+	]
 };
 
 // Mock Auth States
@@ -222,7 +294,7 @@ export const mockHTMLResponses = {
 };
 
 // Mock Storage Data
-export const mockStorageData = {
+export const mockStorageData: StorageData = {
 	signInToken: 'SignIn=mock-signin-token; Path=/; HttpOnly',
 	mainForm: {
 		__VIEWSTATE: 'mock-viewstate',
@@ -240,8 +312,9 @@ export const mockStorageData = {
 		],
 		currentSemester: '20231'
 	},
-	calendar: mockCalendarData,
-	student: 'Nguyễn Văn A - CT050101'
+	calendar: mockProcessedCalendarData,
+	student: 'Nguyễn Văn A - CT050101',
+	user: mockUser
 };
 
 // Mock Form Data

@@ -1,15 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { 
-	AlertTriangle, 
-	CheckCircle, 
-	Info, 
-	XCircle,
-	FileX,
-	Calculator,
-	Target
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle, Info, XCircle, FileX, Calculator, Target } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -17,10 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { GradeRecord } from '@/types/grades';
-import { 
-	validateGradeRecords, 
-	getValidationSummary, 
-	isDataCompleteForGPA 
+import {
+	validateGradeRecords,
+	getValidationSummary,
+	isDataCompleteForGPA
 } from '@/lib/ts/grades/validation';
 
 interface ValidationSummaryProps {
@@ -31,26 +23,32 @@ interface ValidationSummaryProps {
 
 export function ValidationSummary({ grades, onFixErrors, className }: ValidationSummaryProps) {
 	const validationErrors = useMemo(() => validateGradeRecords(grades), [grades]);
-	const validationSummary = useMemo(() => getValidationSummary(validationErrors), [validationErrors]);
+	const validationSummary = useMemo(
+		() => getValidationSummary(validationErrors),
+		[validationErrors]
+	);
 	const gpaCompleteness = useMemo(() => isDataCompleteForGPA(grades), [grades]);
 
 	// Group errors by record
 	const errorsByRecord = useMemo(() => {
-		const grouped = validationErrors.reduce((acc, error) => {
-			if (!acc[error.recordId]) {
-				acc[error.recordId] = [];
-			}
-			acc[error.recordId].push(error);
-			return acc;
-		}, {} as Record<string, typeof validationErrors>);
+		const grouped = validationErrors.reduce(
+			(acc, error) => {
+				if (!acc[error.recordId]) {
+					acc[error.recordId] = [];
+				}
+				acc[error.recordId]?.push(error);
+				return acc;
+			},
+			{} as Record<string, typeof validationErrors>
+		);
 
 		return Object.entries(grouped).map(([recordId, errors]) => {
-			const grade = grades.find(g => g.id === recordId);
+			const grade = grades.find((g) => g.id === recordId);
 			return {
 				recordId,
 				grade,
-				errors: errors.filter(e => e.severity === 'error'),
-				warnings: errors.filter(e => e.severity === 'warning')
+				errors: errors.filter((e) => e.severity === 'error'),
+				warnings: errors.filter((e) => e.severity === 'warning')
 			};
 		});
 	}, [validationErrors, grades]);
@@ -86,9 +84,7 @@ export function ValidationSummary({ grades, onFixErrors, className }: Validation
 						)}
 						Kiểm tra dữ liệu
 					</CardTitle>
-					<CardDescription>
-						Tình trạng và chất lượng dữ liệu điểm
-					</CardDescription>
+					<CardDescription>Tình trạng và chất lượng dữ liệu điểm</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-6">
 					{/* Overall Status */}
@@ -102,7 +98,9 @@ export function ValidationSummary({ grades, onFixErrors, className }: Validation
 							<div className="text-sm text-muted-foreground">Lỗi nghiêm trọng</div>
 						</div>
 						<div className="text-center p-4 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
-							<div className="text-2xl font-bold text-yellow-600">{validationSummary.totalWarnings}</div>
+							<div className="text-2xl font-bold text-yellow-600">
+								{validationSummary.totalWarnings}
+							</div>
 							<div className="text-sm text-muted-foreground">Cảnh báo</div>
 						</div>
 					</div>
@@ -112,8 +110,9 @@ export function ValidationSummary({ grades, onFixErrors, className }: Validation
 						<Alert className="border-red-200 bg-red-50 dark:bg-red-950">
 							<XCircle className="h-4 w-4 text-red-600" />
 							<AlertDescription>
-								<strong>Có {validationSummary.totalErrors} lỗi nghiêm trọng</strong> cần được sửa chữa. 
-								Dữ liệu không thể được sử dụng để tính toán chính xác cho đến khi các lỗi này được khắc phục.
+								<strong>Có {validationSummary.totalErrors} lỗi nghiêm trọng</strong> cần được sửa
+								chữa. Dữ liệu không thể được sử dụng để tính toán chính xác cho đến khi các lỗi này
+								được khắc phục.
 							</AlertDescription>
 						</Alert>
 					)}
@@ -122,7 +121,7 @@ export function ValidationSummary({ grades, onFixErrors, className }: Validation
 						<Alert className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950">
 							<AlertTriangle className="h-4 w-4 text-yellow-600" />
 							<AlertDescription>
-								<strong>Có {validationSummary.totalWarnings} cảnh báo.</strong> 
+								<strong>Có {validationSummary.totalWarnings} cảnh báo.</strong>
 								Dữ liệu có thể được sử dụng nhưng nên kiểm tra lại để đảm bảo tính chính xác.
 							</AlertDescription>
 						</Alert>
@@ -132,7 +131,7 @@ export function ValidationSummary({ grades, onFixErrors, className }: Validation
 						<Alert className="border-green-200 bg-green-50 dark:bg-green-950">
 							<CheckCircle className="h-4 w-4 text-green-600" />
 							<AlertDescription>
-								<strong>Dữ liệu hoàn toàn hợp lệ!</strong> 
+								<strong>Dữ liệu hoàn toàn hợp lệ!</strong>
 								Tất cả bản ghi đều đạt tiêu chuẩn và sẵn sàng để tính toán.
 							</AlertDescription>
 						</Alert>
@@ -144,13 +143,13 @@ export function ValidationSummary({ grades, onFixErrors, className }: Validation
 							<Calculator className="h-4 w-4" />
 							Tính toán GPA
 						</h4>
-						
+
 						{isDataComplete ? (
 							<Alert className="border-green-200 bg-green-50 dark:bg-green-950">
 								<Target className="h-4 w-4 text-green-600" />
 								<AlertDescription>
-									Dữ liệu đầy đủ để tính toán GPA chính xác. 
-									Có {gpaCompleteness.totalGradableSubjects} môn học được tính vào GPA.
+									Dữ liệu đầy đủ để tính toán GPA chính xác. Có{' '}
+									{gpaCompleteness.totalGradableSubjects} môn học được tính vào GPA.
 								</AlertDescription>
 							</Alert>
 						) : (
@@ -167,7 +166,9 @@ export function ValidationSummary({ grades, onFixErrors, className }: Validation
 											))}
 										</ul>
 										<div className="text-sm">
-											Có thể tính toán với {gpaCompleteness.totalGradableSubjects - gpaCompleteness.missingDataCount} / {gpaCompleteness.totalGradableSubjects} môn học.
+											Có thể tính toán với{' '}
+											{gpaCompleteness.totalGradableSubjects - gpaCompleteness.missingDataCount} /{' '}
+											{gpaCompleteness.totalGradableSubjects} môn học.
 										</div>
 									</div>
 								</AlertDescription>
@@ -181,9 +182,7 @@ export function ValidationSummary({ grades, onFixErrors, className }: Validation
 							<Separator />
 							<div className="flex items-center justify-between">
 								<h4 className="font-medium">Chi tiết lỗi và cảnh báo</h4>
-								<Badge variant="outline">
-									{errorsByRecord.length} bản ghi có vấn đề
-								</Badge>
+								<Badge variant="outline">{errorsByRecord.length} bản ghi có vấn đề</Badge>
 							</div>
 
 							<Collapsible>
@@ -206,8 +205,8 @@ export function ValidationSummary({ grades, onFixErrors, className }: Validation
 														</div>
 													</div>
 													{onFixErrors && (
-														<Button 
-															size="sm" 
+														<Button
+															size="sm"
 															variant="outline"
 															onClick={() => onFixErrors(recordId)}
 														>
@@ -223,7 +222,10 @@ export function ValidationSummary({ grades, onFixErrors, className }: Validation
 															Lỗi ({errors.length})
 														</div>
 														{errors.map((error, index) => (
-															<div key={index} className="text-sm p-2 bg-red-50 dark:bg-red-950 rounded border-l-4 border-red-500">
+															<div
+																key={index}
+																className="text-sm p-2 bg-red-50 dark:bg-red-950 rounded border-l-4 border-red-500"
+															>
 																<strong>{error.field}:</strong> {error.message}
 															</div>
 														))}
@@ -237,7 +239,10 @@ export function ValidationSummary({ grades, onFixErrors, className }: Validation
 															Cảnh báo ({warnings.length})
 														</div>
 														{warnings.map((warning, index) => (
-															<div key={index} className="text-sm p-2 bg-yellow-50 dark:bg-yellow-950 rounded border-l-4 border-yellow-500">
+															<div
+																key={index}
+																className="text-sm p-2 bg-yellow-50 dark:bg-yellow-950 rounded border-l-4 border-yellow-500"
+															>
 																<strong>{warning.field}:</strong> {warning.message}
 															</div>
 														))}
@@ -252,11 +257,12 @@ export function ValidationSummary({ grades, onFixErrors, className }: Validation
 					)}
 
 					{/* Field Error Summary */}
-					{(Object.keys(validationSummary.errorsByField).length > 0 || Object.keys(validationSummary.warningsByField).length > 0) && (
+					{(Object.keys(validationSummary.errorsByField).length > 0 ||
+						Object.keys(validationSummary.warningsByField).length > 0) && (
 						<div className="space-y-4">
 							<Separator />
 							<h4 className="font-medium">Thống kê lỗi theo trường</h4>
-							
+
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 								{Object.keys(validationSummary.errorsByField).length > 0 && (
 									<div className="space-y-2">
@@ -264,7 +270,9 @@ export function ValidationSummary({ grades, onFixErrors, className }: Validation
 										{Object.entries(validationSummary.errorsByField).map(([field, count]) => (
 											<div key={field} className="flex justify-between text-sm">
 												<span>{field}</span>
-												<Badge variant="destructive" className="text-xs">{count}</Badge>
+												<Badge variant="destructive" className="text-xs">
+													{count}
+												</Badge>
 											</div>
 										))}
 									</div>
@@ -276,7 +284,9 @@ export function ValidationSummary({ grades, onFixErrors, className }: Validation
 										{Object.entries(validationSummary.warningsByField).map(([field, count]) => (
 											<div key={field} className="flex justify-between text-sm">
 												<span>{field}</span>
-												<Badge variant="outline" className="text-xs">{count}</Badge>
+												<Badge variant="outline" className="text-xs">
+													{count}
+												</Badge>
 											</div>
 										))}
 									</div>

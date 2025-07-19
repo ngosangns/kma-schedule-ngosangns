@@ -15,13 +15,7 @@ export {
 } from './calculations';
 
 // Import/Export
-export {
-	parseCSV,
-	parseJSON,
-	exportToCSV,
-	exportToJSON,
-	downloadFile
-} from './import-export';
+export { parseCSV, parseJSON, exportToCSV, exportToJSON, downloadFile } from './import-export';
 
 // Validation
 export {
@@ -47,8 +41,4 @@ export type {
 	GradesUIState
 } from '@/types/grades';
 
-export {
-	GRADE_CONVERSION_TABLE,
-	CALCULATION_WEIGHTS,
-	EXCLUDED_SUBJECTS
-} from '@/types/grades';
+export { GRADE_CONVERSION_TABLE, CALCULATION_WEIGHTS, EXCLUDED_SUBJECTS } from '@/types/grades';

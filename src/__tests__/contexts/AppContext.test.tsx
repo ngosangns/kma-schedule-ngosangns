@@ -1,8 +1,7 @@
-import React from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { AppProvider, useApp, useAuth, useCalendar, useUI } from '@/contexts/AppContext';
 import { loadData, saveData } from '@/lib/ts/storage';
-import { mockUser, mockCalendarData, mockStorageData } from '../mocks/data';
+import { mockUser, mockProcessedCalendarData, mockStorageData } from '../mocks/data';
 
 // Mock storage functions
 jest.mock('@/lib/ts/storage', () => ({
@@ -68,12 +67,12 @@ describe('AppContext', () => {
 			act(() => {
 				result.current.dispatch({
 					type: 'SET_CALENDAR',
-					payload: mockCalendarData
+					payload: mockProcessedCalendarData
 				});
 			});
 
 			expect(saveData).toHaveBeenCalledWith({
-				calendar: mockCalendarData,
+				calendar: mockProcessedCalendarData,
 				student: undefined,
 				user: mockUser
 			});
@@ -200,10 +199,10 @@ describe('AppContext', () => {
 			});
 
 			act(() => {
-				result.current.setCalendar(mockCalendarData);
+				result.current.setCalendar(mockProcessedCalendarData);
 			});
 
-			expect(result.current.calendar).toEqual(mockCalendarData);
+			expect(result.current.calendar).toEqual(mockProcessedCalendarData);
 		});
 
 		it('should handle setting student', () => {
@@ -345,7 +344,7 @@ describe('AppContext', () => {
 				});
 				result.current.dispatch({
 					type: 'SET_CALENDAR',
-					payload: mockCalendarData
+					payload: mockProcessedCalendarData
 				});
 				result.current.dispatch({
 					type: 'SET_STUDENT',

@@ -12,15 +12,15 @@ import { processGradeRecord } from './calculations';
 // Zod schema for validating raw grade data
 const RawGradeSchema = z.object({
 	'Tên môn': z.string().min(1, 'Tên môn không được để trống'),
-	'Kỳ': z.union([z.string(), z.number()]).transform((val) => {
+	Kỳ: z.union([z.string(), z.number()]).transform((val) => {
 		const num = typeof val === 'string' ? parseInt(val, 10) : val;
 		return isNaN(num) ? 1 : num;
 	}),
-	'Tín': z.union([z.string(), z.number()]).transform((val) => {
+	Tín: z.union([z.string(), z.number()]).transform((val) => {
 		const num = typeof val === 'string' ? parseInt(val, 10) : val;
 		return isNaN(num) ? 0 : num;
 	}),
-	'TP1': z
+	TP1: z
 		.union([z.string(), z.number(), z.null()])
 		.transform((val) => {
 			if (val === null || val === '' || val === undefined) return null;
@@ -28,7 +28,7 @@ const RawGradeSchema = z.object({
 			return isNaN(num) ? null : num;
 		})
 		.nullable(),
-	'TP2': z
+	TP2: z
 		.union([z.string(), z.number(), z.null()])
 		.transform((val) => {
 			if (val === null || val === '' || val === undefined) return null;
@@ -36,7 +36,7 @@ const RawGradeSchema = z.object({
 			return isNaN(num) ? null : num;
 		})
 		.nullable(),
-	'Thi': z
+	Thi: z
 		.union([z.string(), z.number(), z.null()])
 		.transform((val) => {
 			if (val === null || val === '' || val === undefined) return null;
@@ -44,7 +44,7 @@ const RawGradeSchema = z.object({
 			return isNaN(num) ? null : num;
 		})
 		.nullable(),
-	'ĐQT': z
+	ĐQT: z
 		.union([z.string(), z.number(), z.null()])
 		.transform((val) => {
 			if (val === null || val === '' || val === undefined) return null;
@@ -53,7 +53,7 @@ const RawGradeSchema = z.object({
 		})
 		.nullable()
 		.optional(),
-	'KTHP': z
+	KTHP: z
 		.union([z.string(), z.number(), z.null()])
 		.transform((val) => {
 			if (val === null || val === '' || val === undefined) return null;
@@ -87,7 +87,7 @@ export function parseCSV(csvContent: string): Promise<ImportResult> {
 				const importResult = processRawData(results.data as RawGradeData[]);
 				resolve(importResult);
 			},
-			error: (error) => {
+			error: (error: Error) => {
 				resolve({
 					success: false,
 					data: [],
@@ -108,10 +108,10 @@ export function parseCSV(csvContent: string): Promise<ImportResult> {
 export function parseJSON(jsonContent: string): ImportResult {
 	try {
 		const data = JSON.parse(jsonContent);
-		
+
 		// Handle different JSON structures
 		let rawData: RawGradeData[];
-		
+
 		if (Array.isArray(data)) {
 			rawData = data;
 		} else if (data.grades && Array.isArray(data.grades)) {
@@ -122,7 +122,9 @@ export function parseJSON(jsonContent: string): ImportResult {
 			return {
 				success: false,
 				data: [],
-				errors: ['Invalid JSON structure. Expected an array of grade records or an object with grades/data property.'],
+				errors: [
+					'Invalid JSON structure. Expected an array of grade records or an object with grades/data property.'
+				],
 				warnings: [],
 				totalRecords: 0,
 				validRecords: 0,
@@ -158,19 +160,19 @@ function processRawData(rawData: RawGradeData[]): ImportResult {
 		try {
 			// Validate with Zod schema
 			const validatedRow = RawGradeSchema.parse(row);
-			
+
 			// Convert to GradeRecord format
 			const gradeRecord = processGradeRecord({
 				tenMon: validatedRow['Tên môn'],
 				ky: validatedRow['Kỳ'],
 				tin: validatedRow['Tín'],
-				tp1: validatedRow['TP1'],
-				tp2: validatedRow['TP2'],
-				thi: validatedRow['Thi'],
-				dqt: validatedRow['ĐQT'],
-				kthp: validatedRow['KTHP'],
-				kthpHe4: validatedRow['KTHP hệ 4'],
-				diemChu: validatedRow['Điểm chữ']
+				tp1: validatedRow['TP1'] ?? null,
+				tp2: validatedRow['TP2'] ?? null,
+				thi: validatedRow['Thi'] ?? null,
+				dqt: validatedRow['ĐQT'] ?? null,
+				kthp: validatedRow['KTHP'] ?? null,
+				kthpHe4: validatedRow['KTHP hệ 4'] ?? null,
+				diemChu: validatedRow['Điểm chữ'] ?? null
 			});
 
 			if (gradeRecord.isValid) {
@@ -190,10 +192,12 @@ function processRawData(rawData: RawGradeData[]): ImportResult {
 		} catch (error) {
 			invalidRecords++;
 			if (error instanceof z.ZodError) {
-				const fieldErrors = error.errors.map(err => `${err.path.join('.')}: ${err.message}`);
+				const fieldErrors = error.errors.map((err) => `${err.path.join('.')}: ${err.message}`);
 				errors.push(`Row ${index + 1}: ${fieldErrors.join(', ')}`);
 			} else {
-				errors.push(`Row ${index + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+				errors.push(
+					`Row ${index + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`
+				);
 			}
 		}
 	});
@@ -214,22 +218,20 @@ function processRawData(rawData: RawGradeData[]): ImportResult {
  */
 export function exportToCSV(
 	grades: GradeRecord[],
-	options: ExportOptions = { format: 'csv', includeCalculated: true, includeSemesterStats: false, includeOverallStats: false }
+	options: ExportOptions = {
+		format: 'csv',
+		includeCalculated: true,
+		includeSemesterStats: false,
+		includeOverallStats: false
+	}
 ): string {
-	const headers = [
-		'Tên môn',
-		'Kỳ',
-		'Tín',
-		'TP1',
-		'TP2',
-		'Thi'
-	];
+	const headers = ['Tên môn', 'Kỳ', 'Tín', 'TP1', 'TP2', 'Thi'];
 
 	if (options.includeCalculated) {
 		headers.push('ĐQT', 'KTHP', 'KTHP hệ 4', 'Điểm chữ');
 	}
 
-	const rows = grades.map(grade => {
+	const rows = grades.map((grade) => {
 		const row = [
 			grade.tenMon,
 			grade.ky.toString(),
@@ -263,19 +265,24 @@ export function exportToCSV(
 export function exportToJSON(
 	grades: GradeRecord[],
 	statistics?: GradeStatistics,
-	options: ExportOptions = { format: 'json', includeCalculated: true, includeSemesterStats: false, includeOverallStats: false }
+	options: ExportOptions = {
+		format: 'json',
+		includeCalculated: true,
+		includeSemesterStats: false,
+		includeOverallStats: false
+	}
 ): string {
 	const exportData: any = {
 		exportDate: new Date().toISOString(),
 		totalRecords: grades.length,
-		grades: grades.map(grade => {
+		grades: grades.map((grade) => {
 			const exportGrade: any = {
 				'Tên môn': grade.tenMon,
-				'Kỳ': grade.ky,
-				'Tín': grade.tin,
-				'TP1': grade.tp1,
-				'TP2': grade.tp2,
-				'Thi': grade.thi
+				Kỳ: grade.ky,
+				Tín: grade.tin,
+				TP1: grade.tp1,
+				TP2: grade.tp2,
+				Thi: grade.thi
 			};
 
 			if (options.includeCalculated) {
@@ -304,7 +311,7 @@ export function exportToJSON(
 		}
 
 		if (options.includeSemesterStats) {
-			exportData.semesterStatistics = statistics.semesterStats.map(semester => ({
+			exportData.semesterStatistics = statistics.semesterStats.map((semester) => ({
 				semester: semester.semester,
 				totalCredits: semester.totalCredits,
 				gpa10: semester.gpa10,

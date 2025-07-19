@@ -12,8 +12,8 @@ self.onmessage = (event: MessageEvent<ScheduleWorkerMessage>) => {
 		self.postMessage({
 			data: {
 				selectedClasses: [],
-				totalConflictedSessions: 0,
-			},
+				totalConflictedSessions: 0
+			}
 		} as ScheduleWorkerResponse);
 	}
 };

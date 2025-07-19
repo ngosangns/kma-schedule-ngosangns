@@ -1,6 +1,5 @@
 import {
 	GradeRecord,
-	GradeConversionRule,
 	SemesterData,
 	GradeStatistics,
 	GRADE_CONVERSION_TABLE,
@@ -28,7 +27,9 @@ export function calculateKTHP(dqt: number | null, thi: number | null): number | 
 	if (dqt < 0 || dqt > 10 || thi < 0 || thi > 10) return null;
 
 	return Number(
-		(CALCULATION_WEIGHTS.KTHP_DQT_WEIGHT * dqt + CALCULATION_WEIGHTS.KTHP_THI_WEIGHT * thi).toFixed(2)
+		(CALCULATION_WEIGHTS.KTHP_DQT_WEIGHT * dqt + CALCULATION_WEIGHTS.KTHP_THI_WEIGHT * thi).toFixed(
+			2
+		)
 	);
 }
 
@@ -93,9 +94,12 @@ export function processGradeRecord(record: Partial<GradeRecord>): GradeRecord {
 	if (!record.tenMon) errors.push('Tên môn không được để trống');
 	if (!record.ky || record.ky < 1) errors.push('Kỳ học không hợp lệ');
 	if (!record.tin || record.tin < 0) errors.push('Số tín chỉ không hợp lệ');
-	if (record.tp1 !== null && (record.tp1 < 0 || record.tp1 > 10)) errors.push('TP1 phải từ 0-10');
-	if (record.tp2 !== null && (record.tp2 < 0 || record.tp2 > 10)) errors.push('TP2 phải từ 0-10');
-	if (record.thi !== null && (record.thi < 0 || record.thi > 10)) errors.push('Điểm thi phải từ 0-10');
+	if (record.tp1 !== null && record.tp1 !== undefined && (record.tp1 < 0 || record.tp1 > 10))
+		errors.push('TP1 phải từ 0-10');
+	if (record.tp2 !== null && record.tp2 !== undefined && (record.tp2 < 0 || record.tp2 > 10))
+		errors.push('TP2 phải từ 0-10');
+	if (record.thi !== null && record.thi !== undefined && (record.thi < 0 || record.thi > 10))
+		errors.push('Điểm thi phải từ 0-10');
 
 	return {
 		id,
@@ -111,7 +115,7 @@ export function processGradeRecord(record: Partial<GradeRecord>): GradeRecord {
 		diemChu,
 		excludeFromGPA,
 		isValid: errors.length === 0,
-		errors: errors.length > 0 ? errors : undefined
+		errors
 	};
 }
 
@@ -125,10 +129,7 @@ export function calculateGPA10(grades: GradeRecord[]): number | null {
 
 	if (validGrades.length === 0) return null;
 
-	const totalWeightedScore = validGrades.reduce(
-		(sum, grade) => sum + (grade.kthp! * grade.tin),
-		0
-	);
+	const totalWeightedScore = validGrades.reduce((sum, grade) => sum + grade.kthp! * grade.tin, 0);
 	const totalCredits = validGrades.reduce((sum, grade) => sum + grade.tin, 0);
 
 	return totalCredits > 0 ? Number((totalWeightedScore / totalCredits).toFixed(2)) : null;
@@ -145,7 +146,7 @@ export function calculateGPA4(grades: GradeRecord[]): number | null {
 	if (validGrades.length === 0) return null;
 
 	const totalWeightedScore = validGrades.reduce(
-		(sum, grade) => sum + (grade.kthpHe4! * grade.tin),
+		(sum, grade) => sum + grade.kthpHe4! * grade.tin,
 		0
 	);
 	const totalCredits = validGrades.reduce((sum, grade) => sum + grade.tin, 0);
@@ -188,7 +189,7 @@ export function calculateSemesterStats(grades: GradeRecord[], semester: number):
  * Calculate overall statistics for all grades
  */
 export function calculateOverallStats(grades: GradeRecord[]): GradeStatistics {
-	const semesters = [...new Set(grades.map((grade) => grade.ky))].sort((a, b) => a - b);
+	const semesters = Array.from(new Set(grades.map((grade) => grade.ky))).sort((a, b) => a - b);
 	const semesterStats = semesters.map((semester) => calculateSemesterStats(grades, semester));
 
 	const totalCredits = grades.reduce((sum, grade) => sum + grade.tin, 0);
@@ -200,7 +201,9 @@ export function calculateOverallStats(grades: GradeRecord[]): GradeStatistics {
 	const totalSubjects = grades.length;
 	const passedSubjects = grades.filter((grade) => grade.kthp !== null && grade.kthp >= 5).length;
 	const failedSubjects = grades.filter((grade) => grade.kthp !== null && grade.kthp < 5).length;
-	const excellentSubjects = grades.filter((grade) => grade.kthp !== null && grade.kthp >= 8.5).length;
+	const excellentSubjects = grades.filter(
+		(grade) => grade.kthp !== null && grade.kthp >= 8.5
+	).length;
 	const goodSubjects = grades.filter(
 		(grade) => grade.kthp !== null && grade.kthp >= 7.0 && grade.kthp < 8.5
 	).length;

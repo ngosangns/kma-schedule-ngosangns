@@ -120,7 +120,7 @@ global.ResizeObserver = class ResizeObserver {
 };
 
 // Mock fetch for unit tests only (not for integration tests)
-if (!process.env.JEST_INTEGRATION_TEST) {
+if (!process.env['JEST_INTEGRATION_TEST']) {
 	global.fetch = jest.fn();
 } else {
 	// For integration tests, use real fetch
@@ -129,7 +129,7 @@ if (!process.env.JEST_INTEGRATION_TEST) {
 		try {
 			const { fetch } = require('undici');
 			global.fetch = fetch;
-		} catch (e) {
+		} catch {
 			console.warn('Could not load undici fetch, using mock');
 			global.fetch = jest.fn();
 		}

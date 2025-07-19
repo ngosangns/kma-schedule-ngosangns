@@ -1,9 +1,9 @@
-import { 
-	numToDate, 
-	dateToNum, 
-	getTotalDaysBetweenDates, 
+import {
+	numToDate,
+	dateToNum,
+	getTotalDaysBetweenDates,
 	getSessionShift,
-	generateCalendarTableData 
+	generateCalendarTableData
 } from '@/lib/ts/course-planning/schedule-generator';
 import { SESSION_CONSTANTS, JSONResultData, MajorSelectedSubjects } from '@/types/course-planning';
 
@@ -59,7 +59,7 @@ describe('Schedule Generator', () => {
 			const selectedClasses: MajorSelectedSubjects = {};
 
 			const result = generateCalendarTableData(mockCalendar, selectedClasses);
-			
+
 			expect(result).toBeDefined();
 			expect(result.totalConflictedSessions).toBe(0);
 			expect(result.data).toBeDefined();

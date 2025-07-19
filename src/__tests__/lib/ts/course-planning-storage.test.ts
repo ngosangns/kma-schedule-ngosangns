@@ -1,7 +1,7 @@
-import { 
-	saveCoursePlanningData, 
-	loadCoursePlanningData, 
-	clearCoursePlanningData 
+import {
+	saveCoursePlanningData,
+	loadCoursePlanningData,
+	clearCoursePlanningData
 } from '@/lib/ts/storage';
 import { CoursePlanningStorageData } from '@/types';
 import { JSONResultData, MajorSelectedSubjects } from '@/types/course-planning';

@@ -40,19 +40,19 @@ describe('Import/Export Functions', () => {
 			const jsonData = JSON.stringify([
 				{
 					'Tên môn': 'Toán cao cấp A1',
-					'Kỳ': 1,
-					'Tín': 4,
-					'TP1': 8.0,
-					'TP2': 9.0,
-					'Thi': 7.0
+					Kỳ: 1,
+					Tín: 4,
+					TP1: 8.0,
+					TP2: 9.0,
+					Thi: 7.0
 				},
 				{
 					'Tên môn': 'Lập trình C',
-					'Kỳ': 1,
-					'Tín': 3,
-					'TP1': 9.0,
-					'TP2': 8.5,
-					'Thi': 8.5
+					Kỳ: 1,
+					Tín: 3,
+					TP1: 9.0,
+					TP2: 8.5,
+					Thi: 8.5
 				}
 			]);
 
@@ -62,8 +62,8 @@ describe('Import/Export Functions', () => {
 			expect(result.data).toHaveLength(2);
 			expect(result.validRecords).toBe(2);
 			expect(result.invalidRecords).toBe(0);
-			expect(result.data[0].tenMon).toBe('Toán cao cấp A1');
-			expect(result.data[1].tenMon).toBe('Lập trình C');
+			expect(result.data[0]?.tenMon).toBe('Toán cao cấp A1');
+			expect(result.data[1]?.tenMon).toBe('Lập trình C');
 		});
 
 		it('should parse JSON with grades property', () => {
@@ -71,11 +71,11 @@ describe('Import/Export Functions', () => {
 				grades: [
 					{
 						'Tên môn': 'Toán cao cấp A1',
-						'Kỳ': 1,
-						'Tín': 4,
-						'TP1': 8.0,
-						'TP2': 9.0,
-						'Thi': 7.0
+						Kỳ: 1,
+						Tín: 4,
+						TP1: 8.0,
+						TP2: 9.0,
+						Thi: 7.0
 					}
 				]
 			});
@@ -84,7 +84,7 @@ describe('Import/Export Functions', () => {
 
 			expect(result.success).toBe(true);
 			expect(result.data).toHaveLength(1);
-			expect(result.data[0].tenMon).toBe('Toán cao cấp A1');
+			expect(result.data[0]?.tenMon).toBe('Toán cao cấp A1');
 		});
 
 		it('should handle invalid JSON', () => {
@@ -108,19 +108,19 @@ describe('Import/Export Functions', () => {
 			const jsonData = JSON.stringify([
 				{
 					'Tên môn': '', // Invalid: empty name
-					'Kỳ': 1,
-					'Tín': 4,
-					'TP1': 8.0,
-					'TP2': 9.0,
-					'Thi': 7.0
+					Kỳ: 1,
+					Tín: 4,
+					TP1: 8.0,
+					TP2: 9.0,
+					Thi: 7.0
 				},
 				{
 					'Tên môn': 'Valid Subject',
-					'Kỳ': 1,
-					'Tín': 3,
-					'TP1': 9.0,
-					'TP2': 8.5,
-					'Thi': 8.5
+					Kỳ: 1,
+					Tín: 3,
+					TP1: 9.0,
+					TP2: 8.5,
+					Thi: 8.5
 				}
 			]);
 
@@ -136,11 +136,11 @@ describe('Import/Export Functions', () => {
 			const jsonData = JSON.stringify([
 				{
 					'Tên môn': 'Toán cao cấp A1',
-					'Kỳ': 1,
-					'Tín': 4,
-					'TP1': 8.0,
-					'TP2': 9.0,
-					'Thi': null // Missing grade
+					Kỳ: 1,
+					Tín: 4,
+					TP1: 8.0,
+					TP2: 9.0,
+					Thi: null // Missing grade
 				}
 			]);
 
@@ -148,7 +148,7 @@ describe('Import/Export Functions', () => {
 
 			expect(result.success).toBe(true);
 			expect(result.data).toHaveLength(1);
-			expect(result.data[0].thi).toBeNull();
+			expect(result.data[0]?.thi).toBeNull();
 			expect(result.warnings).toContain(expect.stringContaining('Missing all grade components'));
 		});
 	});
@@ -185,7 +185,7 @@ describe('Import/Export Functions', () => {
 		it('should handle null values in CSV export', () => {
 			const gradesWithNulls: GradeRecord[] = [
 				{
-					...sampleGrades[0],
+					...sampleGrades[0]!,
 					tp1: null,
 					tp2: null,
 					thi: null,

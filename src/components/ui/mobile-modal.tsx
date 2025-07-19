@@ -54,15 +54,13 @@ export function MobileModal({
 
 			{/* Modal */}
 			<div
-				className={cn(
-					'absolute inset-0 flex items-center justify-center p-4',
-					fullScreen && 'p-0'
-				)}
+				className={cn('absolute inset-0 flex items-center justify-center p-4', fullScreen && 'p-0')}
 			>
 				<div
 					className={cn(
 						'relative bg-background rounded-lg shadow-lg transition-all duration-300 ease-out w-full max-w-md max-h-[90vh] overflow-hidden',
-						fullScreen && 'max-w-none max-h-none h-full rounded-none safe-top safe-bottom safe-left safe-right',
+						fullScreen &&
+							'max-w-none max-h-none h-full rounded-none safe-top safe-bottom safe-left safe-right',
 						isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0',
 						className
 					)}

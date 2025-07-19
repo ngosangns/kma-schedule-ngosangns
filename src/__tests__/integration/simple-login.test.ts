@@ -14,8 +14,8 @@ import {
 } from '@/lib/ts/calendar';
 
 // Skip these tests if credentials are not provided
-const TEST_USERNAME = process.env.TEST_USERNAME;
-const TEST_PASSWORD = process.env.TEST_PASSWORD;
+const TEST_USERNAME = process.env['TEST_USERNAME'];
+const TEST_PASSWORD = process.env['TEST_PASSWORD'];
 
 const skipIfNoCredentials = TEST_USERNAME && TEST_PASSWORD ? describe : describe.skip;
 

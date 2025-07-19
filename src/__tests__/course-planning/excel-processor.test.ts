@@ -24,22 +24,23 @@ describe('Excel Processor', () => {
 
 		it('should have correct default sheet configuration', () => {
 			expect(DEFAULT_SHEET_DATA).toBeDefined();
-			expect(DEFAULT_SHEET_DATA.CT4).toBeDefined();
-			expect(DEFAULT_SHEET_DATA.CT4.fieldColumn[Field.Class]).toBe('D');
-			expect(DEFAULT_SHEET_DATA.CT4.fieldColumn[Field.DayOfWeek]).toBe('G');
-			expect(DEFAULT_SHEET_DATA.CT4.fieldColumn[Field.Session]).toBe('H');
+			expect(DEFAULT_SHEET_DATA['CT4']).toBeDefined();
+			expect(DEFAULT_SHEET_DATA['CT4']?.fieldColumn[Field.Class]).toBe('D');
+			expect(DEFAULT_SHEET_DATA['CT4']?.fieldColumn[Field.DayOfWeek]).toBe('G');
+			expect(DEFAULT_SHEET_DATA['CT4']?.fieldColumn[Field.Session]).toBe('H');
 		});
 
 		it('should validate field mappings', () => {
-			const sheetData = DEFAULT_SHEET_DATA.CT4;
+			const sheetData = DEFAULT_SHEET_DATA['CT4'];
 
 			// Check all required fields are mapped
-			expect(sheetData.fieldColumn[Field.Class]).toBeDefined();
-			expect(sheetData.fieldColumn[Field.DayOfWeek]).toBeDefined();
-			expect(sheetData.fieldColumn[Field.Session]).toBeDefined();
-			expect(sheetData.fieldColumn[Field.StartDate]).toBeDefined();
-			expect(sheetData.fieldColumn[Field.EndDate]).toBeDefined();
-			expect(sheetData.fieldColumn[Field.Teacher]).toBeDefined();
+			expect(sheetData).toBeDefined();
+			expect(sheetData?.fieldColumn[Field.Class]).toBeDefined();
+			expect(sheetData?.fieldColumn[Field.DayOfWeek]).toBeDefined();
+			expect(sheetData?.fieldColumn[Field.Session]).toBeDefined();
+			expect(sheetData?.fieldColumn[Field.StartDate]).toBeDefined();
+			expect(sheetData?.fieldColumn[Field.EndDate]).toBeDefined();
+			expect(sheetData?.fieldColumn[Field.Teacher]).toBeDefined();
 		});
 	});
 });

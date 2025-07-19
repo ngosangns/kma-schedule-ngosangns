@@ -96,10 +96,7 @@ export function FloatingActionMenu({
 				onClick={onToggle}
 				icon={
 					<Plus
-						className={cn(
-							'h-6 w-6 transition-transform duration-200',
-							isOpen && 'rotate-45'
-						)}
+						className={cn('h-6 w-6 transition-transform duration-200', isOpen && 'rotate-45')}
 					/>
 				}
 				position={position}
@@ -107,12 +104,7 @@ export function FloatingActionMenu({
 			/>
 
 			{/* Backdrop */}
-			{isOpen && (
-				<div
-					className="fixed inset-0 bg-black/20 -z-10"
-					onClick={onToggle}
-				/>
-			)}
+			{isOpen && <div className="fixed inset-0 bg-black/20 -z-10" onClick={onToggle} />}
 		</div>
 	);
 }

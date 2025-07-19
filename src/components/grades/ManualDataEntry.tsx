@@ -8,8 +8,15 @@ import { Plus, Trash2, Save, Calculator } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+
+import {
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage
+} from '@/components/ui/form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -33,7 +40,11 @@ interface ManualDataEntryProps {
 	className?: string;
 }
 
-export function ManualDataEntry({ onGradesChange, initialGrades = [], className }: ManualDataEntryProps) {
+export function ManualDataEntry({
+	onGradesChange,
+	initialGrades = [],
+	className
+}: ManualDataEntryProps) {
 	const [grades, setGrades] = useState<GradeRecord[]>(initialGrades);
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
@@ -77,14 +88,16 @@ export function ManualDataEntry({ onGradesChange, initialGrades = [], className 
 
 	const editGrade = (index: number) => {
 		const grade = grades[index];
-		form.reset({
-			tenMon: grade.tenMon,
-			ky: grade.ky,
-			tin: grade.tin,
-			tp1: grade.tp1,
-			tp2: grade.tp2,
-			thi: grade.thi
-		});
+		if (grade) {
+			form.reset({
+				tenMon: grade.tenMon,
+				ky: grade.ky,
+				tin: grade.tin,
+				tp1: grade.tp1,
+				tp2: grade.tp2,
+				thi: grade.thi
+			});
+		}
 		setEditingIndex(index);
 	};
 
@@ -118,9 +131,7 @@ export function ManualDataEntry({ onGradesChange, initialGrades = [], className 
 						<Plus className="h-5 w-5" />
 						Nhập dữ liệu thủ công
 					</CardTitle>
-					<CardDescription>
-						Thêm từng môn học một cách thủ công
-					</CardDescription>
+					<CardDescription>Thêm từng môn học một cách thủ công</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-6">
 					{/* Input Form */}
@@ -147,9 +158,9 @@ export function ManualDataEntry({ onGradesChange, initialGrades = [], className 
 										<FormItem>
 											<FormLabel>Kỳ học</FormLabel>
 											<FormControl>
-												<Input 
-													type="number" 
-													min="1" 
+												<Input
+													type="number"
+													min="1"
 													max="20"
 													{...field}
 													onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
@@ -169,9 +180,9 @@ export function ManualDataEntry({ onGradesChange, initialGrades = [], className 
 										<FormItem>
 											<FormLabel>Tín chỉ</FormLabel>
 											<FormControl>
-												<Input 
-													type="number" 
-													min="0" 
+												<Input
+													type="number"
+													min="0"
 													max="10"
 													{...field}
 													onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
@@ -188,15 +199,17 @@ export function ManualDataEntry({ onGradesChange, initialGrades = [], className 
 										<FormItem>
 											<FormLabel>TP1 (Giữa kỳ)</FormLabel>
 											<FormControl>
-												<Input 
-													type="number" 
+												<Input
+													type="number"
 													step="0.1"
-													min="0" 
+													min="0"
 													max="10"
 													placeholder="0-10"
 													{...field}
 													value={field.value || ''}
-													onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+													onChange={(e) =>
+														field.onChange(e.target.value ? parseFloat(e.target.value) : null)
+													}
 												/>
 											</FormControl>
 											<FormMessage />
@@ -210,15 +223,17 @@ export function ManualDataEntry({ onGradesChange, initialGrades = [], className 
 										<FormItem>
 											<FormLabel>TP2 (Chuyên cần)</FormLabel>
 											<FormControl>
-												<Input 
-													type="number" 
+												<Input
+													type="number"
 													step="0.1"
-													min="0" 
+													min="0"
 													max="10"
 													placeholder="0-10"
 													{...field}
 													value={field.value || ''}
-													onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+													onChange={(e) =>
+														field.onChange(e.target.value ? parseFloat(e.target.value) : null)
+													}
 												/>
 											</FormControl>
 											<FormMessage />
@@ -232,15 +247,17 @@ export function ManualDataEntry({ onGradesChange, initialGrades = [], className 
 										<FormItem>
 											<FormLabel>Điểm thi</FormLabel>
 											<FormControl>
-												<Input 
-													type="number" 
+												<Input
+													type="number"
 													step="0.1"
-													min="0" 
+													min="0"
 													max="10"
 													placeholder="0-10"
 													{...field}
 													value={field.value || ''}
-													onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+													onChange={(e) =>
+														field.onChange(e.target.value ? parseFloat(e.target.value) : null)
+													}
 												/>
 											</FormControl>
 											<FormMessage />
@@ -282,7 +299,10 @@ export function ManualDataEntry({ onGradesChange, initialGrades = [], className 
 
 							<div className="space-y-2 max-h-96 overflow-y-auto">
 								{grades.map((grade, index) => (
-									<Card key={grade.id} className={`p-4 ${!grade.isValid ? 'border-red-200 bg-red-50 dark:bg-red-950' : ''}`}>
+									<Card
+										key={grade.id}
+										className={`p-4 ${!grade.isValid ? 'border-red-200 bg-red-50 dark:bg-red-950' : ''}`}
+									>
 										<div className="flex items-center justify-between">
 											<div className="flex-1 space-y-2">
 												<div className="flex items-center gap-2">
@@ -290,7 +310,9 @@ export function ManualDataEntry({ onGradesChange, initialGrades = [], className 
 													<Badge variant="outline">Kỳ {grade.ky}</Badge>
 													<Badge variant="outline">{grade.tin} TC</Badge>
 													{grade.diemChu && (
-														<Badge variant={grade.kthp && grade.kthp >= 5 ? 'default' : 'destructive'}>
+														<Badge
+															variant={grade.kthp && grade.kthp >= 5 ? 'default' : 'destructive'}
+														>
 															{grade.diemChu}
 														</Badge>
 													)}

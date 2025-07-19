@@ -1,12 +1,27 @@
 {
-	"extends": ["next/core-web-vitals", "@typescript-eslint/recommended"],
+	"extends": [
+		"next/core-web-vitals",
+		"@typescript-eslint/recommended",
+		"@typescript-eslint/recommended-requiring-type-checking",
+		"plugin:import/recommended",
+		"plugin:import/typescript",
+		"plugin:jsx-a11y/recommended"
+	],
 	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
 		"ecmaVersion": "latest",
 		"sourceType": "module",
 		"project": "./tsconfig.json"
 	},
-	"plugins": ["@typescript-eslint"],
+	"plugins": ["@typescript-eslint", "import", "jsx-a11y", "unused-imports"],
+	"settings": {
+		"import/resolver": {
+			"typescript": {
+				"alwaysTryTypes": true,
+				"project": "./tsconfig.json"
+			}
+		}
+	},
 	"rules": {
 		// TypeScript-specific rules for type safety
 		"@typescript-eslint/no-explicit-any": "error",
@@ -47,7 +62,43 @@
 		"no-var": "error",
 		"no-console": ["warn", { "allow": ["warn", "error"] }],
 		"eqeqeq": ["error", "always"],
-		"curly": ["error", "all"]
+		"curly": ["error", "all"],
+
+		// Import/Export rules
+		"import/order": [
+			"error",
+			{
+				"groups": ["builtin", "external", "internal", "parent", "sibling", "index"],
+				"newlines-between": "always",
+				"alphabetize": {
+					"order": "asc",
+					"caseInsensitive": true
+				}
+			}
+		],
+		"import/no-unresolved": "error",
+		"import/no-cycle": "error",
+		"import/no-unused-modules": "error",
+		"import/no-duplicates": "error",
+
+		// Unused imports
+		"unused-imports/no-unused-imports": "error",
+		"unused-imports/no-unused-vars": [
+			"error",
+			{
+				"vars": "all",
+				"varsIgnorePattern": "^_",
+				"args": "after-used",
+				"argsIgnorePattern": "^_"
+			}
+		],
+
+		// Accessibility rules
+		"jsx-a11y/alt-text": "error",
+		"jsx-a11y/anchor-has-content": "error",
+		"jsx-a11y/anchor-is-valid": "error",
+		"jsx-a11y/click-events-have-key-events": "error",
+		"jsx-a11y/no-static-element-interactions": "error"
 	},
 	"overrides": [
 		{
@@ -59,7 +110,15 @@
 				"@typescript-eslint/no-unsafe-call": "off",
 				"@typescript-eslint/no-unsafe-member-access": "off",
 				"@typescript-eslint/no-unsafe-return": "off",
-				"@typescript-eslint/explicit-function-return-type": "off"
+				"@typescript-eslint/explicit-function-return-type": "off",
+				"import/no-unused-modules": "off"
+			}
+		},
+		{
+			"files": ["**/*.config.js", "**/*.config.ts", "**/*.config.cjs"],
+			"rules": {
+				"@typescript-eslint/no-var-requires": "off",
+				"import/no-unused-modules": "off"
 			}
 		}
 	]

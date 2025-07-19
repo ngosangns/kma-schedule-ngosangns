@@ -8,10 +8,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 	useEffect(() => {
 		const root = window.document.documentElement;
-		
+
 		// Remove existing theme classes
 		root.classList.remove('light', 'dark');
-		
+
 		// Add current theme class
 		root.classList.add(theme);
 	}, [theme]);

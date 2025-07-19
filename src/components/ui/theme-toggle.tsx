@@ -15,11 +15,7 @@ export function ThemeToggle() {
 			className="h-9 w-9 p-0"
 			aria-label={`Chuyển sang ${theme === 'light' ? 'dark' : 'light'} mode`}
 		>
-			{theme === 'light' ? (
-				<Moon className="h-4 w-4" />
-			) : (
-				<Sun className="h-4 w-4" />
-			)}
+			{theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
 		</Button>
 	);
 }

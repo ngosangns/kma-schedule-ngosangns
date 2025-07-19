@@ -80,7 +80,7 @@ interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
 
 const AllTheProviders = ({
 	children,
-	initialState = {}
+	initialState: _initialState = {}
 }: {
 	children: React.ReactNode;
 	initialState?: CustomRenderOptions['initialState'];
@@ -190,8 +190,8 @@ export interface TestConfig {
  * Load test credentials from environment variables
  */
 export function getTestCredentials(): TestCredentials {
-	const username = process.env.TEST_USERNAME;
-	const password = process.env.TEST_PASSWORD;
+	const username = process.env['TEST_USERNAME'];
+	const password = process.env['TEST_PASSWORD'];
 
 	if (!username || !password) {
 		throw new Error(
@@ -207,8 +207,8 @@ export function getTestCredentials(): TestCredentials {
  * Get alternative test credentials if available
  */
 export function getAlternativeTestCredentials(): TestCredentials | undefined {
-	const username = process.env.TEST_USERNAME_2;
-	const password = process.env.TEST_PASSWORD_2;
+	const username = process.env['TEST_USERNAME_2'];
+	const password = process.env['TEST_PASSWORD_2'];
 
 	if (!username || !password) {
 		return undefined;
@@ -227,11 +227,11 @@ export function getTestConfig(): TestConfig {
 	return {
 		credentials,
 		alternativeCredentials,
-		expectedSemester: process.env.TEST_SEMESTER,
-		expectedSubjects: process.env.TEST_EXPECTED_SUBJECTS
-			? parseInt(process.env.TEST_EXPECTED_SUBJECTS)
+		expectedSemester: process.env['TEST_SEMESTER'],
+		expectedSubjects: process.env['TEST_EXPECTED_SUBJECTS']
+			? parseInt(process.env['TEST_EXPECTED_SUBJECTS'])
 			: undefined,
-		timeout: process.env.TEST_TIMEOUT ? parseInt(process.env.TEST_TIMEOUT) : 30000
+		timeout: process.env['TEST_TIMEOUT'] ? parseInt(process.env['TEST_TIMEOUT']) : 30000
 	};
 }
 
@@ -239,7 +239,7 @@ export function getTestConfig(): TestConfig {
  * Check if real account testing is enabled
  */
 export function isRealAccountTestingEnabled(): boolean {
-	return !!(process.env.TEST_USERNAME && process.env.TEST_PASSWORD);
+	return !!(process.env['TEST_USERNAME'] && process.env['TEST_PASSWORD']);
 }
 
 /**
@@ -286,7 +286,7 @@ export function waitForOperation(
 					resolve(result);
 					return;
 				}
-			} catch (error) {
+			} catch {
 				// Continue trying unless timeout
 			}
 

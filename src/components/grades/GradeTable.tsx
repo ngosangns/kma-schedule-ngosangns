@@ -55,7 +55,7 @@ export function GradeTable({
 
 	// Get unique semesters for filter
 	const semesters = useMemo(() => {
-		const uniqueSemesters = [...new Set(grades.map((g) => g.ky))].sort((a, b) => a - b);
+		const uniqueSemesters = Array.from(new Set(grades.map((g) => g.ky))).sort((a, b) => a - b);
 		return uniqueSemesters;
 	}, [grades]);
 
@@ -86,7 +86,7 @@ export function GradeTable({
 		});
 	};
 
-	const handleFilterChange = (key: keyof GradeFilterConfig, value: any) => {
+	const handleFilterChange = (key: keyof GradeFilterConfig, value: unknown): void => {
 		setFilterConfig((prev) => ({
 			...prev,
 			[key]: value === '' || value === 'all' ? undefined : value
@@ -236,7 +236,9 @@ export function GradeTable({
 										<Checkbox
 											id="failed"
 											checked={filterConfig.onlyFailed || false}
-											onCheckedChange={(checked) => handleFilterChange('onlyFailed', checked)}
+											onCheckedChange={(checked) =>
+												handleFilterChange('onlyFailed', checked === true)
+											}
 										/>
 										<label htmlFor="failed" className="text-sm">
 											Chỉ môn rớt
@@ -246,7 +248,9 @@ export function GradeTable({
 										<Checkbox
 											id="excellent"
 											checked={filterConfig.onlyExcellent || false}
-											onCheckedChange={(checked) => handleFilterChange('onlyExcellent', checked)}
+											onCheckedChange={(checked) =>
+												handleFilterChange('onlyExcellent', checked === true)
+											}
 										/>
 										<label htmlFor="excellent" className="text-sm">
 											Chỉ môn xuất sắc
@@ -256,7 +260,7 @@ export function GradeTable({
 										<Checkbox
 											id="invalid"
 											checked={showInvalidOnly}
-											onCheckedChange={setShowInvalidOnly}
+											onCheckedChange={(checked) => setShowInvalidOnly(checked === true)}
 										/>
 										<label htmlFor="invalid" className="text-sm">
 											Chỉ dữ liệu lỗi ({invalidGradesCount})
