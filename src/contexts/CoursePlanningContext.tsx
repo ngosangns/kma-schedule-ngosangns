@@ -33,6 +33,7 @@ type CoursePlanningAction =
 			payload: { majorKey: string; subjectName: string; show: boolean };
 	  }
 	| { type: 'SELECT_MAJOR'; payload: { major: string; select: boolean } }
+	| { type: 'SET_SELECTED_MODE'; payload: AutoMode }
 	| { type: 'SET_AUTO_TH'; payload: number }
 	| { type: 'SET_OLD_AUTO'; payload: AutoMode | null }
 	| { type: 'RESET_STATE' };
@@ -41,6 +42,7 @@ type CoursePlanningAction =
 const initialState: CoursePlanningState = {
 	calendar: null,
 	selectedClasses: {},
+	selectedMode: 'refer-non-overlap',
 	autoTh: -1,
 	oldAuto: null,
 	loading: false,
@@ -110,6 +112,9 @@ function coursePlanningReducer(
 
 			return { ...state, selectedClasses, autoTh: -1 };
 
+		case 'SET_SELECTED_MODE':
+			return { ...state, selectedMode: action.payload };
+
 		case 'SET_AUTO_TH':
 			return { ...state, autoTh: action.payload };
 
@@ -139,6 +144,7 @@ interface CoursePlanningContextType {
 	// Schedule generation
 	generateSchedule: (auto: AutoMode) => Promise<void>;
 	getCalendarTableData: () => CalendarTableData | null;
+	setSelectedMode: (mode: AutoMode) => void;
 
 	// Utility
 	setLoading: (loading: boolean) => void;
@@ -162,6 +168,9 @@ export function CoursePlanningProvider({ children }: { children: React.ReactNode
 			if (storedData.selectedClasses) {
 				dispatch({ type: 'SET_SELECTED_CLASSES', payload: storedData.selectedClasses });
 			}
+			if (storedData.selectedMode) {
+				dispatch({ type: 'SET_SELECTED_MODE', payload: storedData.selectedMode });
+			}
 		}
 	}, []);
 
@@ -171,10 +180,11 @@ export function CoursePlanningProvider({ children }: { children: React.ReactNode
 			saveCoursePlanningData({
 				calendar: state.calendar,
 				selectedClasses: state.selectedClasses,
+				selectedMode: state.selectedMode,
 				lastUpdated: new Date().toISOString()
 			});
 		}
-	}, [state.calendar, state.selectedClasses]);
+	}, [state.calendar, state.selectedClasses, state.selectedMode]);
 
 	// Data loading
 	const loadCalendarData = useCallback((data: JSONResultData) => {
@@ -325,6 +335,10 @@ export function CoursePlanningProvider({ children }: { children: React.ReactNode
 		dispatch({ type: 'RESET_STATE' });
 	}, []);
 
+	const setSelectedMode = useCallback((mode: AutoMode) => {
+		dispatch({ type: 'SET_SELECTED_MODE', payload: mode });
+	}, []);
+
 	const contextValue: CoursePlanningContextType = {
 		state,
 		loadCalendarData,
@@ -334,6 +348,7 @@ export function CoursePlanningProvider({ children }: { children: React.ReactNode
 		updateShowSubject,
 		generateSchedule,
 		getCalendarTableData,
+		setSelectedMode,
 		setLoading,
 		setError,
 		resetState,

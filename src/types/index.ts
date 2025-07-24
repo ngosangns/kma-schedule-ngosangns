@@ -147,6 +147,7 @@ export interface CalendarResponse {
 export interface CoursePlanningStorageData {
 	calendar: import('./course-planning').JSONResultData | null;
 	selectedClasses: import('./course-planning').MajorSelectedSubjects;
+	selectedMode?: import('./course-planning').AutoMode;
 	title?: string;
 	lastUpdated?: string;
 }

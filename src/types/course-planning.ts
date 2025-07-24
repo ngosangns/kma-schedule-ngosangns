@@ -119,6 +119,7 @@ export interface ScheduleWorkerResponse {
 export interface CoursePlanningState {
 	calendar: JSONResultData | null;
 	selectedClasses: MajorSelectedSubjects;
+	selectedMode: AutoMode;
 	autoTh: number;
 	oldAuto: AutoMode | null;
 	loading: boolean;

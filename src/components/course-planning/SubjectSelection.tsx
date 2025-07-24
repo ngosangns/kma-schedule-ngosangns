@@ -261,7 +261,8 @@ function ScheduleWizard({
 	conflictCount,
 	onContinue
 }: ScheduleWizardProps) {
-	const [selectedMode, setSelectedMode] = useState<AutoMode>('refer-non-overlap');
+	const { state, setSelectedMode } = useCoursePlanning();
+	const selectedMode = state.selectedMode;
 	const [currentStep, setCurrentStep] = useState(1);
 
 	const canGenerate = selectedSubjectsCount > 0;

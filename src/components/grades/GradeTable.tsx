@@ -50,6 +50,7 @@ import { isSubjectFailed } from '@/lib/ts/grades/calculations';
 import { GradeEditModal } from './GradeEditModal';
 import { SimpleCSVImport } from './SimpleCSVImport';
 import { SimpleCSVExport } from './SimpleCSVExport';
+import { StudyPlanDialog } from './StudyPlanDialog';
 
 interface GradeTableProps {
 	grades: GradeRecord[];
@@ -179,6 +180,7 @@ export function GradeTable({
 							<CardDescription>Xem và quản lý điểm số các môn học</CardDescription>
 						</div>
 						<div className="flex items-center gap-2">
+							<StudyPlanDialog grades={grades} />
 							{onImportComplete && <SimpleCSVImport onImportComplete={onImportComplete} />}
 							<SimpleCSVExport grades={grades} />
 							{editable && (

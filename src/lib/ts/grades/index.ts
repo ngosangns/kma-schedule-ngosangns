@@ -20,6 +20,14 @@ export { parseCSV, parseJSON, exportToCSV, exportToJSON, downloadFile } from './
 // Validation
 export { validateGradeRecord, validateGradeRecords, filterGrades, sortGrades } from './validation';
 
+// Study Planning
+export {
+	calculateStudyPlan,
+	calculateMultipleScenarios,
+	getRemainingSubjects
+} from './study-planning';
+export type { StudyPlanInput, StudyPlanResult } from './study-planning';
+
 // Re-export types for convenience
 export type {
 	GradeRecord,
