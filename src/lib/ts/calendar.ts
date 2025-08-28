@@ -1,51 +1,97 @@
-import $ from 'jquery';
+// @ts-nocheck
 import { createInlineWorker } from './worker';
 import moment from 'moment';
+import { MainFormData, ProcessedCalendarData, SemesterData } from '@/types';
 
-export function fetchCalendarWithPost(formObj: any, signInToken: any) {
-	return /** @type {any} */ $.ajax({
-		url: 'https://actvn-schedule.cors-ngosangns.workers.dev/subject',
+export async function fetchCalendarWithPost(
+	formObj: MainFormData,
+	signInToken: string
+): Promise<string> {
+	// Validate token
+	if (!signInToken || typeof signInToken !== 'string') {
+		throw new Error('Invalid signInToken provided');
+	}
+
+	// Clean token - remove any potential invalid characters and newlines
+	const cleanToken = signInToken.trim().replace(/[\r\n]/g, '');
+
+	// Validate clean token
+	if (!cleanToken || cleanToken.length === 0) {
+		throw new Error('Token is empty after cleaning');
+	}
+
+	// Ensure token doesn't contain invalid characters for HTTP headers
+	if (!/^[a-zA-Z0-9=;._-]+$/.test(cleanToken)) {
+		throw new Error('Token contains invalid characters');
+	}
+
+	const response = await fetch('/api/kma/subject', {
 		method: 'POST',
-		data: Object.keys(formObj)
+		body: Object.keys(formObj)
 			.map((key) => {
-				return encodeURIComponent(key) + '=' + encodeURIComponent(formObj[key]);
+				return encodeURIComponent(key) + '=' + encodeURIComponent(formObj[key] || '');
 			})
 			.join('&'),
 		headers: {
 			'Content-Type': 'application/x-www-form-urlencoded',
-			'x-cors-headers': JSON.stringify({
-				Cookie: signInToken
-			})
+			Authorization: `Bearer ${cleanToken}`
 		}
 	});
+
+	if (!response.ok) {
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
+
+	return await response.text();
 }
 
-export function fetchCalendarWithGet(signInToken: any) {
-	return /** @type {any} */ $.ajax({
-		url: 'https://actvn-schedule.cors-ngosangns.workers.dev/subject',
+export async function fetchCalendarWithGet(signInToken: string): Promise<string> {
+	// Validate token
+	if (!signInToken || typeof signInToken !== 'string') {
+		throw new Error('Invalid signInToken provided');
+	}
+
+	// Clean token - remove any potential invalid characters and newlines
+	const cleanToken = signInToken.trim().replace(/[\r\n]/g, '');
+
+	// Validate clean token
+	if (!cleanToken || cleanToken.length === 0) {
+		throw new Error('Token is empty after cleaning');
+	}
+
+	// Ensure token doesn't contain invalid characters for HTTP headers
+	if (!/^[a-zA-Z0-9=;._-]+$/.test(cleanToken)) {
+		throw new Error('Token contains invalid characters');
+	}
+
+	const response = await fetch('/api/kma/subject', {
 		method: 'GET',
 		headers: {
-			'x-cors-headers': JSON.stringify({
-				Cookie: signInToken
-			})
+			Authorization: `Bearer ${cleanToken}`
 		}
 	});
+
+	if (!response.ok) {
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
+
+	return await response.text();
 }
 
-export function getFieldFromResult(result: any, field: any) {
-	let res = result.match(new RegExp('id="' + field + '" value="(.+?)"', 'g'));
-	if (!res || !res.length) return false;
-	res = res[0];
-	res = res.match(/value="(.+?)"/);
-	if (!res || !res.length) return false;
-	res = res[1];
-	return res;
+export function getFieldFromResult(result: string, field: string): string | false {
+	const matches = result.match(new RegExp('id="' + field + '" value="(.+?)"', 'g'));
+	if (!matches || !matches.length) return false;
+
+	const firstMatch = matches[0];
+	const valueMatch = firstMatch.match(/value="(.+?)"/);
+	if (!valueMatch || !valueMatch.length) return false;
+
+	return valueMatch[1] || false;
 }
 
-function stripHTMLTags(str: any) {
+function stripHTMLTags(str: string | null | false): string {
 	if (str === null || str === false) return '';
-	else str = str.toString();
-	return str.replace(/<[^>]*>/g, '');
+	return str.toString().replace(/<[^>]*>/g, '');
 }
 
 export function filterTrashInHtml(html: string): string {
@@ -54,7 +100,7 @@ export function filterTrashInHtml(html: string): string {
 	return result;
 }
 
-export function cleanFromHTMLtoArray(raw_tkb: string) {
+export function cleanFromHTMLtoArray(raw_tkb: string): string[][] | false {
 	if (!raw_tkb || !raw_tkb.length) return false;
 
 	// remove trash and catch table from html string
@@ -64,13 +110,24 @@ export function cleanFromHTMLtoArray(raw_tkb: string) {
 	if (raw_tkb_matched && raw_tkb_matched.length) raw_tkb = raw_tkb_matched[0];
 
 	// convert response to DOM then export the table to array
-	$('body').append('<div id=cleanTKB class=uk-hidden></div>');
-	$('#cleanTKB').html(raw_tkb);
-	const data_content_temp = Array.prototype.map.call(
-		document.querySelectorAll('#gridRegistered tr'),
-		(tr) => Array.prototype.map.call(tr.querySelectorAll('td'), (td) => stripHTMLTags(td.innerHTML))
-	);
-	$('#cleanTKB').remove();
+	if (typeof document === 'undefined') {
+		throw new Error('DOM operations not available on server side');
+	}
+
+	const tempDiv = document.createElement('div');
+	tempDiv.id = 'cleanTKB';
+	tempDiv.style.display = 'none';
+	tempDiv.innerHTML = raw_tkb;
+	document.body.appendChild(tempDiv);
+
+	const data_content_temp: string[][] = Array.prototype.map.call(
+		tempDiv.querySelectorAll('#gridRegistered tr'),
+		(tr: HTMLTableRowElement) =>
+			Array.prototype.map.call(tr.querySelectorAll('td'), (td: HTMLTableCellElement) =>
+				stripHTMLTags(td.innerHTML)
+			)
+	) as string[][];
+	document.body.removeChild(tempDiv);
 
 	// check null
 	if (!data_content_temp) return false;
@@ -78,25 +135,31 @@ export function cleanFromHTMLtoArray(raw_tkb: string) {
 	return data_content_temp;
 }
 
-export function processStudent(rawHtml: string) {
-	let student = rawHtml.match(/<span id="lblStudent">(.+?)<\/span/g);
-	if (student && student.length) {
-		student = student[0].match(/<span id="lblStudent">(.+?)<\/span/);
-		if (student && student.length > 1) return student[1];
+export function processStudent(rawHtml: string): string {
+	const studentMatches = rawHtml.match(/<span id="lblStudent">(.+?)<\/span/g);
+	if (studentMatches && studentMatches.length) {
+		const studentMatch = studentMatches[0].match(/<span id="lblStudent">(.+?)<\/span/);
+		if (studentMatch && studentMatch.length > 1 && studentMatch[1]) return studentMatch[1];
 	}
 	return 'KIT Club';
 }
 
-export async function processCalendar(rawHtml: string) {
+export async function processCalendar(rawHtml: string): Promise<ProcessedCalendarData> {
 	if (!rawHtml) throw new Error('empty data');
 
-	return await new Promise((resolve, reject) => {
+	return await new Promise<ProcessedCalendarData>((resolve, reject) => {
 		const worker = createInlineWorker(
-			(_rawHtml: { data: any }) => self.postMessage(restructureTKB(_rawHtml.data)),
+			(_rawHtml: { data: string[][] | false }) => self.postMessage(restructureTKB(_rawHtml.data)),
 			restructureTKB
 		);
-		worker.onmessage = (res) =>
-			resolve(res.data ? res.data : res.data === false ? { data_subject: [] } : null);
+		worker.onmessage = (res) => {
+			const result = res.data
+				? res.data
+				: res.data === false
+					? { data_subject: [], weeks: [] }
+					: { data_subject: [], weeks: [] };
+			resolve(result);
+		};
 		worker.onerror = (err) => reject(err);
 		worker.postMessage(cleanFromHTMLtoArray(rawHtml));
 	}).catch((e) => {
@@ -104,16 +167,29 @@ export async function processCalendar(rawHtml: string) {
 	});
 }
 
-export function processMainForm(rawHtml: any) {
+export function processMainForm(rawHtml: string): MainFormData {
 	// parse html
-	const parser = new DOMParser(),
-		content = 'text/html',
-		dom = parser.parseFromString(rawHtml, content),
-		form1 = dom.getElementById('Form1'),
-		mainForm = form1 ? $(form1) : null;
-	return mainForm
-		? mainForm.serializeArray().reduce((o, kv) => ({ ...o, [kv.name]: kv.value }), {})
-		: {};
+	if (typeof DOMParser === 'undefined') {
+		throw new Error('DOMParser not available on server side');
+	}
+
+	const parser = new DOMParser();
+	const dom = parser.parseFromString(rawHtml, 'text/html');
+	const form1 = dom.getElementById('Form1');
+
+	if (!form1) return {} as MainFormData;
+
+	const formData: Record<string, string> = {};
+	const inputs = form1.querySelectorAll('input, select, textarea');
+
+	inputs.forEach((input) => {
+		const element = input as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+		if (element.name && element.value) {
+			formData[element.name] = element.value;
+		}
+	});
+
+	return formData as MainFormData;
 }
 
 /**
@@ -124,34 +200,61 @@ export function processMainForm(rawHtml: any) {
  * 	currentSemester: string
  * } | null} response
  */
-export function processSemesters(response: string): {
-	semesters: Array<{ value: string; from: string; to: string; th: string }>;
-	currentSemester: string;
-} | null {
-	const semesterOptions = $(response).find('select[name=drpSemester]').first();
-	if (!semesterOptions.length) return null;
-
-	const semester = semesterOptions.find('option');
-	const semesters = [];
-	for (const item of semester) {
-		const tmp = item.innerHTML.split('_');
-		semesters.push({
-			value: item.value,
-			from: tmp[1],
-			to: tmp[2],
-			th: tmp[0]
-		});
+export function processSemesters(response: string): SemesterData | null {
+	if (typeof DOMParser === 'undefined') {
+		throw new Error('DOMParser not available on server side');
 	}
 
-	const currentSemester: any = semesterOptions.find('option:checked').first();
+	const parser = new DOMParser();
+	const dom = parser.parseFromString(response, 'text/html');
+	const semesterSelect = dom.querySelector('select[name=drpSemester]');
+
+	if (!semesterSelect) return null;
+
+	const options = semesterSelect.querySelectorAll('option');
+	const semesters: Array<{ value: string; from: string; to: string; th: string }> = [];
+	let currentSemester = '';
+
+	for (let i = 0; i < options.length; i++) {
+		const option = options[i] as HTMLOptionElement;
+		const tmp = option.innerHTML.split('_');
+
+		// Ensure we have all required parts
+		if (tmp.length >= 3) {
+			semesters.push({
+				value: option.value,
+				from: tmp[1] || '',
+				to: tmp[2] || '',
+				th: tmp[0] || ''
+			});
+		}
+
+		if (option.selected) {
+			currentSemester = option.value;
+		}
+	}
+
+	// Sort semesters by year and semester number (most recent first)
+	semesters.sort((a, b) => {
+		const yearA = parseInt(a.to || '0');
+		const yearB = parseInt(b.to || '0');
+		if (yearA !== yearB) {
+			return yearB - yearA; // Newer year first
+		}
+		// If same year, sort by semester number (2 before 1)
+		return parseInt(b.th || '0') - parseInt(a.th || '0');
+	});
+
+	// Take only the 10 most recent semesters
+	const recentSemesters = semesters;
 
 	return {
-		semesters: semesters,
-		currentSemester: currentSemester.length ? currentSemester.val() : ''
+		semesters: recentSemesters,
+		currentSemester: currentSemester
 	};
 }
 
-export function restructureTKB(data: any) {
+export function restructureTKB(data: string[][] | false): ProcessedCalendarData | false {
 	const categories = {
 		lop_hoc_phan: 'Lớp học phần',
 		hoc_phan: 'Học phần',
@@ -165,29 +268,31 @@ export function restructureTKB(data: any) {
 	};
 
 	// check null
-	if (data.length == 0 || data == false) return false;
+	if (data === false || data.length === 0) return false;
 	// remove price
 	data.pop();
 	// if after remove price just only have header titles then return
-	if (data.length == 1) return false;
+	if (data.length === 1) return false;
 	// create var
 	const header_data = data[0];
 	const content_data = data.slice(1, data.length);
-	let min_time: any, max_time: any;
-	const data_subject: any = Array.prototype.map.call(content_data, function (td) {
+	let min_time: any = null;
+	let max_time: any = null;
+	const data_subject = content_data.map((td: string[]) => {
+		if (!header_data) return null;
 		const regex_time_spliter =
 			'([0-9]{2}\\/[0-9]{2}\\/[0-9]{4}).+?([0-9]{2}\\/[0-9]{2}\\/[0-9]{4}):(\\([0-9]*\\))?(.+?)((Từ)|$)+?';
 		const regex_time_spliter_multi = new RegExp(regex_time_spliter, 'g');
 		const regex_time_spliter_line = new RegExp(regex_time_spliter);
 
-		let temp_dia_diem = td[header_data.indexOf(categories.dia_diem)];
-		const temp_dia_diem_season_index = temp_dia_diem.match(/\([0-9,]+?\)/g);
+		let temp_dia_diem: any = td[header_data.indexOf(categories.dia_diem)];
+		const temp_dia_diem_season_index = temp_dia_diem?.match(/\([0-9,]+?\)/g);
 		// return null (not remove) if not match the pattern (to sync with season time)
 		if (!temp_dia_diem_season_index) temp_dia_diem = null;
-		if (temp_dia_diem) {
+		if (temp_dia_diem && temp_dia_diem_season_index) {
 			// add \n before each season
 			temp_dia_diem_season_index.forEach(
-				(child_item: any) => (temp_dia_diem = temp_dia_diem.replace(child_item, '\n' + child_item))
+				(child_item: any) => (temp_dia_diem = temp_dia_diem!.replace(child_item, '\n' + child_item))
 			);
 			// split season
 			temp_dia_diem = temp_dia_diem.match(/\n\(([0-9,]+?)\)(.+)/g);
@@ -215,7 +320,7 @@ export function restructureTKB(data: any) {
 		// ---------------------------------
 
 		const temp_thoi_gian =
-			td[header_data.indexOf(categories.thoi_gian)].match(regex_time_spliter_multi);
+			td[header_data.indexOf(categories.thoi_gian)]?.match(regex_time_spliter_multi);
 		// throw Error if subject hasn't had class times
 		if (!temp_thoi_gian) return false;
 		temp_thoi_gian.forEach((item: any, index: any) => {
@@ -289,8 +394,8 @@ export function restructureTKB(data: any) {
 			tkb: temp_thoi_gian
 		};
 	});
-	min_time = min_time.getTime();
-	max_time = max_time.getTime();
+	min_time = min_time?.getTime() || 0;
+	max_time = max_time?.getTime() || 0;
 
 	const days_outline: any = [];
 	const one_day_time = 86400000;
@@ -305,7 +410,7 @@ export function restructureTKB(data: any) {
 
 	for (const week of days_outline) {
 		for (const day of week) {
-			day.shift = [...Array(16).keys()].map((shift) => {
+			day.shift = Array.from({ length: 16 }, (_, shift) => {
 				for (const subject of data_subject) {
 					if (subject)
 						for (const season of subject.tkb)
@@ -347,10 +452,26 @@ export function restructureTKB(data: any) {
 			});
 		}
 	}
-	return { data_subject: days_outline };
+	return {
+		data_subject: data_subject,
+		weeks: days_outline
+	};
 }
 
-export function exportToGoogleCalendar(student: string | null, calendar: any) {
+export function exportToGoogleCalendar(
+	student: string | null,
+	calendar: ProcessedCalendarData
+): void {
+	if (
+		!calendar ||
+		!calendar.data_subject ||
+		!Array.isArray(calendar.data_subject) ||
+		!calendar.weeks ||
+		!Array.isArray(calendar.weeks)
+	) {
+		console.error('Invalid calendar data for export');
+		return;
+	}
 	const time_sift_table = [
 		{},
 		{ start: '000000', end: '004500' },
@@ -371,22 +492,31 @@ export function exportToGoogleCalendar(student: string | null, calendar: any) {
 		{ start: '133000', end: '141500' }
 	];
 	let result = `BEGIN:VCALENDAR\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\n\n`;
-	calendar.data_subject.forEach((week: any) => {
+	calendar.weeks.forEach((week: any) => {
 		for (const day of week) {
 			const timeIter = new Date(day.time);
-			day.shift.forEach((shift: any, shift_index: number) => {
-				if (shift.content) {
-					result += `BEGIN:VEVENT\nDTSTART:${moment(timeIter).format('YYYYMMDD')}T${
-						time_sift_table[shift_index + 1].start
-					}Z\n`;
-					result += `DTEND:${moment(timeIter).format('YYYYMMDD')}T${
-						time_sift_table[shift_index + shift.length].end
-					}Z\n`;
-					if (shift.address) result += `LOCATION:${shift.address}\n`;
-					result += `SUMMARY:${shift.name}\n`;
-					result += `END:VEVENT\n\n`;
-				}
-			});
+			if (day.shift && Array.isArray(day.shift)) {
+				day.shift.forEach((shift: any, shift_index: number) => {
+					if (shift.content) {
+						const startIndex = shift_index + 1;
+						const endIndex = shift_index + (parseInt(shift.length) || 1);
+
+						// Ensure indices are within bounds
+						if (startIndex < time_sift_table.length && endIndex < time_sift_table.length) {
+							const startTime = time_sift_table[startIndex]?.start;
+							const endTime = time_sift_table[endIndex]?.end;
+
+							if (startTime && endTime) {
+								result += `BEGIN:VEVENT\nDTSTART:${moment(timeIter).format('YYYYMMDD')}T${startTime}Z\n`;
+								result += `DTEND:${moment(timeIter).format('YYYYMMDD')}T${endTime}Z\n`;
+								if (shift.address) result += `LOCATION:${shift.address}\n`;
+								result += `SUMMARY:${shift.name}\n`;
+								result += `END:VEVENT\n\n`;
+							}
+						}
+					}
+				});
+			}
 		}
 	});
 	result += `END:VCALENDAR`;

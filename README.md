@@ -1,31 +1,109 @@
-### kma-schedule by ngosangns
+# KMA Schedule by ngosangns
 
-Thông báo: Hiện nay tool đã được gộp vào dự án KIT Manager của Câu lạc bộ lập trình Học viện Kỹ thuật mật mã. Các bạn có thể follow dự án KIT Manager ở đây: [https://github.com/KIT-Club/kit-manager](https://github.com/KIT-Club/kit-manager).
+A comprehensive schedule management application for KMA (Học viện Kỹ thuật Mật mã) students, featuring both official schedule viewing and course planning capabilities.
 
-- Deployed by Google Firebase: [https://kma-schedule-ngosangns.web.app](https://kma-schedule-ngosangns.web.app/)
-- Features:
-  - Create a readable schedule timetable for KMA's students
-  - Support login by account
-  - Support source code
-  - Export to Google Calendar
-  - Proxy using Cloudflare Workers
+## Features
 
-#### Install
+### 📅 Official Schedule Viewing
 
-- Requires:
+- Convert raw HTML from the official KMA website into readable schedule timetables
+- Clean, modern interface for viewing class schedules
+- Semester-based navigation and filtering
+- Responsive design for desktop and mobile devices
 
-  - Node.js 18 LTS
-  - npm
-  - pnpm: `npm install -g pnpm`
+### 📚 Course Planning (Lập lịch tín chỉ)
 
-- Install:
+- **Excel File Processing**: Upload and process Excel files containing course information
+- **Smart Subject Selection**: Interactive interface for selecting subjects and classes
+- **Automatic Schedule Generation**: AI-powered optimization to create conflict-free schedules
+- **Multiple Optimization Modes**: Morning, afternoon, evening preferences
+- **Visual Calendar Display**: Color-coded calendar view with conflict detection
+- **Alternative Solutions**: Generate multiple schedule options
 
+### 📊 Grade Management (Quản lý bảng điểm)
+
+- **File Import**: Support for CSV and JSON grade data import with validation
+- **Manual Entry**: Form-based grade entry with real-time calculation
+- **Automatic Calculations**: ĐQT, KTHP, and GPA calculations following KMA standards
+- **Grade Conversion**: Automatic conversion between 10-point, 4-point, and letter grades
+- **Statistics Dashboard**: Comprehensive analytics with charts and visualizations
+- **Data Validation**: Real-time error detection and data quality checks
+- **Export Capabilities**: Export processed data to CSV/JSON with customizable options
+- **Mobile Responsive**: Optimized table and card views for all screen sizes
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- Yarn package manager
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/ngosangns/kma-schedule-ngosangns.git
+cd kma-schedule-ngosangns
+
+# Install dependencies
+yarn install
+
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your configuration
+
+# Run development server
+yarn dev
 ```
-pnpm install
-```
 
-- Run:
+### Usage
 
-```
-pnpm dev
+#### Official Schedule
+
+1. Navigate to the application
+2. Log in with your KMA credentials
+3. Select your semester
+4. View your schedule in calendar format
+
+#### Course Planning
+
+1. Go to "Lập lịch tín chỉ" in the navigation
+2. Upload an Excel file with course information
+3. Select subjects you want to register for
+4. Choose optimization preferences
+5. Generate and view your optimal schedule
+
+## Documentation
+
+- [Course Planning Guide](docs/course-planning.md) - Detailed guide for the course planning feature
+- [API Documentation](docs/api.md) - API endpoints and usage
+- [Development Guide](docs/development.md) - Setup and development instructions
+
+## Technology Stack
+
+- **Frontend**: Next.js 14, React, TypeScript
+- **Styling**: Tailwind CSS, Radix UI
+- **State Management**: React Context API
+- **File Processing**: xlsx library
+- **Testing**: Jest, React Testing Library
+- **Performance**: Web Workers for heavy computations
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Development Setup
+
+```bash
+# Install dependencies
+yarn install
+
+# Run tests
+yarn test
+
+# Run development server
+yarn dev
+
+# Build for production
+yarn build
 ```
